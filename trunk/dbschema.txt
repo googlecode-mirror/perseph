@@ -1,0 +1,45 @@
+[DB Schema]
+
+	[Entity Creation]
+
+		In each case Key is replace with the actual key(s) required for the object. If an entity
+		should happen to have multipl non-composite keys multiple functions will be exposed.
+		
+		withKey
+			Produces an entity with the given key as a key. It may load existing data for the
+			entity, or it may check if it exists.  It will generally not fail.
+			
+			Functions: checkNew, load
+			
+		findWithKey
+			The returned entity will have be confirmed to have existed, otherwise an exception
+			is thrown if it cannot be found/loaded.
+			
+			Functions: save, delete
+		
+		createWithKey
+			Indicates you wish to "add" this new entity. Create may check at this time if it is
+			a new entity, or it may defer that to the add function.
+			
+			Functions: add
+		
+		findOrCreateWithKey
+			Indicates that you wish to create a new entity or load an existing one if possible.
+			After calling this function the current status will be known (is it new or loaded),
+			but that may change by the time an update function is made.
+			
+			Functions: save, delete
+		
+		search
+			Search takes either an array of DBS_Query options, or the same options as a
+			variable argument list.  The result of this array will be an Iterator which can be
+			iterated a "single" time.
+			
+			That object will also expose a function called "endSearch" which can be used
+			to end the searching prematurely if so desired -- strictly a resource consideration.
+			
+		searchDelete
+			Takes the same arguments as search, but deletes the entities rather than
+			returning the found results.
+		
+		

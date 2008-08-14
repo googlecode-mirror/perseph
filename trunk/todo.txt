@@ -1,0 +1,7 @@
+== Features ==
+
+[ ] add descriptions into forms (this is hard to do while using HTML_QuickForm)
+[.] add support for Null values in forms/lists on entity linking
+	-perhaps a proper conversion systems is needed (but don't duplicate quickform)
+
+== Defects ==

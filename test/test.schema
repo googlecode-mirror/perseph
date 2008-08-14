@@ -1,0 +1,188 @@
+/* Nothing actually usess the charset yet, the db variable in PHP must be set to do the conversion correctly */
+default charset "UTF-8";
+
+/* Custom types allow finer control over formatting and conversions. Custom types can
+	not be used in the "provider" sections. */
+type CustomID<Integer> { 	/* The base type says how this type behaves (for forms,listings,+elsewhere) */
+
+}
+
+/* In this example all of our
+	tables are in one database
+	*/
+provider DBTest {
+	var db_test;
+	type DBSource;
+	
+	table basic {
+		ID<Integer> LAST_INSERT_ID;
+		Name<String>;
+		Date<Date> ;
+		Time<Time>;
+		DateTime<DateTime>;
+		Bool<Bool>;
+		Decimal<Decimal>;
+		Float<Float>;
+		NameRef<Integer>;
+	}
+	
+	table twokeys {
+		KeyNum<Integer>;
+		KeyString<String>;
+		Value<String>;
+	}
+	
+	table convert {
+		Index<Integer> LAST_INSERT_ID;
+		Labels<String>;
+		LabelCount<Integer>;
+	}
+	
+	table names {
+		Name<String>;
+		ID<Integer>;
+	}
+}
+
+entity DBSTest {
+	fields {
+		ID<CustomID> 
+			ALT_RECORD_KEY LOAD_ONLY;
+		Name<String> 
+			ALT_RECORD_KEY TITLE MAXLEN(50)
+			LABEL("Logical Name")
+			DESC("A description which can be used for forms or for general reference.");
+		Date<Date>;
+		Time<Time>;
+		DateTime<DateTime> ALLOW_NULL;
+		Bool<Bool>;
+		Decimal<Decimal>;
+		Float<Float> DEFAULT(123.5);
+		NameRef<DBSName> ALLOW_NULL;
+	}
+	
+	aliases {
+		/* Indicate that "ANumber" can also be used to reference Decimal, the fields are equivalent 
+			TODO: check search/searchAndDelete case */
+		ANumber = Decimal;
+	}
+}
+
+mapper DBSTest {
+	provider DBTest;
+	
+	fields {
+		using basic {
+			@ID = ID;
+			@Name = Name;
+			@Date = Date;
+			@Time = Time;
+			@DateTime = DateTime;
+			@Bool = Bool;
+			@Decimal = Decimal;
+			@Float = Float;
+			
+			/* Link DB value directly to entity field record key */
+			@NameRef = NameRef.ID;
+		}
+	}
+}
+
+entity DBSTwoKeys {
+	fields {
+		Num<Integer> RECORD_KEY;
+		Name<String> RECORD_KEY MAXLEN(20);
+		Value<String> MAXLEN(50) DEFAULT("Just 'a' 	Default");
+	}
+}
+
+mapper DBSTwoKeys {
+	provider DBTest;
+	fields {
+		using twokeys {
+			@KeyNum = Num;
+			@KeyString = Name;
+			@Value = Value;
+		}
+	}
+}
+
+entity DBSStrings {
+	class DerivedStrings;
+	
+	fields  {
+		/* If a field is a RECORD_KEY, LOAD_ONLY, and maps to a LAST_INSERT_ID db field, then for creating
+			this entity it need not be specified. This is to support auto_increment like columns as the only key for
+			an entity. (em: I'm not so happy about this, it should have some kind of DEFAULT(@SAVE) marked! */
+		MyID<Integer> RECORD_KEY LOAD_ONLY;
+		Labels<Array<String>>;
+	}
+}
+
+mapper DBSStrings {
+	provider DBTest;
+	fields {
+		using convert {
+			@Index = MyID;
+			
+			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
+			convert_labels<Array<String>>( @Labels ) = Labels;
+		}
+	}
+}
+
+entity DBSName {
+	fields {
+		/* This time we explicitly set IDs */
+		ID<Integer> RECORD_KEY;
+		
+		/* Titles are used for Forms and Listings as the primary way to refer to this entity */
+		Name<String> TITLE;
+	}
+}
+
+mapper DBSName {
+	provider DBTest;
+	fields {
+		using names {
+			@ID = ID;
+			@Name = Name;
+		}
+	}
+}
+
+form SampleFormQuick {
+	entity DBSTest;
+	allowDelete true; /* the record may be deleted -- a delete option is given to the user */
+	
+	fields {
+		ID HIDDEN;
+		Date;
+		Float READ_ONLY;
+	}
+}
+
+form SampleFormFull {
+	entity DBSTest;
+	addFields all;	/* All fields in entity will also be included, not just those specified here */
+	
+	fields {
+		ID HIDDEN;
+	}
+}
+
+
+listing SampleList {
+	entity DBSTest;
+	
+	fields {
+		/* Custom formatters can be specified for any column */
+		_fmt_id( ID ) "Some ID";
+		Name; /*Use default label*/
+		Decimal "Decimal Value";	
+		/*NameRef "Links To"; TODO: support without need for converter */
+				
+		/* Here the entity itself is provided to the formatter */
+		_fmt_ruleaction( @SELF ) "Action";
+	}
+}

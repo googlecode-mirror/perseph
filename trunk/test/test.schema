@@ -11,6 +11,8 @@ type CustomID<Integer> { 	/* The base type says how this type behaves (for forms
 	tables are in one database
 	*/
 provider DBTest {
+	/* These first two lines are PHP specific, but as we have only one emitter so far
+		we haven't thought about how to extract this part appropriately */
 	var db_test;
 	type DBSource;
 	

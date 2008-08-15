@@ -1,4 +1,4 @@
-import sys
+import sys, os
 
 if len( sys.argv ) != 3:
 	print "Syntax: input.schema output/dir/base_\n"
@@ -7,7 +7,9 @@ if len( sys.argv ) != 3:
 infile = sys.argv[1]
 outbase = sys.argv[2]
 
-sys.path.append('antlr/runtime/Python')
+# import antlr (relative to ourself)
+ourpath = os.path.abspath( os.path.dirname( sys.argv[0] ) )
+sys.path.append('%s/antlr/runtime/Python' % ourpath)
 import antlr3
 	
 ###########################################

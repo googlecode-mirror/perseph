@@ -75,8 +75,15 @@ class Processor:
 			type = varset["type"]
 			provider = None
 			if type == "DBSource":
-				checkVarSet( prov, varset, ["type","var"], ["tablePrefixVar"] )
-				self.sc.providers[name] = provider = DBSchema.Provider_DBSource( varset["var"] )
+				self.sc.providers[name] = provider = DBSchema.Provider_DBSource( )
+				checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar"] )
+				
+				# May use a variable or a function to lookup/return the DB
+				if 'var' in varset:
+					provider.varName = varset['var']
+				else:
+					provider.funcName = varset['func']
+				
 			else:
 				errorOn( prov, "Unknown type in provider: %s" % name )
 			

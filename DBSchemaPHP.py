@@ -124,13 +124,23 @@ class PHPEmitter:
 		self.genEmpty( en, loc )
 		
 		self.wr( "//*** genMapper\n" )
-		self.wrt("""
+		if loc.provider.varName != None:
+			self.wrt("""
 static private function &getDB() {
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	return $$GLOBALS['$var'];
 }
-""", { 'var': loc.provider.varname } )
+""", { 'var': loc.provider.varName } )
+		else:
+			self.wrt("""
+static private function &getDB() {
+	if( !function_exists( '$func' ) )
+		throw new ErrorException( "The database function $func is not defined." );
+	$$temp =& $func();
+	return $$temp;
+}
+""", {'func': loc.provider.funcName } )
 
 		# Produce a convenient form of the key names for functions names and parameter lists
 		keyset = en.getKeySet()

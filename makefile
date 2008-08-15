@@ -1,7 +1,8 @@
-all: parser
+all: config parser
 
-CLEANS=SchemaParser.py SchemaLexer.py Schema.tokens $(wildcard *.pyc) Schema__.g
-CLEANDIRS=$(GENDIR)
+CLEANS=SchemaParser.py SchemaLexer.py Schema.tokens $(wildcard *.pyc) Schema__.g \
+	configure aclocal.m4
+CLEANDIRS=$(GENDIR)  autom4te.cache
 clean:
 	rm -f $(CLEANS)
 	rm -fr $(CLEANDIRS)
@@ -30,3 +31,15 @@ ANTLRJARS=$(wildcard antlr/lib/*.jar)
 ANTLRCP:=`for i in $(ANTLRJARS); do echo -n $$i:; done`
 SchemaParser.py: Schema.g
 	java -cp $(ANTLRCP) org.antlr.Tool Schema.g
+
+##
+# Configure doesn't do much for us beyond checking the environment
+config: configure 
+	./configure
+	
+configure: aclocal.m4 configure.ac
+	autoconf
+	
+aclocal.m4: configure.ac
+	aclocal -I autoconf/
+	

@@ -1,11 +1,11 @@
-/* 
-	This creates/recreates the tables for a test DB in MySql.
-
-	DROP DATABASE dbs_test;
-	CREATE DATABASE `dbs_test` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci; 
-
-	GRANT ALL PRIVILEGES ON dbs_test.* to 'DBSTestUser'@'localhost' IDENTIFIED BY 'password';
-*/
+-- 
+--	This creates/recreates the tables for a test DB in MySql.
+--
+--	DROP DATABASE if exists dbs_test;
+--	CREATE DATABASE `dbs_test` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci; 
+--
+--	GRANT ALL PRIVILEGES ON dbs_test.* to 'DBSTestUser'@'localhost' IDENTIFIED BY 'password';
+--
 
 USE dbs_test;
 
@@ -20,7 +20,7 @@ DROP TABLE IF EXISTS `basic`;
 `Bool` BOOL NOT NULL ,
 `Decimal` DECIMAL( 10, 5 ) NOT NULL ,
 `Float` FLOAT NOT NULL ,
-`NameRef` INT( 2 ) NULL ;
+`NameRef` INT( 2 ) NULL ,
 PRIMARY KEY ( `ID` ) ,
 UNIQUE (`Name`)
 );

@@ -315,6 +315,13 @@ class DBS_SetFieldException extends DBS_FieldException {
 }
 
 /**
+ * STRUCTURE NOTES
+ *
+ * $table : array( db_table_name, internal_table_name )
+ * 	The values differ when a prefix is being used.
+ */
+ 
+/**
  * Should the field be skipped.
  */
 function _dbs_skipfield( $member, $fieldLimit ) {
@@ -344,7 +351,7 @@ function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, 
 			continue;
 		
 		list( $dbname, $dbtype ) = $data;
-		$cnv = "_cnv_F{$table}_{$dbname}_T{$member}";
+		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
 		
 		$value = $into->$cnv( $db->decode( $db->getResult( $result, $dbname ), $dbtype ) );
 		$into->__set( $member, $value );
@@ -363,13 +370,13 @@ function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields 
 		if( strlen( $where ) )
 			$where .= ' AND ';
 			
-		$cnv = "_cnv_F{$member}_T{$table}_{$dbname}";
+		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
 		$value = $into->$cnv( $into->__get( $member ) );
 		$where .= $db->escapeColumn( $dbname ) . ' = ' . $db->quote( $value, $dbtype );
 	}	
 	
 	$cols = _dbs_dbsource_sql_col( $db, $fields );
-	$sql = "SELECT $cols FROM {$db->escapeTable($table)} WHERE $where";
+	$sql = "SELECT $cols FROM {$db->escapeTable($table[0])} WHERE $where";
 	$res = $db->query( $sql );
 	if( !$db->fetchRow( $res ) ) {
 		$db->endResult( $res );
@@ -388,7 +395,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 			throw new Exception( "Unknown field: " . $q->member );
 			
 		if( $q instanceof DBS_Where_Match ) {
-			$cnv = "_cnv_F{$q->member}_T{$table}_{$fields[$q->member][0]}";
+			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$fields[$q->member][0]}";
 			$value = $proto->$cnv( $q->value );
 			
 			$op = $q->op;	//TODO: Check for correctness
@@ -491,7 +498,7 @@ function dbs_dbsource_search( &$db, $table, $item_construct, $fields, $opts ) {
 	list( $dbWhere, $dbSort, $dbLimit, $fieldLimit ) = _dbs_dbsource_extract_options( $db, $table, $fields, $opts, $proto );
 
 	$cols = _dbs_dbsource_sql_col( $db, $fields, $fieldLimit );
-	$sql = "SELECT $cols FROM {$db->escapeTable($table)} $dbWhere $dbSort $dbLimit";
+	$sql = "SELECT $cols FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->query( $sql );
 	return new _DBS_DBSource_Result_Iterator( $db, $res, $item_construct, $table, $fields, $fieldLimit );
 }
@@ -600,7 +607,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
 	$proto =& $item_construct();
 	list( $dbWhere, $dbSort, $dbLimit ) = _dbs_dbsource_extract_options( $db, $table, $fields, $opts, $proto );
-	$sql = "DELETE FROM {$db->escapeTable($table)} $dbWhere $dbSort $dbLimit";
+	$sql = "DELETE FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->exec( $sql );
 	//TODO: Check errors
 	$db->endResult( $res );
@@ -622,7 +629,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		if( !$into->__isDirty( $member ) )
 			continue;
 			
-		$cnv = "_cnv_F{$member}_T{$table}_{$dbname}";
+		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
 		$cols[] = $dbname;
 		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
 	}
@@ -630,7 +637,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	foreach( $keys as $member => $data ) {
 		list( $dbname, $dbtype, $value ) = $data;
 		
-		$cnv = "_cnv_F{$member}_T{$table}_{$dbname}";
+		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
 		$keycols[] = $dbname;
 		$keyvals[] = $db->quote( $into->$cnv( $value ), $dbtype );
 	}
@@ -644,7 +651,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 			$keywhere .= $db->escapeColumn( $keycols[$i] );
 			$keywhere .= '=' . $keyvals[$i];
 		}
-		$sql = "SELECT Count(*) AS Count FROM {$db->escapeTable($table)} WHERE $keywhere";
+		$sql = "SELECT Count(*) AS Count FROM {$db->escapeTable($table[0])} WHERE $keywhere";
 		$res = $db->query( $sql );
 		$db->fetchRow( $res );
 		$newRecord = $db->decode( $db->getResult( $res, 'count' ), 'integer' ) == 0; //TODO: perhaps assert == 1?
@@ -663,9 +670,9 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	//TODO: shouldn't we check the "adding" status to ensure newRecord matches what we expect?
 	
 	if( $newRecord )
-		$sql = "INSERT {$db->escapeTable($table)}  SET ";
+		$sql = "INSERT {$db->escapeTable($table[0])}  SET ";
 	else
-		$sql = "UPDATE {$db->escapeTable($table)} SET ";
+		$sql = "UPDATE {$db->escapeTable($table[0])} SET ";
 	for( $i = 0; $i < count($cols); $i++ ) {
 		if( $i )
 			$sql .= ', ';
@@ -692,7 +699,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		if( $into->__has( $member ) )
 			throw new Exception( "LastInsert field $member already set in data!" );
 		
-		$cnv = "_cnv_F{$table}_{$dbname}_T{$member}";
+		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
 		
 		$value = $into->$cnv( $id );
 		$into->__set( $member, $value );

@@ -1,3 +1,22 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: GPL 3.0
+# This file is part of Persephone.
+#
+# Persephone is free software: you can redistribute it and/or modify it under the 
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, version 3 of the License.
+#
+# Persephone is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Persephone.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# Contributors:
+#		edA-qa mort-ora-y <edA-qa@disemia.com>
+# ***** END LICENSE BLOCK *****
 
 class Type:
 	def __init__(self, name):
@@ -59,6 +78,7 @@ class Provider_DBSource (Provider):
 	def __init__(self,name):
 		Provider.__init__( self )
 		self.varname = name #variable name in PHP which is this source
+		self.tablePrefixVar = None	#prefix variable for all tables
 		
 		
 class Provider_Table:

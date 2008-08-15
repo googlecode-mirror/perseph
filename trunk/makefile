@@ -17,7 +17,7 @@ $(GENDIR):
 test: test-build
 	php $(TESTDIR)/alltests.php
 	
-test-build: $(GENDIR)/schema.inc
+test-build: parser $(GENDIR)/schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
 $(GENDIR)/schema.inc: $(TESTDIR)/test.schema . | $(GENDIR)

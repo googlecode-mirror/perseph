@@ -1,3 +1,22 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: GPL 3.0
+# This file is part of Persephone.
+#
+# Persephone is free software: you can redistribute it and/or modify it under the 
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, version 3 of the License.
+#
+# Persephone is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Persephone.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# Contributors:
+#		edA-qa mort-ora-y <edA-qa@disemia.com>
+# ***** END LICENSE BLOCK *****
 import SchemaLexer as SL
 import SchemaParser as SP
 
@@ -56,11 +75,14 @@ class Processor:
 			type = varset["type"]
 			provider = None
 			if type == "DBSource":
-				checkVarSet( prov, varset, ["type","var"], [] )
+				checkVarSet( prov, varset, ["type","var"], ["tablePrefixVar"] )
 				self.sc.providers[name] = provider = DBSchema.Provider_DBSource( varset["var"] )
 			else:
 				errorOn( prov, "Unknown type in provider: %s" % name )
 			
+			if "tablePrefixVar" in varset:
+				provider.tablePrefixVar = varset['tablePrefixVar'];
+				
 			tableNodes = extTableNodes( prov )
 			for tableNode in tableNodes:
 				tableName = extProp( tableNode, SL.NAME )
@@ -193,6 +215,9 @@ class Processor:
 					#temporary table set until we support multiple tables
 					if mapper.table != "":
 						errorOn( node, "Duplicate table spec, multi-tables not supported" )
+					if not using in mapper.provider.tables:
+						errorOn( node, "Table does not exit in provider: %s" % using )
+						
 					mapper.table = mapper.provider.tables[using];
 					
 					for j in range(1,node.getChildCount() ):

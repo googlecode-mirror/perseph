@@ -44,9 +44,9 @@ PRIMARY KEY ( `Index` )
 ) ;
 
 
-DROP TABLE IF EXISTS `names`;
+DROP TABLE IF EXISTS `pre_names`;
 
-CREATE TABLE `dbs_test`.`names` (
+CREATE TABLE `dbs_test`.`pre_names` (
 `Name` VARCHAR( 50 ) NOT NULL ,
 `ID` INT( 2 ) NOT NULL ,
 PRIMARY KEY ( `ID` ) ,

@@ -48,6 +48,12 @@ class DBSchema_AllTests
 				'datatype_map_callback' => array( 'cstring' => 'mdb2_cstring_utf8_callback' ),
 				) 
 			);
+		if( PEAR::isError( $mdb ) ) 
+		{
+			error_log( $mdb->getMessage() );
+			die( "Unable to create MDB2 DB instance\n" );
+		}
+		
 		$db_test = new MDB2DBSource( $mdb, 'cstring' );
 		//$db_test->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
 		//check_db_error( $db_test->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!

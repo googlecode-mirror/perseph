@@ -10,6 +10,9 @@ function std_header( ) {
 	header( "Content-Type: text/html; charset=utf-8" );	//TODO: hmm, depends/requires itnernal encoding to be utf-8...
 }
 
+/* In the schema we indicate a variable which defines a prefix for some tables */
+$dbtest2_prefix = "pre_";
+
 /* The customer classes for the entites */
 
 class DerivedStrings extends DBSStrings {

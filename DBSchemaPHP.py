@@ -1,3 +1,22 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: GPL 3.0
+# This file is part of Persephone.
+#
+# Persephone is free software: you can redistribute it and/or modify it under the 
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, version 3 of the License.
+#
+# Persephone is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Persephone.  If not, see <http://www.gnu.org/licenses/>.
+# 
+# Contributors:
+#		edA-qa mort-ora-y <edA-qa@disemia.com>
+# ***** END LICENSE BLOCK *****
 import DBSchema
 import re
 from string import Template
@@ -41,6 +60,11 @@ def retrofit_schema( emitter ):
 	def phpFormLabel( en ):
 		return emitter.formLabelOf( en )
 	DBSchema.Entity_Field.phpFormLabel = property( phpFormLabel )
+	
+	def phpTableRef( prov, table ):
+		return "array( %s'%s', '%s' )" \
+			% ( "" if prov.tablePrefixVar == None else "$GLOBALS['%s']." % prov.tablePrefixVar, table.name, table.name );
+	DBSchema.Provider.phpTableRef = phpTableRef;
 
 #####################################################################
 # The PHPEmitter takes the in-memory parsed and processed schema an emits
@@ -105,7 +129,8 @@ static private function &getDB() {
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	return $$GLOBALS['$var'];
-}""", { 'var': loc.provider.varname } )
+}
+""", { 'var': loc.provider.varname } )
 
 		# Produce a convenient form of the key names for functions names and parameter lists
 		keyset = en.getKeySet()
@@ -252,7 +277,7 @@ protected function _maybeLoad() {
 		
 	if( !dbs_dbsource_load( 
 		self::getDB(),
-		'$table',
+		$table,
 		$$this, 
 		$$this->_load_keys,
 		$members
@@ -266,7 +291,7 @@ protected function _maybeLoad() {
 """, { 
 			'loadkeys': self.getKeyBlock( keys, False, lambda key:
 				"$this->_load_keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
-			'table': loc.table.name,
+			'table': loc.provider.phpTableRef( loc.table ),
 			'members': self.getFields( self.FOR_LOAD, loc.fields )
 			} )
 				
@@ -299,7 +324,7 @@ protected function _save( $$adding ) {
 	
 	dbs_dbsource_save( 
 		self::getDB(),
-		'$table',
+		$table,
 		$$this,
 		$$usekeys,
 		$members,
@@ -312,7 +337,7 @@ protected function _save( $$adding ) {
 		'savekeys': self.getKeyBlock( keys, True, lambda key:
 				"$keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
 		'readonly': self.getCheckReadOnly( keys ),
-		'table': loc.table.name,
+		'table': loc.provider.phpTableRef( loc.table ),
 		'members': self.getSaveMembers( loc.fields ),
 		'insertField': self.getInsertFields( loc, en )
 		} )
@@ -354,7 +379,7 @@ static public function search( ) {
 	
 	return dbs_dbsource_search( 
 		self::getDB(),
-		'$table',
+		$table,
 		'_${class}_privConstruct',
 		$fields,
 		$$args	//pass all options to loader
@@ -363,7 +388,7 @@ static public function search( ) {
 		""",{
 			'args': self.args_or_array( ),
 			'fields': self.getFields( self.FOR_SEARCH, loc.fields ),
-			'table': loc.table.name,
+			'table': loc.provider.phpTableRef( loc.table ),
 			'class': en.phpInstClassName,
 			})
 			
@@ -391,7 +416,7 @@ static private function _searchAndDelete( $$args ) {
 
 	return dbs_dbsource_delete( 
 		self::getDB(),
-		'$table',
+		$table,
 		'_${class}_privConstruct',
 		$fields,
 		$$args	//pass all options to deleter
@@ -417,7 +442,7 @@ public function delete() {
 	""", {
 		'args': self.args_or_array( ),
 		'fields': self.getFields( self.FOR_SEARCH, loc.fields ),
-		'table': loc.table.name,
+		'table': loc.provider.phpTableRef( loc.table ),
 		'class': en.phpInstClassName,
 		'deletekeys': self.getKeyBlock( [ field.ent_field for field in loc.fields ], False, lambda field:
 			"\t\t$keys[] = DBS_Query::match( '%s', $this->%s );\n" % ( field.phpName, field.phpName ) )

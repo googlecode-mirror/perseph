@@ -37,6 +37,12 @@ provider DBTest {
 		Labels<String>;
 		LabelCount<Integer>;
 	}
+}
+
+provider DBTest2 {
+	var db_test;
+	type DBSource;
+	tablePrefixVar dbtest2_prefix;
 	
 	table names {
 		Name<String>;
@@ -142,7 +148,7 @@ entity DBSName {
 }
 
 mapper DBSName {
-	provider DBTest;
+	provider DBTest2;
 	fields {
 		using names {
 			@ID = ID;

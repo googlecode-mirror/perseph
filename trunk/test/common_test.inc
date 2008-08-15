@@ -13,6 +13,12 @@ function std_header( ) {
 /* In the schema we indicate a variable which defines a prefix for some tables */
 $dbtest2_prefix = "pre_";
 
+/* we also said to use a function to get the DB, here we'll simply return the global
+	variable. Note, it must return by reference in PHP! */
+function &dbtest2_get() {
+	return $GLOBALS['db_test'];
+}
+
 /* The customer classes for the entites */
 
 class DerivedStrings extends DBSStrings {

@@ -7,7 +7,7 @@ AC_DEFUN([AX_PROG_PHP_VERSION],[
 		ax_php_version="$1"
 		AC_MSG_CHECKING([for php version])
 		changequote(<<,>>)
-		php_version=`$PHP --version | $GREP "^PHP " | $SED -e 's/^.* \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
+		php_version=`$PHP --version | $GREP "^PHP " | $SED -e 's/^PHP \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/'`
 		changequote([,])
 		AC_MSG_RESULT($php_version)
 	

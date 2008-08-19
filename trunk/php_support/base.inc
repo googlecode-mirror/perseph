@@ -225,4 +225,18 @@ function array_contains( $value, $arr ) {
 	return array_search( $value, $arr ) !== false;
 }
 
+
+/**
+ * Extract the object members of objects in an array.
+ *
+ * @param mem [in] the member of the object to pass to the function instead
+ *		of the object itself
+ * @param array [in] which array
+ */
+function array_members( $mem, $arr ) {
+	$ret = array();
+	foreach( $arr as $item )
+		$ret[] = $item->$mem;
+	return $ret;
+}
 ?>

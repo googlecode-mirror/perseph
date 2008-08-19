@@ -81,12 +81,12 @@ mapper DBSTest {
 	
 	fields {
 		using basic {
-			@ID = ID;
+			ID = @ID;
 			@Name = Name;
-			@Date = Date;
+			Date = @Date;
 			@Time = Time;
 			@DateTime = DateTime;
-			@Bool = Bool;
+			@Bool = 	Bool;
 			@Decimal = Decimal;
 			@Float = Float;
 			
@@ -131,7 +131,8 @@ mapper DBSStrings {
 	provider DBTest;
 	fields {
 		using convert {
-			@Index = MyID;
+			/* TODO: what happens with searching when converters are used */
+			@Index = convert_id<Integer>( MyID );
 			
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
 			convert_labels<Array<String>>( @Labels ) = Labels;

@@ -325,6 +325,11 @@ class DBSTest_Basic extends TestCase {
 		$this->assertTrue( $n instanceof DerivedStrings );
 		$this->assertTrue( $q instanceof DerivedStrings );
 		$this->assertTrue( $q->contains( "go" ) );
+		
+		//test search with converted id...
+		$res = DBSStrings::search( DBS_Query::match( 'myID', $q->myID ) )->loadAll();
+		$this->assertEquals( 1, count( $res ) );
+		$this->assertEquals( $q->myID, $res[0]->myID );
 	}
 }
 

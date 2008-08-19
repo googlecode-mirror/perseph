@@ -170,13 +170,19 @@ class Mapper:
 
 class Mapper_Field:
 	def __init__(self):
-		self.db_convert_func = None
-		self.db_convert_type = None #<Type>
+		self.db_convert = None #<Function>
 		self.db_field = None #<Provider_Field>
 		self.db_table = None #<Provider_Table> (Not yet supported)
 	
+		self.ent_convert = None #<Function>
 		self.ent_field = None #<DBSchema_Entity_Field>
 		self.ent_field_field = None #<DBSchema_Entity_Field> name of field in the entity field, may be null (no sub-field in use)
+
+
+class Function:
+	def __init__(self):
+		self.name = None	#<String>
+		self.returnType = None #<Type>
 
 
 class Form:

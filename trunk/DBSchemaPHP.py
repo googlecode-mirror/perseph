@@ -212,50 +212,55 @@ static public function &with${keyName}($keyParamStr) {
 	def genConverters( self, en, loc ):
 		self.wr( "//*** genConverters\n" )
 		for field in loc.fields:
+			fieldType = field.ent_field_field.fieldType if field.ent_field_field != None else field.ent_field.fieldType
+			dbFuncType = field.db_convert.returnType if field.db_convert != None else field.db_field.fieldType
+			entFuncType = field.ent_convert.returnType if field.ent_convert != None else fieldType
+			
 			#//// DB => Member
 			self.wrt( "public static function _cnv_F${table}_${db_col}_T${ent_field}( $$value ) {\n",
 				{ 'table': loc.table.name, 'db_col': field.db_field.name, 'ent_field': field.ent_field.name } )
 			src_type = field.db_field.fieldType
 			
-			if field.db_convert_func != None:
-				self.wr( "$value = %s( $value );\n" % field.db_convert_func )
-				src_type = field.db_convert_type
+			if field.db_convert != None:
+				self.wr( "$value = %s( $value );\n" % field.db_convert.name )
+				src_type = field.db_convert.returnType
 			
+			if dbFuncType.name != entFuncType.name:
+				self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n", 
+					{ 'src_type': dbFuncType.name, 'to_type': entFuncType.name } )
+			
+			if field.ent_convert != None:
+				self.wr( "$value = %s_inv( $value );\n" % field.ent_convert.name )
+				
 			if  field.ent_field_field != None:
-				if src_type.name != field.ent_field_field.fieldType.name:
-					self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n", 
-						{ 'src_type': src_type.name, 'to_type': field.ent_field_field.type.name } )
-					
 				# Nulls are always converted to null, no attempt is made to instantiate target object
 				self.wrt( "$$value = $$value === null ? null : $class::with${key}( $$value );\n" ,
 					{ 'class': field.ent_field.fieldType.phpClassName, 'key': field.ent_field_field.name })
-			elif src_type.name != field.ent_field.fieldType.name:
-				self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n" ,
-					{ 'src_type': src_type.name, 'to_type': field.ent_field.fieldType.name } )
 			
 			self.wr( "return $value;\n" )
 			self.wr( "}\n" );
 			
+			
 			#//// Member => DB
 			self.wrt( "public static function _cnv_F${ent_field}_T${table}_${db_col}( $$value ) {\n" ,
 				{ 'table': loc.table.name, 'db_col': field.db_field.name, 'ent_field': field.ent_field.name } )
-			if field.db_convert_func == None:
-				tar_type = field.db_field.fieldType
-			else:
-				tar_type = field.db_convert_type
-			
+				
+			src_type = fieldType
 			if  field.ent_field_field != None:
 				# As above, if we have a null we simply produce null
 				self.wr( "$value = $value === null ? null : $value->%s;\n" % field.ent_field_field.phpName )
-				if tar_type.name != field.ent_field_field.fieldType.name:
-					self.wrt( "$$value = convert_${from_type}_to_${to_type}( $$value );\n" ,
-						{'from_type': field.ent_field_field.fieldType.name, 'to_type': tar_type.name } )
-			elif tar_type.name != field.ent_field.fieldType.name:
-				self.wrt( "$$value = convert_${from_type}_to_${to_type}( $$value );\n" ,
-					{ 'from_type': field.ent_field.fieldType.name, 'to_type': tar_type.name } )
+				
+			if field.ent_convert != None:
+				self.wr( "$value = %s( $value );\n" % field.ent_convert.name )
+				src_type = field.ent_convert.returnType
+				
+			if dbFuncType.name != entFuncType.name:
+				self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n", 
+					{ 'src_type': entFuncType.name, 'to_type': dbFuncType.name } )
 			
-			if field.db_convert_func != None:
-				self.wr( "$value = %s_inv( $value );\n" % field.db_convert_func );
+			if field.db_convert != None:
+				self.wr( "$value = %s_inv( $value );\n" % field.db_convert.name );
+			
 			
 			self.wr( "return $value;\n" )
 			self.wr( "}\n\n" )

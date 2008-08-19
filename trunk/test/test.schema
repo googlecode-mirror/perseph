@@ -132,7 +132,7 @@ mapper DBSStrings {
 	fields {
 		using convert {
 			/* TODO: what happens with searching when converters are used */
-			@Index = convert_id<Integer>( MyID );
+			@Index = convert_id<CustomID>( MyID );
 			
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
 			convert_labels<Array<String>>( @Labels ) = Labels;

@@ -56,4 +56,12 @@ function convert_labels_inv( $arr ) {
 	return implode( ',', $arr );
 }
 
+function convert_id( $id ) {
+	return $id - 1000;
+}
+
+function convert_id_inv( $id ) {
+	return $id + 1000;
+}
+
 ?>

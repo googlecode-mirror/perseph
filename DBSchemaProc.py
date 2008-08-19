@@ -240,11 +240,9 @@ class Processor:
 								
 							( db, ent ) = ( left, right ) if left['db'] else ( right, left )
 							if ent['func'] != None:
-								errorOn( expr, "functions not supported on entity side, use inverse on DB side" )
-								
-							if db['func'] != None:
-								mapField.db_convert_func = db['func']
-								mapField.db_convert_type = db['func_type']
+								mapField.ent_convert = ent['func'];	
+							elif db['func'] != None:
+								mapField.db_convert = db['func']
 								
 							#TODO: check that fields exist
 							mapField.db_field = mapper.table.fields[db['name']]
@@ -266,8 +264,10 @@ class Processor:
 		res['func'] = None
 		
 		if node.type == SL.FUNCTION:
-			res['func'] = node.getChild(0).text
-			res['func_type'] = self.getType( node )
+			func = DBSchema.Function()
+			func.name = node.getChild(0).text 
+			func.returnType = self.getType( node )
+			res['func'] = func
 			node = node.getChild(2)
 			
 		if node.type == SL.DBFIELDNAME:

@@ -218,5 +218,11 @@ function gettype_full( $obj ) {
 	return gettype( $obj );
 }
 
+/**
+ * Checks if the array contains a given value.
+ */
+function array_contains( $value, $arr ) {
+	return array_search( $value, $arr ) !== false;
+}
 
 ?>

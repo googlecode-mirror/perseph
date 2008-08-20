@@ -131,7 +131,6 @@ mapper DBSStrings {
 	provider DBTest;
 	fields {
 		using convert {
-			/* TODO: what happens with searching when converters are used */
 			@Index = convert_id<CustomID>( MyID );
 			
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */

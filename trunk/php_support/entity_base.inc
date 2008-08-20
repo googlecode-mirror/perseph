@@ -401,8 +401,8 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 			$op = $q->op;	//TODO: Check for correctness
 			$value = $db->quote( $value, $fields[$q->member][1] );
 		} else if( $q instanceof DBS_Where_MatchString ) {
-			if( $fields[$q->member][1] !== 'String' )
-				throw new Exception( 'MatchString can only be used with string columns, attempted: ' . $fields[$q->member][1] );
+			if( $fields[$q->member][1] !== 'String' && $fields[$q->member][1] != 'Text' )
+				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $fields[$q->member][1] );
 				
 			if( $q->positive )
 				$op = ' LIKE ';

@@ -705,21 +705,27 @@ function &_${inst}_privConstruct() {
 					$$rule->find();
 				}
 				
-				$$this->extract( $$rule );
-				if( $$this->getAction() == DBS_FormBase::ACTION_SAVE ) {
-					$$rule->save();
-					$$this->inject( $$rule, true );	//capture any logic/new values from entity
-					print( "<p class='success'>Saved.</p>" );
-				} else if( $$this->getAction() == DBS_FormBase::ACTION_ADD ) {
-					$$rule->add();
-					$$this->isNew = false;
-					$$this->inject( $$rule, true );	//capture any logic/new values from entity
-					print( "<p class='success'>Added.</p>" );
-				} else if( $$this->getAction() == DBS_FormBase::ACTION_DELETE ) {
-					$$rule->delete();
-					$$showForm = false;
-					print( "<p class='success'>Deleted.</p>" );
+				try {
+					$$this->extract( $$rule );
+					if( $$this->getAction() == DBS_FormBase::ACTION_SAVE ) {
+						$$rule->save();
+						$$this->inject( $$rule, true );	//capture any logic/new values from entity
+						print( "<p class='success'>Saved.</p>" );
+					} else if( $$this->getAction() == DBS_FormBase::ACTION_ADD ) {
+						$$rule->add();
+						$$this->isNew = false;
+						$$this->inject( $$rule, true );	//capture any logic/new values from entity
+						print( "<p class='success'>Added.</p>" );
+					} else if( $$this->getAction() == DBS_FormBase::ACTION_DELETE ) {
+						$$rule->delete();
+						$$showForm = false;
+						print( "<p class='success'>Deleted.</p>" );
+					}
+				} catch( DBS_SetFieldException $$ex ) {
+					//just do something quick and dirty for now, TODO: combine with HTMLQuickForm to report validation errors
+					print( "<p class='error'>{$$ex->getMessage()}</p>" );
 				}
+				//TODO: Other exceptions...
 			}
 			
 			if( $$showForm ) {

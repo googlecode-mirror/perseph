@@ -12,15 +12,18 @@
  * ***** END LICENSE BLOCK ***** */
 
 function strict_clean_error_handler( $no, $msg, $file, $line ) {
-    if ( $no == E_STRICT && (
-    		strpos($file, '/pear/') ||
-    		strpos($file,'/php/') ||
-    		preg_match('/(PEAR|MDB2_Date)::.*?should not be called statically/', $msg)
-  		) ) {
- 		/* Don't execute PHP internal error handler */
-    	return true;
-    }
-    return false;
+	//allow error suppression to always work
+	if( error_reporting() === 0 )
+		return true;
+		
+	if ( $no == E_STRICT && (
+		strpos($file, '/pear/') ||
+		strpos($file,'/php/')
+		) ) {
+		/* Don't execute PHP internal error handler */
+		return true;
+	}
+	return false;
 }
 set_error_handler('strict_clean_error_handler');
 

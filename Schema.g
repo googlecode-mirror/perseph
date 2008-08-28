@@ -24,13 +24,17 @@ tokens
 	FUNCTION;
 	REF;
 	COLTYPE;
+	OPEQUALS;
+	OPLESSTHAN;
+	OPGREATERTHAN;
+	PLACEHOLDER;
 }
 
 schema 	
 	:	 declaration*;
 
 declaration 	
-	:	defaultExpr | providerBlock | entityBlock | mapperBlock | formBlock | listingBlock | customtypeBlock;
+	:	defaultExpr | providerBlock | entityBlock | mapperBlock | formBlock | listingBlock | customtypeBlock | searchBlock;
 
 defaultExpr	//prefer "default" but Java target doesn't correct the name!	
 	:	DEFAULT rawVarSet -> ^(DEFAULT rawVarSet);
@@ -167,6 +171,33 @@ idOrRef
 	|	'@' id -> ^(REF id);
 // $>
 
+//$<Search
+
+searchBlock
+	:	SEARCH id typeDef OPENBLOCK searchExpr* CLOSEBLOCK -> ^(SEARCH ^(NAME id) typeDef searchExpr*);
+	
+searchExpr
+	:	searchFilterExpr;
+	
+searchFilterExpr
+	:	FILTER sfeExpr ENDEXPR -> ^(FILTER sfeExpr);
+	
+sfeExpr 
+	:	id sfeOP sfeRef -> ^(sfeOP id sfeRef);
+	
+sfeRef
+	:	id -> ^(FIELD id)
+	|	'?' -> PLACEHOLDER
+	|	STRING
+	|	NUMBER
+	;
+
+sfeOP
+	: '=' -> OPEQUALS
+	| '<' -> OPLESSTHAN
+	| '>' -> OPGREATERTHAN
+	;
+//$>
 
 string	
 	:	
@@ -188,6 +219,8 @@ id
 	| FORM
 	| LISTING
 	| CUSTOMTYPE
+	| FILTER
+	| SEARCH
 	;
 
 typeDef	
@@ -209,6 +242,8 @@ USING	:	'using';
 FORM	:	'form';
 LISTING	:	'listing';
 CUSTOMTYPE	:	'type';
+FILTER	:	'filter';
+SEARCH	:	'search';
 
 // $>
 

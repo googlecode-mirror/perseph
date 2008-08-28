@@ -48,7 +48,7 @@ class DBSchema_AllTests
 				'datatype_map_callback' => array( 'cstring' => 'mdb2_cstring_utf8_callback' ),
 				) 
 			);
-		if( PEAR::isError( $mdb ) ) 
+		if( @PEAR::isError( $mdb ) ) 
 		{
 			error_log( $mdb->getMessage() );
 			die( "Unable to create MDB2 DB instance\n" );

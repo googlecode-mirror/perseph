@@ -33,6 +33,7 @@ class Processor:
 			SL.CUSTOMTYPE: [],
 			SL.LISTING: [],
 			SL.FORM: [],
+			SL.SEARCH: [],
 			}
 			
 		self.sc = DBSchema.Root()
@@ -49,6 +50,7 @@ class Processor:
 		self.processMappers( )
 		self.processForms( )
 		self.processListings( )
+		self.processSearches( )
 		
 	def processDefaults( self ):
 		for df in self.rawDecls[SL.DEFAULT]:
@@ -383,8 +385,40 @@ class Processor:
 				# Assign a default label
 				if field.label == None:
 					field.label = field.entField.label
+			
+			
+	def processSearches( self ):
+		for searchNode in self.rawDecls[SL.SEARCH]:
+			name = extProp( searchNode, SL.NAME )
+			type = self.getType( searchNode )
+			
+			search = DBSchema.Search( name, type )
+			self.sc.searches[name] = search
+			
+			filterNode = extNodeOpt( searchNode, SL.FILTER )
+			if filterNode != None:
+				search.filter = self.extractSearchFilter( filterNode.getChild(0), type )
 		
-
+		
+	def extractSearchFilter( self, node, entity ):
+		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN ):
+			expr = DBSchema.Search_FilterField()
+			expr.op = node.text	# assuming this is the correct symbol for now
+			
+			left = node.getChild(0)
+			if not left.text in entity.fields:
+				errorOn( left, "No such field in entity, %s" % left.text )
+			expr.field = entity.fields[left.text]
+				
+			right = node.getChild(1)
+			if right.type == SL.PLACEHOLDER:
+				expr.placeholder = True
+			else:
+				expr.const = right.text
+			return expr
+			
+		errorOn( node, "Unrecognized search expression" )
+	
 ####################################
 # Extractor utilities
 def errorOn( node, msg ):

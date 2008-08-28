@@ -68,6 +68,7 @@ class Root:
 		self.mappers = {}
 		self.forms = {}
 		self.listings = {}
+		self.searches = {}
 		
 		
 class Provider:
@@ -218,3 +219,22 @@ class Listing_Field:
 		self.label = "" #	//<String> 
 		self.convertFunc = None #	//<FunctionName>
 
+
+class Search:
+	def __init__(self, name, entity ):
+		self.name = name;
+		self.sort = None	# <Search_Sort>
+		self.filter = None	# <Search_FilterExpr>
+		self.limit = None	# <Search_None>
+		self.entity = entity	# <Entity>
+		
+class Search_FilterExpr:
+	def __init__(self):
+		pass
+	
+class Search_FilterField(Search_FilterExpr):
+	def __init__(self):
+		self.field = None	# <Entity_Field>
+		self.op = None	# String form of OP
+		self.const = None	# If a constant, then the string form of it here
+		self.placeholder = False	# True if a placeholder is used (not a constant)

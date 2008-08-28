@@ -139,6 +139,10 @@ mapper DBSStrings {
 	}
 }
 
+search MyDBSStrings<DBSStrings> {
+	filter MyID = ?;
+}
+
 entity DBSName {
 	fields {
 		/* This time we explicitly set IDs */

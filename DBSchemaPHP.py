@@ -102,6 +102,8 @@ class PHPEmitter:
 		self.genBaseRequires()
 		for entity in self.sc.entities.itervalues():
 			self.genEntity( entity )
+		for search in self.sc.searches.itervalues():
+			self.genSearch( search )
 		self.wr( "\n?>" );
 		
 	def genBaseRequires( self ):
@@ -119,7 +121,7 @@ class PHPEmitter:
 		self.genConverters( en, loc )
 		self.genMaybeLoad( en, loc )
 		self.genAddSave( en, loc )
-		self.genSearch( en, loc )
+		self.genEntitySearch( en, loc )
 		self.genDelete( en, loc )
 		self.genEmpty( en, loc )
 		
@@ -382,8 +384,8 @@ protected function _save( $$adding ) {
 			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
 		return self.getPHPMapArrayStr( mem )
 					
-	def genSearch( self, en, loc ):
-		self.wr( "//*** genSearch\n" )
+	def genEntitySearch( self, en, loc ):
+		self.wr( "//*** genEntitySearch\n" )
 		self.wrt("""
 /**
  * Obtains an iterable form of the results. They are to be loaded only on demand...
@@ -895,6 +897,46 @@ function &_${inst}_privConstruct() {
 		self.wr( "}\n" )
 		
 		
+	#/***************************************************************************
+	#* Search Generation
+	#***************************************************************************/	
+	def genSearch( self, search ):
+		numPlaceholders = 0 if search.filter == None else search.filter.countPlaceholders()
+		self.wr( "function search_%s(" % self.className( search.name ) )
+		for i in range( numPlaceholders ):
+			if i > 0:
+				self.wr( ", " )
+			self.wr( "$p%d" % i )
+		self.wr( ") { \n" )
+		self.wr( "\treturn %s::search(\n" % search.entity.phpClassName );
+		
+		if search.filter != None:
+			search.placeHolderAt = 0
+			self.wr( self.genSearchFilter( search, search.filter ) )
+			
+		self.wr( "\t);\n" );
+		
+		self.wr( "}\n" )
+	
+	
+	def genSearchFilter( self, search, filter ):
+		if isinstance( filter, DBSchema.Search_FilterFieldOp ) or isinstance( filter, DBSchema.Search_FilterFieldPattern):
+			if filter.placeholder:
+				#TODO: this will likely cause problems for placeholder ordering
+				expr = "$p%d" % search.placeHolderAt
+				search.placeHolderAt += 1
+			else:
+				expr = self.constantExpr( filter.field.fieldType, filter.const )
+				
+			if isinstance( filter, DBSchema.Search_FilterFieldPattern):
+				return "DBS_Query::matchStringPattern( '%s', %s )" \
+					% ( filter.field.phpName, expr )
+			else:
+				return "DBS_Query::match( '%s', %s, '%s' )" \
+					% ( filter.field.phpName, expr, filter.op )
+		
+		
+
 	##################################################################
 	# Output functions
 	# The short names are since they must always be preceded with "self." and I

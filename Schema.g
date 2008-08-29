@@ -28,6 +28,7 @@ tokens
 	OPLESSTHAN;
 	OPGREATERTHAN;
 	PLACEHOLDER;
+	OPPATTERNMATCH;
 }
 
 schema 	
@@ -177,10 +178,13 @@ searchBlock
 	:	SEARCH id typeDef OPENBLOCK searchExpr* CLOSEBLOCK -> ^(SEARCH ^(NAME id) typeDef searchExpr*);
 	
 searchExpr
-	:	searchFilterExpr;
+	:	searchFilterExpr | searchSortExpr;
 	
 searchFilterExpr
 	:	FILTER sfeExpr ENDEXPR -> ^(FILTER sfeExpr);
+	
+searchSortExpr
+	:	SORT id order=(ASC|DESC) ENDEXPR -> ^(SORT id {$order});
 	
 sfeExpr 
 	:	id sfeOP sfeRef -> ^(sfeOP id sfeRef);
@@ -196,6 +200,7 @@ sfeOP
 	: '=' -> OPEQUALS
 	| '<' -> OPLESSTHAN
 	| '>' -> OPGREATERTHAN
+	| '~=' -> OPPATTERNMATCH
 	;
 //$>
 
@@ -221,6 +226,9 @@ id
 	| CUSTOMTYPE
 	| FILTER
 	| SEARCH
+	| SORT
+	| ASC
+	| DESC
 	;
 
 typeDef	
@@ -244,6 +252,9 @@ LISTING	:	'listing';
 CUSTOMTYPE	:	'type';
 FILTER	:	'filter';
 SEARCH	:	'search';
+SORT		:	'sort';
+ASC	:	'ASC';
+DESC	:	'DESC';
 
 // $>
 

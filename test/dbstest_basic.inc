@@ -163,11 +163,8 @@ class DBSTest_Basic extends TestCase {
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i-1]->decimal );
 			
-		//keyed
-		$ordered = DBSTest::search( 
-			DBS_Query::matchStringPattern( 'name', 'Search:*' ),
-			DBS_Query::sort( 'decimal', DBS_Query::SORT_ASC )
-			)->loadAll( 'decimal' );
+		//keyed (use Scheme search)
+		$ordered = search_KeySortSearch( )->loadAll( 'decimal' );
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i]->decimal );
 			
@@ -327,7 +324,7 @@ class DBSTest_Basic extends TestCase {
 		$this->assertTrue( $q->contains( "go" ) );
 		
 		//test search with converted id...
-		$res = DBSStrings::search( DBS_Query::match( 'myID', $q->myID ) )->loadAll();
+		$res = search_MyDBSStrings( $q->myID )->loadAll();
 		$this->assertEquals( 1, count( $res ) );
 		$this->assertEquals( $q->myID, $res[0]->myID );
 	}

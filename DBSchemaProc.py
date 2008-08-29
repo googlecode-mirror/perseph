@@ -400,11 +400,21 @@ class Processor:
 				search.filter = self.extractSearchFilter( filterNode.getChild(0), type )
 		
 		
+	opMap = {
+		SL.OPEQUALS: '=',
+		SL.OPLESSTHAN: '<',
+		SL.OPGREATERTHAN: '>',
+		};
 	def extractSearchFilter( self, node, entity ):
+		
 		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN ):
-			expr = DBSchema.Search_FilterField()
-			expr.op = node.text	# assuming this is the correct symbol for now
+			expr = DBSchema.Search_FilterFieldOp()
+			expr.op = self.opMap[node.type]
 			
+		if node.type == SL.OPPATTERNMATCH:
+			expr = DBSchema.Search_FilterFieldPattern()
+			
+		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN, SL.OPPATTERNMATCH ):
 			left = node.getChild(0)
 			if not left.text in entity.fields:
 				errorOn( left, "No such field in entity, %s" % left.text )

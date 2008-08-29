@@ -232,9 +232,23 @@ class Search_FilterExpr:
 	def __init__(self):
 		pass
 	
+	def countPlaceholders( self ):
+		return 0
+	
 class Search_FilterField(Search_FilterExpr):
 	def __init__(self):
 		self.field = None	# <Entity_Field>
-		self.op = None	# String form of OP
 		self.const = None	# If a constant, then the string form of it here
 		self.placeholder = False	# True if a placeholder is used (not a constant)
+	
+	def countPlaceholders( self ):
+		return 1 if self.placeholder else 0
+
+class Search_FilterFieldOp(Search_FilterField):
+	def __init__(self):
+		Search_FilterField.__init__(self)
+		self.op = None	# String form of OP
+
+class Search_FilterFieldPattern(Search_FilterField):
+	def __init__(self):
+		Search_FilterField.__init__(self)

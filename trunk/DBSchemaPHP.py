@@ -902,7 +902,7 @@ function &_${inst}_privConstruct() {
 	#***************************************************************************/	
 	def genSearch( self, search ):
 		numPlaceholders = 0 if search.filter == None else search.filter.countPlaceholders()
-		self.wr( "function search_%s(" % self.className( search.name ) )
+		self.wr( "class %s {\n\tstatic public function search(" % self.className( search.name ) )
 		for i in range( numPlaceholders ):
 			if i > 0:
 				self.wr( ", " )
@@ -916,7 +916,7 @@ function &_${inst}_privConstruct() {
 			
 		self.wr( "\t);\n" );
 		
-		self.wr( "}\n" )
+		self.wr( "}\n}\n" )
 	
 	
 	def genSearchFilter( self, search, filter ):

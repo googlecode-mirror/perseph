@@ -164,7 +164,7 @@ class DBSTest_Basic extends TestCase {
 			$this->assertEquals( $i, $ordered[$i-1]->decimal );
 			
 		//keyed (use Scheme search)
-		$ordered = search_KeySortSearch( )->loadAll( 'decimal' );
+		$ordered = KeySortSearch::search()->loadAll( 'decimal' );
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i]->decimal );
 			
@@ -324,7 +324,7 @@ class DBSTest_Basic extends TestCase {
 		$this->assertTrue( $q->contains( "go" ) );
 		
 		//test search with converted id...
-		$res = search_MyDBSStrings( $q->myID )->loadAll();
+		$res = MyDBSStrings::search( $q->myID )->loadAll();
 		$this->assertEquals( 1, count( $res ) );
 		$this->assertEquals( $q->myID, $res[0]->myID );
 	}

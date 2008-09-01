@@ -78,7 +78,7 @@ entity DBSTest {
 
 search KeySortSearch<DBSTest> {
 	filter Name ~= "Search:*";
-	sort decimal ASC;
+	sort Decimal ASC;
 }
 
 mapper DBSTest {

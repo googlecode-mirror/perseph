@@ -53,6 +53,20 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( $n->name, $l->name );
 	}
 	
+	function testLink() {
+		$n = DBSTest::createWithNothing();
+		$n->name = "Link." . time();
+		$n->add();
+		
+		$l = DBSLink::createWithNothing();
+		$l->basic = $n;
+		$l->add();
+		
+		$nk = DBSLink::findWithID( $l->id );
+		$this->assertEquals( $l->basic->id, $n->id );
+		$this->assertEquals( $l->basic->name, $n->name );
+	}
+	
 	function testNameRef() {
 		$n = DBSTest::createWithName( "REFTEST" );
 		$n->nameRef = DBSName::withID( 2 );

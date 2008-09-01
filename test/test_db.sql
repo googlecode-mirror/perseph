@@ -52,3 +52,11 @@ CREATE TABLE `dbs_test`.`pre_names` (
 PRIMARY KEY ( `ID` ) ,
 INDEX ( `Name` )
 );
+
+DROP TABLE IF EXISTS `link`;
+
+CREATE TABLE `link` (
+	`ID` INT(11) NOT NULL AUTO_INCREMENT,
+	`BasicID` INT(11) NOT NULL,
+	PRIMARY KEY(`ID`)
+);

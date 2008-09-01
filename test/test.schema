@@ -39,6 +39,11 @@ provider DBTest {
 		Labels<String>;
 		LabelCount<Integer>;
 	}
+	
+	table link {
+		ID<Integer> LAST_INSERT_ID;
+		BasicID<Integer>;
+	}
 }
 
 provider DBTest2 {
@@ -168,6 +173,23 @@ mapper DBSName {
 	}
 }
 
+entity DBSLink {
+	fields {
+		ID<Integer> RECORD_KEY LOAD_ONLY;
+		Basic<DBSTest>;
+	}
+}
+
+mapper DBSLink {
+	provider DBTest;
+	fields {
+		using link {
+			@ID = ID;
+			@BasicID = Basic.ID;
+		}
+	}
+}
+
 form SampleFormQuick {
 	entity DBSTest;
 	allowDelete true; /* the record may be deleted -- a delete option is given to the user */
@@ -203,3 +225,4 @@ listing SampleList {
 		_fmt_ruleaction( @SELF ) "Action";
 	}
 }
+

@@ -5,7 +5,7 @@
  *
  * This file is an exception to the main Persephone license in that
  * this file may be redistributed under the terms of the GNU
- * General Public License, version 3.
+ * Lesser General Public License, version 3.
  * 
  * Contributors:
  *		edA-qa mort-ora-y <edA-qa@disemia.com>

@@ -149,9 +149,19 @@ abstract class DBS_EntityBase {
 		throw new Exception( "Not supported" );
 	}
 	
+	/**
+	 * Checks if a field is *effectively* dirty. This means that the field has been modified, or is
+	 * otherwise different than what the persisted form might be.
+	 *
+	 * Note that if the entity is new then default fields are considered dirty, since they may not
+	 * have the same default value in the backing store.
+	 */
 	public function __isDirty( $field ) {
+		if( $this->_status == self::STATUS_UNKNOWN )
+			throw new Exception( "isDirty is ambiguous when status is unknown" );
 		$field = $this->_fieldName( $field );
-		return array_get_default( $field, $this->_data_dirty, false );
+		return array_get_default( $field, $this->_data_dirty, false )
+			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_defaults ) );
 	}
 	
 	public function __getTypeData( $field ) {

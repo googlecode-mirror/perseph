@@ -120,7 +120,7 @@ class DBSTest_Basic extends TestCase {
 	function testDirtySave() {
 		$q = DBSTest::createWithName( 'dirty' );
 		$q->decimal = 10.5;
-		$q->float = 123;
+		$q->float = 128;
 		$q->add();
 		
 		$q->decimal = 20.25;
@@ -130,7 +130,7 @@ class DBSTest_Basic extends TestCase {
 		
 		$l = DBSTest::findWithName( 'dirty' );
 		$this->assertEquals( 20.25, $l->decimal );
-		$this->assertEquals( 123, $l->float );
+		$this->assertEquals( 128, $l->float );
 	}
 	
 	function testDelete() {
@@ -190,6 +190,12 @@ class DBSTest_Basic extends TestCase {
 	function testDefault() {
 		$q = DBSTest::createWithNothing();
 		$this->assertEquals( 123.5, $q->float );
+		
+		$q = DBSTest::createWithName( "SaveDefault" );
+		$q->add();
+		
+		$n = DBSTest::findWithName( "SaveDefault" );
+		$this->assertEquals( 123.5, $n->float );
 	}
 	
 	function testTypeRestrictions() {

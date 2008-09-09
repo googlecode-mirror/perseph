@@ -1,0 +1,4 @@
+set %Row% as xpath //td[1][contains(string(),'%Item:ID%')]/parent::tr[1]
+check %Row%
+checkpoint eqString %Item:Name% %Response:{Row}/td[2]/text()%
+checkpoint numcomp 0 = %Response:{Row}/td[3]/text()%

@@ -1,0 +1,21 @@
+Click link:Add
+
+set %Name% ⚘-%Var:Random%-ü
+set %Date% 2001-08-01
+
+SubmitForm with
+	%SubmitButton% value:Add
+	%Params:_dbs_Date% %Date%
+	%Params:_dbs_Name% %Name%
+end
+
+set %ID% as typeString %Response://input[@name='_key__dbs_ID']/@value%
+notice ID:%ID%
+
+checkpoint eqString %Name% %Response://input[@name='_key__dbs_Name']/@value%
+checkpoint eqString %Name% %Response://input[@name='_dbs_Name']/@value%
+checkpoint eqString %Date% %Response://input[@name='_dbs_Date']/@value%
+
+Click link:Return to listing
+# TODO: parsing error now, need to come back to this...
+check eqString %Name% %Response://td[1][contains(text(),'{ID}')]/following-sibling::td[1]/text()%

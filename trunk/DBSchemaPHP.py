@@ -628,23 +628,28 @@ function &_${inst}_privConstruct() {
 				
 			if formfield.readonly:
 				self.wr( "\t$form->addElement( 'static', '_ro_%s', %s );\n" % ( field.phpFormName, field.phpFormLabel ) )
-					
-			#//readonly also need to propagate their value, perhaps just for keys?
-			if formfield.hidden or formfield.readonly:
+				continue
+			
+			if formfield.hidden:	 # why do we need a hidden?
 				self.wr( "\t$form->addElement( 'hidden', '%s' );\n" % field.phpFormName );
-			else:
-				self.wr( "\t$form->addElement( '%s', '%s', %s, %s );\n" 
-					% ( self.formTypeOf( field.fieldType ), field.phpFormName, field.phpFormLabel, self.formOptionsOf( field ) ) )
-					
+				continue
+			
+			self.wr( "\t$form->addElement( '%s', '%s', %s, %s );\n" 
+				% ( self.formTypeOf( field.fieldType ), field.phpFormName, field.phpFormLabel, self.formOptionsOf( field ) ) )
+				
 			if field.maxLen != None:
 				self.wr( "\t$form->addRule( '%s', 	%s . ' may not be longer than %d characters.', 'maxlength', %d, 'client' );\n"
-						% ( field.phpFormName, field.phpFormLabel, field.maxLen, field.maxLen )	)
-							
+					% ( field.phpFormName, field.phpFormLabel, field.maxLen, field.maxLen )	)
+						
 			#	//TODO: isNumeric function, but where?
 			if field.fieldType.name == 'Integer' or field.fieldType.name == 'Decimal' or field.fieldType.name == 'Float':
 				self.wr( "\t$form->addRule( '%s', %s . ' must be numeric.', 'numeric', true, 'client' );\n" 
-						% ( field.phpFormName, field.phpFormLabel )	)
+					% ( field.phpFormName, field.phpFormLabel )	)
 
+
+		for key in form.entity.getRecordKeyFields():
+			self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
+			
 		self.wrt("""
 			$$ret = new Form${class}( $$form );
 			return $$ret;
@@ -670,12 +675,17 @@ function &_${inst}_privConstruct() {
 				
 			#//only inject those values set on the object, this requires a forced load (TODO: what about lazy loading... perhaps only if status is not EXTANT )
 			self.wr( "if( $entity->__has( '%s' ) ) {\n" % formfield.phpMemberName )
-			self.wr( "$values['%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field, formfield ) ) )
+			self.wr( "$values['%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field ) ) )
 			if formfield.readonly: #//set above in _setup
-				self.wr( "$values['_ro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field, formfield )  ) )
+				self.wr( "$values['_ro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field )  ) )
 				
 			self.wr( "}\n" )
 		
+		for key in form.entity.getRecordKeyFields():
+			#//only inject those values set on the object, this requires a forced load (TODO: what about lazy loading... perhaps only if status is not EXTANT )
+			self.wr( "if( $entity->__has( '%s' ) )" % key.phpName )
+			self.wr( "$values['_key_%s'] = %s;\n " % ( key.phpFormName, self.formInFunc( key ) ) )
+			
 		self.wrt("""
 			if( $$overrideRequest )
 				$$this->form->setConstants( $$values );
@@ -738,29 +748,32 @@ function &_${inst}_privConstruct() {
 	
 	}
 ?>""", { 'class': form.entity.phpClassName,
-	'extractKeys': self.formExtract( form, True ),
-	'extract': self.formExtract( form, False ),
+	'extractKeys': self.formExtractKeys( form ),
+	'extract': self.formExtract( form ),
 	 } )
 	
 	
-	def formExtract( self, form, keys ):
+	def formExtract( self, form ):
 		buf = ""
 		for formfield in form.fields:
 			field = form.entity.fields[formfield.name]
 			
-			#//skip keys in key mode, or only keys otherwise
-			if (field.keyType != DBSchema.KEY_TYPE_NONE) != keys:
+			if formfield.readonly:
 				continue;
-				
-			#//TODO: what does readonly mean here...? (Standard form always expects to load keys, even read only ones...)
-			#if formfield.readonly:
-			#	continue;
 				
 			#//TODO: references for entitites
 			buf += "$raw = $this->form->exportValue('%s');\n" % field.phpFormName
-			buf += self.formOutFunc( field, formfield )
+			buf += self.formOutFunc( field )
 		return buf
 		
+	# TODO: Likely some cleanup is needed/some options to handle cases
+	# with multiple keySets where not everything is specified
+	def formExtractKeys( self, form ):
+		buf = ""
+		for key in form.entity.getRecordKeyFields():
+			buf += "$raw = $this->form->exportValue('_key_%s');\n" % key.phpFormName
+			buf += self.formOutFunc( key )
+		return buf
 		
 	def formLinkFieldOf( self, ent ):
 		keys = ent.getRecordKeyFields()
@@ -818,7 +831,7 @@ function &_${inst}_privConstruct() {
 	# Creates the PHP fragment to take a value from the entity and prepare it for
 	# for form.
 	# TODO: Handle nulls in sub field references
-	def formInFunc( self, ent, ff ):
+	def formInFunc( self, ent ):
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			link = self.formLinkFieldOf( ent.fieldType )
 			atype = link.fieldType
@@ -827,13 +840,13 @@ function &_${inst}_privConstruct() {
 			atype = ent.fieldType.getRootType()
 			sub = ''
 				
-		return "_dbs_formin_%s( $entity->%s%s )"	% ( atype.name, ff.phpMemberName, sub )
+		return "_dbs_formin_%s( $entity->%s%s )"	% ( atype.name, ent.phpName, sub )
 	
 	
 	##
 	# Creates the PHP fragment to take a value from the form and convert it to
 	# the entity field type.
-	def formOutFunc( self, ent, ff ):
+	def formOutFunc( self, ent ):
 		# when referencing objects we'll use the lazy loading "withNothing"
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			link = self.formLinkFieldOf( ent.fieldType )
@@ -848,7 +861,7 @@ function &_${inst}_privConstruct() {
 		
 		buf = "$raw = _dbs_formout_%s($raw);\n" % atype.name
 		buf += sub
-		buf += "$entity->%s %s;\n" % ( ff.phpMemberName, assign )
+		buf += "$entity->%s %s;\n" % ( ent.phpName, assign )
 		return buf
 	
 	

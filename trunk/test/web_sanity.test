@@ -1,0 +1,13 @@
+GotoURLAbs http://localhost/persephone/listing.php
+
+Click link:Add
+
+SubmitForm with
+	%SubmitButton% value:Add
+	%Params:_dbs_Date% 2001-08-01
+end
+
+set %ID% as typeString %Response://input[@name='_dbs_ID']/@value%
+notice ID:%ID%
+
+Click link:Return to listing

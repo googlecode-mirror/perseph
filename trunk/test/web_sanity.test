@@ -7,3 +7,4 @@ end
 
 exec ws_add
 exec ws_checklisting
+exec ws_fulledit

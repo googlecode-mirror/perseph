@@ -225,7 +225,7 @@ class Processor:
 					if mapper.table != "":
 						errorOn( node, "Duplicate table spec, multi-tables not supported" )
 					if not using in mapper.provider.tables:
-						errorOn( node, "Table does not exit in provider: %s" % using )
+						errorOn( node, "Table does not exist in provider: %s" % using )
 						
 					mapper.table = mapper.provider.tables[using];
 					

@@ -14,6 +14,13 @@
 require_once dirname(__FILE__).'/base.inc';
 require_once dirname(__FILE__).'/dbsource.inc';
 
+/* Some common functions used in the schems -- these could be implemented direclty in the processor/
+	converter, but it is easier to define them here. */
+/* TypeConvert should really be done in the converter as it should check the types! */
+function TypeConvert( $value ) { return $value; }
+function TypeConvert_inv( $value ) { return $value; }
+
+
 /**
  * Wraps a reference for assignment.
  */
@@ -236,9 +243,14 @@ abstract class DBS_EntityBase {
 			$this->save();
 	}
 	
-	abstract protected function _maybeLoad();
+	protected function _maybeLoad() {
+		//allow this not to exist in case the enity has no associated mapper -- strict in memory or temporary entities
+		throw new DBS_LoginException( DBS_LogicException::NO_LOAD_DEFINED );
+	}
 	
-	abstract protected function _save( $adding );
+	protected function _save( $adding ) {
+		throw new DBS_LoginException( DBS_LogicException::NO_SAVE_DEFINED );
+	}
 	
 	abstract protected function _checkType( $field, $value );
 }
@@ -262,11 +274,15 @@ class DBS_LogicException extends DBS_Exception {
 	const SAVE_INCOMPLETE_LOAD = 1;
 	const ONLY_SAVE_EXTANT = 2;
 	const ONLY_ADD_NEW = 3;
+	const NO_LOAD_DEFINED = 4;
+	const NO_SAVE_DEFINED = 5;
 	
 	static private $codeToMsg = array(
 		self::SAVE_INCOMPLETE_LOAD => 'Attempting to save entity resulting from an incomplete load/search',
 		self::ONLY_SAVE_EXTANT => "Can only save entities with an Extant status.",
 		self::ONLY_ADD_NEW => "Can only add entities with New status.",
+		self::NO_LOAD_DEFINED => "No loading mechanism has been defined for this entity.",
+		self::NO_SAVE_DEFINED => "No saving mechanism has been defined for this entity.",
 		);
 	public function __construct( $code ) {
 		parent::__construct( self::$codeToMsg[$code], $code );

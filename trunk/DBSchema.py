@@ -61,6 +61,7 @@ class Root:
 			"Float": Type( "Float" ),
 			"Bool": Type( "Bool" ),
 			"Text": Type( "Text" ),
+			"Object": Type( "Object" ),
 			}
 		self.defaults = {}
 		self.providers = {}

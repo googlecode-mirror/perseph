@@ -289,6 +289,19 @@ class DBS_LogicException extends DBS_Exception {
 	}
 }
 
+class DBS_DBException extends DBS_Exception {
+	const ADD_ALREADY_IN_DB = 1;
+	const SAVE_NOT_IN_DB = 2;
+	
+	static private $codeToMsg = array(
+		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
+		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB.",
+		);
+	public function __construct( $code ) {
+		parent::__construct( self::$codeToMsg[$code], $code );
+	}
+}
+
 /**
  * Field exceptions indicate a failure in operations relating to a specific field.
  * While in some cases they may seem to be more like Logic exceptions, the
@@ -693,7 +706,9 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	//	$vals = array_merge( $vals, $keyvals );
 	//}
 	
-	//TODO: shouldn't we check the "adding" status to ensure newRecord matches what we expect?
+	//we check the "adding" status to ensure newRecord matches what we expect?
+	if( $newRecord !== $into->isNew() )
+		throw new DBS_DBException( $newRecord ?  DBS_DBException::SAVE_NOT_IN_DB : DBS_DBException::ADD_ALREADY_IN_DB );
 	
 	if( $newRecord )
 		$sql = "INSERT {$db->escapeTable($table[0])}  SET ";

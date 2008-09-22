@@ -56,6 +56,11 @@ function convert_labels_inv( $arr ) {
 	return implode( ',', $arr );
 }
 
+//no _inv form is needed since this is save only (to the DB)
+function count_labels( $labels ) {
+	return count( $labels );
+}
+
 function convert_id( $id ) {
 	return $id - 1000;
 }

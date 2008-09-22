@@ -99,6 +99,12 @@ class Provider_Field:
 KEY_TYPE_NONE = 0
 KEY_TYPE_RECORD = 1
 KEY_TYPE_ALT = 2		
+
+PERSIST_TYPE_NONE = 0
+PERSIST_TYPE_LOAD = 0x1
+PERSIST_TYPE_SAVE = 0x2
+PERSIST_TYPE_LOADSAVE = PERSIST_TYPE_LOAD | PERSIST_TYPE_SAVE
+
 class Entity_Field:
 	
 	def __init__(self, name, fieldType ):
@@ -107,12 +113,21 @@ class Entity_Field:
 		self.keyType = KEY_TYPE_NONE
 		self.hasDefault = False #<Boolean>
 		self.defaultValue = None
-		self.loadOnly = False #<Boolean>
 		self.title = False #<String> the logical title of the entity
 		self.maxLen = None #Null<Integer>if non-null indicates the maximum logical length to the entity
 		self.allowNull = False #<Boolean> does the field allow a null assignment
 		self.label = None #<String> logical label of the field, defaults to name
 		self.desc = None #<String> description, no default
+		self.persist = PERSIST_TYPE_LOADSAVE #<Boolean> how this field is persisted in backing stores
+	
+	def isPersistSave( self ):
+		return self.persist & PERSIST_TYPE_SAVE == PERSIST_TYPE_SAVE
+	
+	def isPersistLoad( self ):
+		return self.persist & PERSIST_TYPE_LOAD == PERSIST_TYPE_LOAD
+	
+	def isLoadOnly( self ):
+		return self.persist == PERSIST_TYPE_LOAD;
 	
 class Entity(Type):
 	def __init__(self,name):

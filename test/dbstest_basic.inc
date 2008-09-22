@@ -30,6 +30,7 @@ class DBSTest_Basic extends TestCase {
 		$n->dateTime = time();
 		$n->decimal = rand( 0, 100000 ) / 1000.0;
 		$n->float = rand() / getrandmax();
+		$n->memoryOnly = 1234;	//value will just be lost on reload (nothing really to test, perhaps when caching is introduced)
 		
 		$this->assertFalse( $n->exists() );
 		$n->add();

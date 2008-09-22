@@ -164,7 +164,7 @@ class Processor:
 						field.hasDefault = True
 						field.defaultValue = opt[1]
 					elif opt[0] == 'LOAD_ONLY':
-						field.loadOnly = True
+						field.persist = DBSchema.PERSIST_TYPE_LOAD
 					elif opt[0] == 'TITLE':
 						field.title = True
 					elif opt[0] == 'MAXLEN':
@@ -175,6 +175,8 @@ class Processor:
 						field.label = opt[1]
 					elif opt[0] == 'DESC':
 						field.desc = opt[1]
+					elif opt[0] == 'NO_PERSISTENCE':
+						field.persist = DBSchema.PERSIST_TYPE_NONE;
 					else:
 						errorOn( fieldSpec, "unrecognized option: %s " % opt )
 					

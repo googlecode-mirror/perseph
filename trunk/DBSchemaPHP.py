@@ -1014,6 +1014,7 @@ function &_${inst}_privConstruct() {
 	
 	##
 	# Produces the literal constant expression for a value of a given type
+	# TODO: Should this not be part of the processor?
 	def constantExpr( self, fieldType, value ):
 		tname = fieldType.name
 		if tname == 'String' or tname =='Text':
@@ -1022,6 +1023,12 @@ function &_${inst}_privConstruct() {
 			return "%d" % atol( value )
 		elif tname == 'Float' or tname == 'Decimal':
 			return "%f" % atof( value )
+		elif tname == 'Bool':
+			if value == 'True':
+				return True
+			if value == 'False':
+				return False
+			raise Error, "Invalid Bool value for constant %s => %s"  % ( tname, value )
 		else:
 			raise Error, "Unknown type for constant %s " % tname
 		

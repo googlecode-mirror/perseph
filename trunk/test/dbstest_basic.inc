@@ -27,7 +27,6 @@ class DBSTest_Basic extends TestCase {
 		$n->date = rand( 1000, 10000 ) * 3600*24;	//TODO: hmm, php has no native Date type
 		$n->time = rand( 0, 100000 );
 		$n->dateTime = time();
-		$n->bool = true;
 		$n->decimal = rand( 0, 100000 ) / 1000.0;
 		$n->float = rand() / getrandmax();
 		

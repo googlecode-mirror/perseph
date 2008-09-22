@@ -2,7 +2,7 @@ all: config parser
 
 CLEANS=SchemaParser.py SchemaLexer.py Schema.tokens $(wildcard *.pyc) Schema__.g \
 	configure aclocal.m4
-CLEANDIRS=$(GENDIR)  autom4te.cache
+CLEANDIRS=$(GENDIR)  autom4te.cache package
 clean:
 	rm -f $(CLEANS)
 	rm -fr $(CLEANDIRS)
@@ -42,4 +42,21 @@ configure: aclocal.m4 configure.ac
 	
 aclocal.m4: configure.ac
 	aclocal -I autoconf/
+	
+PACKAGEDIR=package
+PACKAGEFILES=$(wildcard *.py) php_support docs LICENSE.txt README.txt
+.PHONY: package
+package: all
+	rm -fr $(PACKAGEDIR)
+	mkdir $(PACKAGEDIR)
+	cp -R $(PACKAGEFILES) $(PACKAGEDIR)
+	# Special ANTLR copy
+	mkdir -p $(PACKAGEDIR)/antlr/runtime
+	cp -R antlr/runtime/Python $(PACKAGEDIR)/antlr/runtime
+	
+REVISION=$(shell svn info | sed -rne "s/Revision: ([0-9]+)/\1/p" )
+svn-package: package
+	mv package persephone-$(REVISION)
+	tar cjf persephone-$(REVISION).tar.bz2 persephone-$(REVISION)
+	
 	

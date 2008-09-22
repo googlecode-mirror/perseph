@@ -147,6 +147,7 @@ mapper DBSStrings {
 			
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
 			convert_labels<Array<String>>( @Labels ) = Labels;
+			@LabelCount <= count_labels<Integer>( Labels );
 		}
 	}
 }

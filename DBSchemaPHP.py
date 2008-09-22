@@ -316,7 +316,7 @@ protected function _maybeLoad() {
 	def getPHPMapArrayStr( self, tuples ):
 		buf = "array(\n"
 		for t in tuples:
-			buf += "\t'%s' => %s,\n" % t
+			buf += "\tarray( '%s', %s ),\n" % t
 		buf += ")\n"
 		return buf
 	
@@ -399,13 +399,17 @@ static public function search( ) {
 		self::getDB(),
 		$table,
 		'_${class}_privConstruct',
-		$fields,
+		$searchfields,
+		$loadfields,
 		$$args	//pass all options to loader
 		);
 }
 		""",{
 			'args': self.args_or_array( ),
-			'fields': self.getFields( self.FOR_SEARCH, loc.fields ),
+			# In some cases the loadfields are not the same as the search fields, this generally only applies
+			# in situations with "save only" persistence
+			'searchfields': self.getFields( self.FOR_SEARCH, loc.fields ),
+			'loadfields': self.getFields( self.FOR_LOAD, loc.fields ),
 			'table': loc.provider.phpTableRef( loc.table ),
 			'class': en.phpInstClassName,
 			})
@@ -416,6 +420,8 @@ static public function search( ) {
 	def getFields( self, forWhat, fields ):
 		mem = []
 		for field in fields:
+			if forWhat == self.FOR_LOAD and not field.isPersistLoad():
+				continue;
 			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
 		return self.getPHPMapArrayStr( mem )
 	

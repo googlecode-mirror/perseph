@@ -372,7 +372,8 @@ function _dbs_skipfield( $member, $fieldLimit ) {
 
 function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 	$cols = '';
-	foreach( $fields as $member => $data ) {
+	foreach( $fields as $tuple ) {
+		list( $member, $data ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
 			
@@ -385,10 +386,12 @@ function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 }
 
 function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, $fieldLimit = null ) {
-	foreach( $fields as $member => $data ) {
+	foreach( $fields as $tuple ) {
+		
+		list( $member, $data ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
-		
+			
 		list( $dbname, $dbtype ) = $data;
 		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
 		
@@ -428,20 +431,30 @@ function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields 
 	return true;
 }
 
+function _find_member( $member, $fields ) {
+	foreach( $fields as $tuple ) {
+		if( $tuple[0] === $member )
+			return $tuple;
+	}
+	return null;
+}
+
 function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto ) {
 	if( $q instanceof DBS_Where_Member ) {
-		if( !isset( $fields[$q->member] ) )
+		//TODO: This should actually be *ALL* matching fields!
+		$tuple = _find_member( $q->member, $fields );
+		if( $tuple === null )
 			throw new Exception( "Unknown field: " . $q->member );
 			
 		if( $q instanceof DBS_Where_Match ) {
-			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$fields[$q->member][0]}";
+			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$tuple[1][0]}";
 			$value = $proto->$cnv( $q->value );
 			
 			$op = $q->op;	//TODO: Check for correctness
-			$value = $db->quote( $value, $fields[$q->member][1] );
+			$value = $db->quote( $value, $tuple[1][1] );
 		} else if( $q instanceof DBS_Where_MatchString ) {
-			if( $fields[$q->member][1] !== 'String' && $fields[$q->member][1] != 'Text' )
-				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $fields[$q->member][1] );
+			if( $tuple[1][1] !== 'String' && $tuple[1][1] !== 'Text' )
+				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $tuple[1][1] );
 				
 			if( $q->positive )
 				$op = ' LIKE ';
@@ -454,7 +467,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 			throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 		}
 		
-		return $db->escapeColumn( $fields[$q->member][0] ) . $op . $value;
+		return $db->escapeColumn( $tuple[1][0] ) . $op . $value;
 	} 
 	
 	if( $q instanceof DBS_Where_Group ) {
@@ -513,10 +526,11 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) 
 		if( !( $qSort instanceof DBS_Sort_Single ) )
 			throw new Exception( "Unknown sort item: " . get_class( $qSort ) );
 		
-		if( !isset( $fields[$qSort->member] ) )
+		$tuple = _find_member( $qSort->member, $fields );
+		if( $tuple === null )
 			throw new Exception( "Unknown field: " . $qSort->member );
 		$sort = "ORDER BY " 
-			. $db->escapeColumn( $fields[$qSort->member][0] )
+			. $db->escapeColumn( $tuple[1][0] )
 			. " {$qSort->mode}";
 	} else {
 		$sort = '';
@@ -532,14 +546,14 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) 
 	return array( $where, $sort, $limit, $fieldLimit );
 }
 
-function dbs_dbsource_search( &$db, $table, $item_construct, $fields, $opts ) {
+function dbs_dbsource_search( &$db, $table, $item_construct, $search_fields, $load_fields, $opts ) {
 	$proto =& $item_construct();
-	list( $dbWhere, $dbSort, $dbLimit, $fieldLimit ) = _dbs_dbsource_extract_options( $db, $table, $fields, $opts, $proto );
+	list( $dbWhere, $dbSort, $dbLimit, $fieldLimit ) = _dbs_dbsource_extract_options( $db, $table, $search_fields, $opts, $proto );
 
-	$cols = _dbs_dbsource_sql_col( $db, $fields, $fieldLimit );
+	$cols = _dbs_dbsource_sql_col( $db, $load_fields, $fieldLimit );
 	$sql = "SELECT $cols FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->query( $sql );
-	return new _DBS_DBSource_Result_Iterator( $db, $res, $item_construct, $table, $fields, $fieldLimit );
+	return new _DBS_DBSource_Result_Iterator( $db, $res, $item_construct, $table, $load_fields, $fieldLimit );
 }
 
 class _DBS_DBSource_Result_Iterator implements Iterator {
@@ -663,7 +677,8 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	$keycols = array();
 	$keyvals = array();
 	
-	foreach( $fields as $member => $data ) {
+	foreach( $fields as $tuple ) {
+		list( $member, $data ) = $tuple;
 		list( $dbname, $dbtype ) = $data;
 		if( !$into->__isDirty( $member ) )
 			continue;

@@ -73,6 +73,15 @@ class DBSTest_Basic extends TestCase {
 		}
 	}
 	
+	function testSaveOnly() {
+		$n = DBSTest::createWithName( "SaveOnly:" . time() );
+		$n->otherDecimal = 150;
+		$n->add();
+		
+		$l = DBSTest::findWithName( $n->name );
+		$this->assertEquals( 150, $l->decimal );
+	}
+	
 	function testLink() {
 		$n = DBSTest::createWithNothing();
 		$n->name = "Link." . time();

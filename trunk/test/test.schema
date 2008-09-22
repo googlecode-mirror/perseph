@@ -71,6 +71,7 @@ entity DBSTest {
 		Decimal<Decimal>;
 		Float<Float> DEFAULT(123.5);
 		NameRef<DBSName> ALLOW_NULL;
+		MemoryOnly<Integer> NO_PERSISTENCE;
 	}
 	
 	aliases {

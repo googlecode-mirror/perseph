@@ -361,6 +361,8 @@ protected function _save( $$adding ) {
 	
 	def getInsertFields( self, loc, en ):
 		for field in en.fields.itervalues():
+			if not field.isPersistLoad():
+				continue
 			mapfield = loc.getDBFieldForEntityField( field )
 			if mapfield.db_field.lastInsert:
 				return "array( '%s' => %s )" % ( field.phpName, self.dbField( mapfield ) )
@@ -370,7 +372,7 @@ protected function _save( $$adding ) {
 	def getCheckReadOnly( self, keys ):
 		buf = ""
 		for i in range( len( keys ) ):
-			if not keys[i].loadOnly:
+			if keys[i].isPersistSave():
 				continue
 			buf += "\tif( $this->__isDirty('%s') )\n" % keys[i].phpName
 			buf += "\t\tthrow new DBS_FieldException( '%s', DBS_FieldException::SAVE_LOAD_ONLY );\n" % keys[i].phpName
@@ -379,7 +381,7 @@ protected function _save( $$adding ) {
 	def getSaveMembers( self, fields ):
 		mem = []
 		for field in fields:
-			if field.ent_field.loadOnly:	#//for safety just don't save such fields
+			if not field.ent_field.isPersistSave():	#//for safety just don't save such fields
 				continue;
 			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
 		return self.getPHPMapArrayStr( mem )
@@ -981,7 +983,7 @@ function &_${inst}_privConstruct() {
 				
 			if key.keyType == DBSchema.KEY_TYPE_RECORD:
 				_else = self._throwFieldException( key, "MISSING_REQ" )
-				if checkAdding and key.loadOnly:	#TODO: check LAST_INSERT_ID, but see comment in test schema first!
+				if checkAdding and key.isLoadOnly():	#TODO: check LAST_INSERT_ID, but see comment in test schema first!
 					_else = self._if( '!$adding',	_else )
 				buf += self._if(
 					self._this_has( key ),

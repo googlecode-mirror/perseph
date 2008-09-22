@@ -5,6 +5,7 @@ class DBSTest_Clean extends TestCase {
 		DBSTest::searchAndDelete( DBS_Query::matchAll() );
 		DBSStrings::searchAndDelete( DBS_Query::matchAll() );
 		DBSTwoKeys::searchAndDelete( DBS_Query::matchAll() );
+		DBSName::searchAndDelete( DBS_Query::matchAll() );
 		
 		# Setup names table
 		$names = array( 
@@ -50,6 +51,25 @@ class DBSTest_Basic extends TestCase {
 		$l->id = $n->id;
 		$l->find();
 		$this->assertEquals( $n->name, $l->name );
+	}
+	
+	/**
+	 * The duplicate name should fail since the DB has it marked as Unique
+	 */
+	function testDupName() {
+		$name = "Simple:" . time();
+		$n = DBSTest::createWithName( $name );
+		$n->decimal = 97.5;
+		$n->add();
+		
+		$m = DBSTest::createWithName( $name );
+		$m->decimal = 82.75;
+		try {
+			$m->add();
+			$this->assertTrue( false );
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::ADD_ALREADY_IN_DB, $ex->getCode() );
+		}
 	}
 	
 	function testLink() {

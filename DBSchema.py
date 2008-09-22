@@ -100,11 +100,6 @@ KEY_TYPE_NONE = 0
 KEY_TYPE_RECORD = 1
 KEY_TYPE_ALT = 2		
 
-PERSIST_TYPE_NONE = 0
-PERSIST_TYPE_LOAD = 0x1
-PERSIST_TYPE_SAVE = 0x2
-PERSIST_TYPE_LOADSAVE = PERSIST_TYPE_LOAD | PERSIST_TYPE_SAVE
-
 class Entity_Field:
 	
 	def __init__(self, name, fieldType ):
@@ -118,16 +113,6 @@ class Entity_Field:
 		self.allowNull = False #<Boolean> does the field allow a null assignment
 		self.label = None #<String> logical label of the field, defaults to name
 		self.desc = None #<String> description, no default
-		self.persist = PERSIST_TYPE_LOADSAVE #<Boolean> how this field is persisted in backing stores
-	
-	def isPersistSave( self ):
-		return self.persist & PERSIST_TYPE_SAVE == PERSIST_TYPE_SAVE
-	
-	def isPersistLoad( self ):
-		return self.persist & PERSIST_TYPE_LOAD == PERSIST_TYPE_LOAD
-	
-	def isLoadOnly( self ):
-		return self.persist == PERSIST_TYPE_LOAD;
 	
 class Entity(Type):
 	def __init__(self,name):
@@ -185,6 +170,11 @@ class Mapper:
 				return locfield
 		raise Exception, "No DBField for the entity %s" % ef.name
 
+PERSIST_TYPE_NONE = 0
+PERSIST_TYPE_LOAD = 0x1
+PERSIST_TYPE_SAVE = 0x2
+PERSIST_TYPE_LOADSAVE = PERSIST_TYPE_LOAD | PERSIST_TYPE_SAVE
+
 class Mapper_Field:
 	def __init__(self):
 		self.db_convert = None #<Function>
@@ -195,6 +185,16 @@ class Mapper_Field:
 		self.ent_field = None #<DBSchema_Entity_Field>
 		self.ent_field_field = None #<DBSchema_Entity_Field> name of field in the entity field, may be null (no sub-field in use)
 
+		self.persist = PERSIST_TYPE_LOADSAVE #<Boolean> how this field is persisted in backing stores
+	
+	def isPersistSave( self ):
+		return self.persist & PERSIST_TYPE_SAVE == PERSIST_TYPE_SAVE
+	
+	def isPersistLoad( self ):
+		return self.persist & PERSIST_TYPE_LOAD == PERSIST_TYPE_LOAD
+	
+	def isLoadOnly( self ):
+		return self.persist == PERSIST_TYPE_LOAD;
 
 class Function:
 	def __init__(self):

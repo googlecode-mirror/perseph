@@ -15,7 +15,7 @@ tokens
 	ENTFIELDNAME;
 	ENTSUBFIELD;
 	NAME;
-	MAPEQUALEXPR;
+	MAPOPEXPR;
 	ALIAS;
 	FIELD;
 	TYPE;
@@ -116,10 +116,16 @@ mapperFields
 	:	FIELDS OPENBLOCK mapperField* CLOSEBLOCK -> ^(FIELDS mapperField*);
 	
 mapperField
-	:	mapperFieldExpr '=' mapperFieldExpr ENDEXPR -> ^(MAPEQUALEXPR mapperFieldExpr mapperFieldExpr)
+	:	mapperFieldExpr mapperFieldOp mapperFieldExpr ENDEXPR -> ^(MAPOPEXPR mapperFieldOp mapperFieldExpr mapperFieldExpr)
 	|	mapperUsing
 	;
-	
+
+mapperFieldOp
+	:	MAPEQUALOP
+	|	MAPTORIGHTOP
+	|	MAPTOLEFTOP
+	;
+		
 mapperUsing
 	:	USING id OPENBLOCK mapperField* CLOSEBLOCK -> ^(USING id mapperField*);
 	
@@ -257,6 +263,10 @@ ASC	:	'ASC';
 DESC	:	'DESC';
 
 // $>
+
+MAPEQUALOP 	:	 '=';
+MAPTORIGHTOP	:	'=>';
+MAPTOLEFTOP	:	'<=';
 
 RAWID	:	(UN_LETTER|'_')(UN_LETTER|UN_DIGIT|'_'|'-')*;
 NUMBER	:	(UN_DIGIT|'.')+;

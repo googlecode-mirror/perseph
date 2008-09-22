@@ -72,6 +72,7 @@ entity DBSTest {
 		Float<Float> DEFAULT(123.5);
 		NameRef<DBSName> ALLOW_NULL;
 		MemoryOnly<Integer> NO_PERSISTENCE;
+		OtherDecimal<Decimal> SAVE_ONLY;
 	}
 	
 	aliases {
@@ -98,6 +99,7 @@ mapper DBSTest {
 			@DateTime = DateTime;
 			@Bool = 	Bool;
 			@Decimal = Decimal;
+			@Decimal = OtherDecimal;
 			@Float = Float;
 			
 			/* Link DB value directly to entity field record key */

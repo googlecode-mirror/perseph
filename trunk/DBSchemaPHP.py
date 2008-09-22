@@ -306,7 +306,7 @@ protected function _maybeLoad() {
 	return true;
 }
 """, { 
-			'loadkeys': self.getKeyBlock( keys, False, lambda key:
+			'loadkeys': self.getKeyBlock( loc.fields, False, lambda key:
 				"$this->_load_keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
 			'table': loc.provider.phpTableRef( loc.table ),
 			'members': self.getFields( self.FOR_LOAD, loc.fields )
@@ -351,37 +351,36 @@ protected function _save( $$adding ) {
 	//now these are the keys which identify this object
 	$$this->_load_keys = $$keys;
 }""", {
-		'savekeys': self.getKeyBlock( keys, True, lambda key:
+		'savekeys': self.getKeyBlock( loc.fields, True, lambda key:
 				"$keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
-		'readonly': self.getCheckReadOnly( keys ),
+		'readonly': self.getCheckReadOnly( loc.fields ),
 		'table': loc.provider.phpTableRef( loc.table ),
 		'members': self.getSaveMembers( loc.fields ),
-		'insertField': self.getInsertFields( loc, en )
+		'insertField': self.getInsertFields( loc.fields )
 		} )
 	
-	def getInsertFields( self, loc, en ):
-		for field in en.fields.itervalues():
+	def getInsertFields( self, fields ):
+		for field in fields:
 			if not field.isPersistLoad():
 				continue
-			mapfield = loc.getDBFieldForEntityField( field )
-			if mapfield.db_field.lastInsert:
-				return "array( '%s' => %s )" % ( field.phpName, self.dbField( mapfield ) )
+			if field.db_field.lastInsert:
+				return "array( '%s' => %s )" % ( field.ent_field.phpName, self.dbField( field ) )
 		
 		return "null"
 		
-	def getCheckReadOnly( self, keys ):
+	def getCheckReadOnly( self, fields ):
 		buf = ""
-		for i in range( len( keys ) ):
-			if keys[i].isPersistSave():
+		for i in range( len( fields ) ):
+			if fields[i].isPersistSave():
 				continue
-			buf += "\tif( $this->__isDirty('%s') )\n" % keys[i].phpName
-			buf += "\t\tthrow new DBS_FieldException( '%s', DBS_FieldException::SAVE_LOAD_ONLY );\n" % keys[i].phpName
+			buf += "\tif( $this->__isDirty('%s') )\n" % fields[i].ent_field.phpName
+			buf += "\t\tthrow new DBS_FieldException( '%s', DBS_FieldException::SAVE_LOAD_ONLY );\n" % fields[i].ent_field.phpName
 		return buf
 		
 	def getSaveMembers( self, fields ):
 		mem = []
 		for field in fields:
-			if not field.ent_field.isPersistSave():	#//for safety just don't save such fields
+			if not field.isPersistSave():	#//for safety just don't save such fields
 				continue;
 			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
 		return self.getPHPMapArrayStr( mem )
@@ -463,7 +462,7 @@ public function delete() {
 		'fields': self.getFields( self.FOR_SEARCH, loc.fields ),
 		'table': loc.provider.phpTableRef( loc.table ),
 		'class': en.phpInstClassName,
-		'deletekeys': self.getKeyBlock( [ field.ent_field for field in loc.fields ], False, lambda field:
+		'deletekeys': self.getKeyBlock( loc.fields, False, lambda field:
 			"\t\t$keys[] = DBS_Query::match( '%s', $this->%s );\n" % ( field.phpName, field.phpName ) )
 		} )
 		
@@ -972,18 +971,19 @@ function &_${inst}_privConstruct() {
 	# keys via a provided statement
 	#
 	# @param fields [in] the fields to consider for keys
-	# @param checkAdding [in] allow that LOAD_ONLY fields to be absent if "$adding" is true
+	# @param checkAdding [in] allow that load only fields to be absent if "$adding" is true
 	# @param statement [in] assignment statement for each key
 	def getKeyBlock( self, fields, checkAdding, statement ):
 		buf = "";
 		#only need one ALT_RECORD_KEY, but need all RECORD_KEY
-		for key in fields:
+		for field in fields:
+			key = field.ent_field
 			if key.keyType == DBSchema.KEY_TYPE_NONE:
 				continue;
 				
 			if key.keyType == DBSchema.KEY_TYPE_RECORD:
 				_else = self._throwFieldException( key, "MISSING_REQ" )
-				if checkAdding and key.isLoadOnly():	#TODO: check LAST_INSERT_ID, but see comment in test schema first!
+				if checkAdding and field.isLoadOnly():	#TODO: check LAST_INSERT_ID, but see comment in test schema first!
 					_else = self._if( '!$adding',	_else )
 				buf += self._if(
 					self._this_has( key ),

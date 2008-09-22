@@ -173,12 +173,6 @@ class Processor:
 						field.label = opt[1]
 					elif opt[0] == 'DESC':
 						field.desc = opt[1]
-					elif opt[0] == 'LOAD_ONLY':
-						field.persist = DBSchema.PERSIST_TYPE_LOAD
-					elif opt[0] == 'NO_PERSISTENCE':
-						field.persist = DBSchema.PERSIST_TYPE_NONE
-					elif opt[0] == 'SAVE_ONLY':
-						field.persist = DBSchema.PERSIST_TYPE_SAVE
 					else:
 						errorOn( fieldSpec, "unrecognized option: %s " % opt )
 					
@@ -238,9 +232,10 @@ class Processor:
 						mapField = DBSchema.Mapper_Field()
 						mapper.fields.append( mapField )
 						
-						if expr.type == SL.MAPEQUALEXPR:
-							left = self.getMapperFieldExpr( expr.getChild(0) )
-							right = self.getMapperFieldExpr( expr.getChild(1) )
+						if expr.type == SL.MAPOPEXPR:
+							op = expr.getChild(0)
+							left = self.getMapperFieldExpr( expr.getChild(1) )
+							right = self.getMapperFieldExpr( expr.getChild(2) )
 							if left['db'] == right['db']:
 								errorOn( expr, "requires one database and one entity field" )
 								
@@ -256,6 +251,20 @@ class Processor:
 							
 							if ent['subfield'] != None:
 								mapField.ent_field_field = mapField.ent_field.fieldType.fields[ent['subfield']]
+							
+							# handle non-bi-directional persistence
+							if op.type != SL.MAPEQUALOP:
+								if op.type == SL.MAPTORIGHTOP:
+									isToEnt = left['db']
+								elif op.type == SL.MAPTOLEFTOP:
+									isToEnt = right['db']
+								else:
+									errorOn( op, "Unrecognized operator %s" % SP.tokenNames[ op.type ] )
+									
+								if isToEnt:
+									mapField.persist = DBSchema.PERSIST_TYPE_LOAD
+								else:
+									mapField.persist = DBSchema.PERSIST_TYPE_SAVE
 							
 						else:
 							errorOn( expr, "Unsupported expression " + expr )

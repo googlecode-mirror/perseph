@@ -59,7 +59,7 @@ provider DBTest2 {
 entity DBSTest {
 	fields {
 		ID<CustomID> 
-			ALT_RECORD_KEY LOAD_ONLY;
+			ALT_RECORD_KEY;
 		Name<String> 
 			ALT_RECORD_KEY TITLE MAXLEN(50)
 			LABEL("Logical Name")
@@ -71,8 +71,8 @@ entity DBSTest {
 		Decimal<Decimal>;
 		Float<Float> DEFAULT(123.5);
 		NameRef<DBSName> ALLOW_NULL;
-		MemoryOnly<Integer> NO_PERSISTENCE;
-		OtherDecimal<Decimal> SAVE_ONLY;
+		MemoryOnly<Integer>;
+		OtherDecimal<Decimal>;
 	}
 	
 	aliases {
@@ -92,14 +92,14 @@ mapper DBSTest {
 	
 	fields {
 		using basic {
-			ID = @ID;
+			@ID => ID;
 			@Name = Name;
 			Date = @Date;
 			@Time = Time;
 			@DateTime = DateTime;
 			@Bool = 	Bool;
 			@Decimal = Decimal;
-			@Decimal = OtherDecimal;
+			@Decimal <= OtherDecimal;
 			@Float = Float;
 			
 			/* Link DB value directly to entity field record key */
@@ -134,7 +134,7 @@ entity DBSStrings {
 		/* If a field is a RECORD_KEY, LOAD_ONLY, and maps to a LAST_INSERT_ID db field, then for creating
 			this entity it need not be specified. This is to support auto_increment like columns as the only key for
 			an entity. (em: I'm not so happy about this, it should have some kind of DEFAULT(@SAVE) marked! */
-		MyID<Integer> RECORD_KEY LOAD_ONLY;
+		MyID<Integer> RECORD_KEY;
 		Labels<Array<String>>;
 	}
 }
@@ -143,7 +143,7 @@ mapper DBSStrings {
 	provider DBTest;
 	fields {
 		using convert {
-			@Index = convert_id<CustomID>( MyID );
+			@Index => convert_id<CustomID>( MyID );
 			
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
 			convert_labels<Array<String>>( @Labels ) = Labels;
@@ -177,7 +177,7 @@ mapper DBSName {
 
 entity DBSLink {
 	fields {
-		ID<Integer> RECORD_KEY LOAD_ONLY;
+		ID<Integer> RECORD_KEY;
 		Basic<DBSTest>;
 	}
 }
@@ -186,7 +186,7 @@ mapper DBSLink {
 	provider DBTest;
 	fields {
 		using link {
-			@ID = ID;
+			@ID => ID;
 			@BasicID = Basic.ID;
 		}
 	}

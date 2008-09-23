@@ -377,6 +377,22 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 1, count( $res ) );
 		$this->assertEquals( $q->myID, $res[0]->myID );
 	}
+	
+	function testFailOnBrokenKey() {
+		$bk = BrokenKey::createWithNothing();
+		$bk->name = "Some Name" . time();
+		$bk->add();
+		$this->assertTrue( $bk->id > 0 );
+		
+		$nbk = BrokenKey::createWithNothing();
+		$nbk->name = $bk->name;
+		try {
+			$nbk->add();
+			$this->assertTrue( false );
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::SAVE_FAILED, $ex->getCode() );
+		}
+	}
 }
 
 ?>

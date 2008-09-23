@@ -229,3 +229,19 @@ listing SampleList {
 	}
 }
 
+entity BrokenKey {
+	fields {
+		ID<Integer> RECORD_KEY;
+		Name<String>;	/*Unique in DB*/
+	}
+}
+
+mapper BrokenKey {
+	provider DBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Name = Name;
+		}
+	}
+}

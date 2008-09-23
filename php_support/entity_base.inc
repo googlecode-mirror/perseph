@@ -293,11 +293,13 @@ class DBS_DBException extends DBS_Exception {
 	const ADD_ALREADY_IN_DB = 1;
 	const SAVE_NOT_IN_DB = 2;
 	const LOAD_FAILED = 3;
+	const SAVE_FAILED = 4;
 	
 	static private $codeToMsg = array(
 		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
 		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB.",
 		self::LOAD_FAILED => "A load operation has failed.",
+		self::SAVE_FAILED => "A save operation has failed.",
 		);
 		
 	public $sql;	//a possible associated SQL statement, or null if none
@@ -753,7 +755,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	
 	$res = $db->exec( $sql );
 	if( $res === false )	
-		throw new Exception( "Error while saving data." );
+		throw new DBS_DBException( DBS_DBException::SAVE_FAILED, $sql );
 	$db->endResult( $res );
 	
 	//if we are using the lastInsert mechanism, then handle it here

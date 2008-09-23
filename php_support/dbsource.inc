@@ -47,6 +47,17 @@ interface DBSource {
 	public function escapeTable( $table );
 	
 	public function getNewID();
+	
+	/**
+	 * Allows the disabling (or reenabling) of error logging. By default DB errors
+	 * will be logged using error_log
+	 */
+	public function setErrorLogging( $on );
+	
+	/**
+	 * Returns the textual form of the last error which occurred.
+	 */
+	public function getLastError( );
 }
 
 class MDB2DBSource implements DBSource {
@@ -77,8 +88,20 @@ class MDB2DBSource implements DBSource {
 		if( !$failed )
 			return true;
 			
-		error_log( $item->getMessage() );
+		$this->lastError = $item->getMessage();
+		if( $this->errorLogging )
+			error_log( $this->lastError );
 		return false;
+	}
+	
+	private $errorLogging = true;
+	public function setErrorLogging( $on ) {
+		$this->errorLogging = $on;
+	}
+	
+	private $lastError;
+	public function getLastError( ) {
+		return $this->lastError;
 	}
 	
 	public function query( $q ) {
@@ -90,7 +113,11 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	public function exec( $q ) {
-		return $this->mdb->exec( $q );
+		$res = $this->mdb->exec( $q );
+		if( !$this->checkError( $res ) )
+			return false;
+			
+		return $res;
 	}
 	
 	public function fetchRow( $res ) {
@@ -282,11 +309,22 @@ abstract class DBSourceBase implements DBSource {
 
 		$ret = $this->int_exec( $q );
 		if( $ret === false ) {
-			error_log( "Could not execute query:" . $q );
-			error_log( $this->int_errormsg() );
+			$this->lastError = "Could not execute query: $q: " . $this->int_errormsg();
+			if( $this->errorLogging )
+				error_log( $this->lastError );
 		}
 
 		return $ret;
+	}
+
+	private $errorLogging = true;
+	public function setErrorLogging( $on ) {
+		$this->errorLogging = $on;
+	}
+	
+	private $lastError;
+	public function getLastError( ) {
+		return $this->lastError;
 	}
 
 	function exec( $q ) {

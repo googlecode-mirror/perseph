@@ -292,13 +292,18 @@ class DBS_LogicException extends DBS_Exception {
 class DBS_DBException extends DBS_Exception {
 	const ADD_ALREADY_IN_DB = 1;
 	const SAVE_NOT_IN_DB = 2;
+	const LOAD_FAILED = 3;
 	
 	static private $codeToMsg = array(
 		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
 		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB.",
+		self::LOAD_FAILED => "A load operation has failed.",
 		);
-	public function __construct( $code ) {
+		
+	public $sql;	//a possible associated SQL statement, or null if none
+	public function __construct( $code, $sql = null ) {
 		parent::__construct( self::$codeToMsg[$code], $code );
+		$this->sql = $sql;
 	}
 }
 
@@ -358,8 +363,17 @@ class DBS_SetFieldException extends DBS_FieldException {
  *
  * $table : array( db_table_name, internal_table_name )
  * 	The values differ when a prefix is being used.
+ *
+ *
+ * $fields/$keys : array( 
+ *		array( membername, dbname, dbtype [, $value ] )
+ *		...
+ *		)
+ *
+ * The membername may be repeated multiple times if multiple relations exist (not in all situations
+ * however). $value exists during "_save"
  */
- 
+
 /**
  * Should the field be skipped.
  */
@@ -373,13 +387,13 @@ function _dbs_skipfield( $member, $fieldLimit ) {
 function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 	$cols = '';
 	foreach( $fields as $tuple ) {
-		list( $member, $data ) = $tuple;
+		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
 			
 		if( strlen( $cols ) )
 			$cols .= ', ';
-		$cols .= $db->escapeColumn( $data[0] );
+		$cols .= $db->escapeColumn( $dbname );
 	}
 	
 	return $cols;
@@ -387,12 +401,10 @@ function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 
 function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, $fieldLimit = null ) {
 	foreach( $fields as $tuple ) {
-		
-		list( $member, $data ) = $tuple;
+		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
 			
-		list( $dbname, $dbtype ) = $data;
 		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
 		
 		$value = $into->$cnv( $db->decode( $db->getResult( $result, $dbname ), $dbtype ) );
@@ -401,14 +413,10 @@ function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, 
 	}
 }
 
-/**
- * @params keys [in] membername => (dbname,dbtype)
- * @params fields [in] membername => (dbname,dbtype)
- */
 function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields ) {
 	$where = '';
-	foreach( $keys as $member => $data  ) {
-		list( $dbname, $dbtype ) = $data;
+	foreach( $keys as $tuple ) {
+		list( $member, $dbname, $dbtype ) = $tuple;
 		if( strlen( $where ) )
 			$where .= ' AND ';
 			
@@ -445,16 +453,17 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 		$tuple = _find_member( $q->member, $fields );
 		if( $tuple === null )
 			throw new Exception( "Unknown field: " . $q->member );
+		list( $member, $dbname, $dbtype ) = $tuple;
 			
 		if( $q instanceof DBS_Where_Match ) {
-			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$tuple[1][0]}";
+			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$dbname}";
 			$value = $proto->$cnv( $q->value );
 			
 			$op = $q->op;	//TODO: Check for correctness
-			$value = $db->quote( $value, $tuple[1][1] );
+			$value = $db->quote( $value, $dbtype );
 		} else if( $q instanceof DBS_Where_MatchString ) {
-			if( $tuple[1][1] !== 'String' && $tuple[1][1] !== 'Text' )
-				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $tuple[1][1] );
+			if( $dbtype !== 'String' && $dbtype !== 'Text' )
+				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $dbtype );
 				
 			if( $q->positive )
 				$op = ' LIKE ';
@@ -467,7 +476,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 			throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 		}
 		
-		return $db->escapeColumn( $tuple[1][0] ) . $op . $value;
+		return $db->escapeColumn( $dbname ) . $op . $value;
 	} 
 	
 	if( $q instanceof DBS_Where_Group ) {
@@ -529,8 +538,10 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) 
 		$tuple = _find_member( $qSort->member, $fields );
 		if( $tuple === null )
 			throw new Exception( "Unknown field: " . $qSort->member );
+		list( $member, $dbname, $dbtype ) = $tuple;
+		
 		$sort = "ORDER BY " 
-			. $db->escapeColumn( $tuple[1][0] )
+			. $db->escapeColumn( $dbname )
 			. " {$qSort->mode}";
 	} else {
 		$sort = '';
@@ -553,6 +564,8 @@ function dbs_dbsource_search( &$db, $table, $item_construct, $search_fields, $lo
 	$cols = _dbs_dbsource_sql_col( $db, $load_fields, $fieldLimit );
 	$sql = "SELECT $cols FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->query( $sql );
+	if( $res === false )
+		throw new DBS_DBException( DBS_DBException::LOAD_FAILED, $sql );
 	return new _DBS_DBSource_Result_Iterator( $db, $res, $item_construct, $table, $load_fields, $fieldLimit );
 }
 
@@ -669,7 +682,6 @@ function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
 /**
  * Support function for _save created by phpemitter
  *
- * @param keys [in] "member" => array( dbname, dbtype, value )
  */
 function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields, $lastInsert ) {
 	$cols = array();
@@ -678,8 +690,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	$keyvals = array();
 	
 	foreach( $fields as $tuple ) {
-		list( $member, $data ) = $tuple;
-		list( $dbname, $dbtype ) = $data;
+		list( $member, $dbname, $dbtype ) = $tuple;
 		if( !$into->__isDirty( $member ) )
 			continue;
 			
@@ -688,8 +699,8 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
 	}
 	
-	foreach( $keys as $member => $data ) {
-		list( $dbname, $dbtype, $value ) = $data;
+	foreach( $keys as $tuple ) {
+		list( $member, $dbname, $dbtype, $value ) = $tuple;
 		
 		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
 		$keycols[] = $dbname;
@@ -749,8 +760,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	if( $newRecord && $lastInsert !== null ) {
 		$id = $db->getNewID();
 		
-		$member = key( $lastInsert );
-		list( $dbname, $dbtype ) = current( $lastInsert );
+		list( $member, $dbname, $dbtype ) = current( $lastInsert );
 		
 		if( $into->__has( $member ) )
 			throw new Exception( "LastInsert field $member already set in data!" );

@@ -49,8 +49,8 @@ def retrofit_schema( emitter ):
 	
 	def phpLoadDescriptor( self, loc ):
 		field = loc.getDBFieldForEntityField( self )
-		return "array( '%s', '%s', $this->%s )" \
-			% ( field.db_field.name, field.db_field.fieldType.name, self.phpName )
+		return "array( '%s', '%s', '%s', $this->%s )" \
+			% ( self.phpName, field.db_field.name, field.db_field.fieldType.name, self.phpName )
 	DBSchema.Entity_Field.phpLoadDescriptor = phpLoadDescriptor
 	
 	def phpFormName( en ):
@@ -307,7 +307,7 @@ protected function _maybeLoad() {
 }
 """, { 
 			'loadkeys': self.getKeyBlock( loc.fields, False, lambda key:
-				"$this->_load_keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
+				"$this->_load_keys[] = %s;" % key.phpLoadDescriptor(loc) ),
 			'table': loc.provider.phpTableRef( loc.table ),
 			'members': self.getFields( self.FOR_LOAD, loc.fields )
 			} )
@@ -316,7 +316,7 @@ protected function _maybeLoad() {
 	def getPHPMapArrayStr( self, tuples ):
 		buf = "array(\n"
 		for t in tuples:
-			buf += "\tarray( '%s', %s ),\n" % t
+			buf += "%s,\n" % t
 		buf += ")\n"
 		return buf
 	
@@ -352,7 +352,7 @@ protected function _save( $$adding ) {
 	$$this->_load_keys = $$keys;
 }""", {
 		'savekeys': self.getKeyBlock( loc.fields, True, lambda key:
-				"$keys['%s'] = %s;" % ( key.phpName, key.phpLoadDescriptor(loc) ) ),
+				"$keys[] = %s;" % key.phpLoadDescriptor(loc) ),
 		'readonly': self.getCheckReadOnly( loc.fields ),
 		'table': loc.provider.phpTableRef( loc.table ),
 		'members': self.getSaveMembers( loc.fields ),
@@ -364,7 +364,7 @@ protected function _save( $$adding ) {
 			if not field.isPersistLoad():
 				continue
 			if field.db_field.lastInsert:
-				return "array( '%s' => %s )" % ( field.ent_field.phpName, self.dbField( field ) )
+				return "array( %s )" % self.dbField( field )
 		
 		return "null"
 		
@@ -382,7 +382,7 @@ protected function _save( $$adding ) {
 		for field in fields:
 			if not field.isPersistSave():	#//for safety just don't save such fields
 				continue;
-			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
+			mem.append( self.dbField( field ) )
 		return self.getPHPMapArrayStr( mem )
 					
 	def genEntitySearch( self, en, loc ):
@@ -422,7 +422,7 @@ static public function search( ) {
 		for field in fields:
 			if forWhat == self.FOR_LOAD and not field.isPersistLoad():
 				continue;
-			mem.append( ( field.ent_field.phpName, self.dbField( field ) ) )
+			mem.append( self.dbField( field ) )
 		return self.getPHPMapArrayStr( mem )
 	
 	def genDelete( self, en, loc ):
@@ -1072,7 +1072,7 @@ function &_${inst}_privConstruct() {
 		return m.group(1).lower() + m.group(2)
 
 	def dbField( self, field ):
-		return "array( '%s', '%s' )" % (field.db_field.name, field.db_field.fieldType.name)
+		return "array( '%s', '%s', '%s' )" % (field.ent_field.phpName, field.db_field.name, field.db_field.fieldType.name)
 	
 	def args_or_array( self ):
 		#//allow an array to be used instead of variable arguments

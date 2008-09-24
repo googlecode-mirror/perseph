@@ -245,3 +245,22 @@ mapper BrokenKey {
 		}
 	}
 }
+
+entity NullKey {
+	fields {
+		ID<Integer> ALT_RECORD_KEY;
+		Name<String> ALT_RECORD_KEY ALLOW_NULL;	/*Unique in DB*/
+		Decimal<Decimal>;
+	}
+}
+
+mapper NullKey {
+	provider DBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Name = Name;
+			@Decimal = Decimal;
+		}
+	}
+}

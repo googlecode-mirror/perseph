@@ -393,6 +393,21 @@ class DBSTest_Basic extends TestCase {
 			$this->assertEquals( DBS_DBException::SAVE_FAILED, $ex->getCode() );
 		}
 	}
+	
+	function testNullKey() {
+		$q = NullKey::createWithNothing();
+		$q->decimal = 10;
+		$q->add();
+		$this->assertTrue( $q->id > 0 );
+		
+		$q->decimal++;
+		$q->save();
+		
+		$this->assertEquals( 11, $q->decimal );
+		
+		$q->name = "nullkey" . time();
+		$q->save();
+	}
 }
 
 ?>

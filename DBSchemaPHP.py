@@ -325,16 +325,19 @@ protected function _maybeLoad() {
 		keys = en.getRecordKeyFields()
 		self.wrt("""
 	
-protected function _save( $$adding ) {
-
+protected function getSaveKeys( $$adding ) {
 	$$keys = array();
-	$savekeys
+	$savekeys;
+	return $$keys;
+}
+
+protected function _save( $$adding ) {
 
 	//use the same keys as loading to allow for modifying key fields
 	if( $$this->_load_keys !== null )
 		$$usekeys = $$this->_load_keys;
 	else
-		$$usekeys = $$keys;
+		$$usekeys = $$this->getSaveKeys( $$adding );
 	
 	//check that no read-only fields have been modified
 	$readonly
@@ -348,8 +351,9 @@ protected function _save( $$adding ) {
 		$insertField
 		);
 	$$this->_status = DBS_EntityBase::STATUS_EXTANT;
-	//now these are the keys which identify this object
-	$$this->_load_keys = $$keys;
+	//now reclaculate keys in case a load field was changed, or some default set
+	//NOTE: we are no longer in "adding" mode here!
+	$$this->_load_keys = $$this->getSaveKeys( false );
 }""", {
 		'savekeys': self.getKeyBlock( loc.fields, True, lambda key:
 				"$keys[] = %s;" % key.phpLoadDescriptor(loc) ),

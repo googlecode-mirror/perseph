@@ -281,7 +281,7 @@ class DBSTest_Basic extends TestCase {
 		$q->name = "01234567890123456789012345678901234567890123456789"; //50 chars
 		try {
 			$q->name = "01234567890123456789012345678901234567890123456789!"; //51 chars
-			$this->assertTrue( false );
+			$this->fail();
 		} catch( DBS_SetFieldException $e ) {
 			$this->assertEquals( DBS_SetFieldException::TYPE_LEN, $e->getType() );
 			$this->assertEquals( 'name', $e->field );
@@ -325,7 +325,7 @@ class DBSTest_Basic extends TestCase {
 		$q->id = 45;
 		try {
 			$q->save();
-			$this->assertTrue( false );
+			$this->fail();
 		} catch( DBS_FieldException $e ) {
 			$this->assertEquals( DBS_FieldException::SAVE_LOAD_ONLY, $e->getCode() );
 			$this->assertEquals( 'id', $e->field );
@@ -347,7 +347,7 @@ class DBSTest_Basic extends TestCase {
 		$q->decimal = 12;
 		try {
 			$q->save();
-			$this->assertTrue( false );
+			$this->fail();
 		} catch( DBS_LogicException $e ) {
 			$this->assertEquals( DBS_LogicException::SAVE_INCOMPLETE_LOAD, $e->getCode() );
 		}
@@ -373,7 +373,7 @@ class DBSTest_Basic extends TestCase {
 		$j->num = 2;
 		try {
 		 	$j->find();
-		 	$this->assertTrue( false );
+		 	$this->fail();
 		} catch( DBS_FieldException $e ) {
 		}
 		
@@ -415,7 +415,7 @@ class DBSTest_Basic extends TestCase {
 		$nbk->name = $bk->name;
 		try {
 			$nbk->add();
-			$this->assertTrue( false );
+			$this->fail();
 		} catch( DBS_DBException $ex ) {
 			$this->assertEquals( DBS_DBException::SAVE_FAILED, $ex->getCode() );
 		}
@@ -434,6 +434,27 @@ class DBSTest_Basic extends TestCase {
 		
 		$q->name = "nullkey" . time();
 		$q->save();
+	}
+	
+	function testNonSaves() {
+		$q = NullKey::createWithNothing();
+		try {
+			$q->add();
+			$this->fail();
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::SAVE_ZERO_FIELDS, $ex->getCode() );
+		}
+		
+		//in this case some defaults exist, thus add will work
+		$q = DBSTest::createWithNothing();
+		$q->add();
+		//though save must fail
+		try {
+			$q->save();
+			$this->fail();
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::SAVE_ZERO_FIELDS, $ex->getCode() );
+		}
 	}
 }
 

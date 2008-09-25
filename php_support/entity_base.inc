@@ -294,12 +294,14 @@ class DBS_DBException extends DBS_Exception {
 	const SAVE_NOT_IN_DB = 2;
 	const LOAD_FAILED = 3;
 	const SAVE_FAILED = 4;
+	const SAVE_ZERO_FIELDS = 5;
 	
 	static private $codeToMsg = array(
 		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
 		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB.",
 		self::LOAD_FAILED => "A load operation has failed.",
 		self::SAVE_FAILED => "A save operation has failed.",
+		self::SAVE_ZERO_FIELDS => "A save was attempted with no modified fields, or defaults on add. There is no way to do this with most DBs, thus it isn't supported.",
 		);
 		
 	public $sql;	//a possible associated SQL statement, or null if none
@@ -705,6 +707,9 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
 	}
 	
+	if( count( $cols ) == 0 )
+		throw new DBS_DBException( DBS_DBException::SAVE_ZERO_FIELDS );
+		
 	foreach( $keys as $tuple ) {
 		list( $member, $dbname, $dbtype, $value ) = $tuple;
 		

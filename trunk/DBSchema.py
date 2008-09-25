@@ -90,6 +90,7 @@ class Provider_DBSource(Provider_DBSourceLike):
 class Provider_MDB2(Provider_DBSourceLike):
 	def __init__(self):
 		Provider_DBSourceLike.__init__( self )
+		self.textType = 'text'	#which MDB2 type (or custom type) to use for text/string fields
 		
 		
 class Provider_Table:

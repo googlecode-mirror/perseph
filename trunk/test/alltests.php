@@ -79,4 +79,10 @@ class DBSchema_AllTests
 
 DBSchema_AllTests::main();
 
+/**
+ * To test the function lookup of DB is also working
+ */
+function &getMDB() { 
+	return $GLOBALS['mdb'];
+}
 ?>

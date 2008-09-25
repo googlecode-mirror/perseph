@@ -146,25 +146,41 @@ class PHPEmitter:
 	def genGetDB( self, loc ):
 		self.wr("static private function &getDB() {\n" );
 		
+		# Obtain the raw DB object from a var or function
 		if loc.provider.varName != None:
+			cname = loc.provider.varName
 			self.wrt("""
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	$$db =& $$GLOBALS['$var'];
 """, { 'var': loc.provider.varName } )
 		else:
+			cname = loc.provider.funcName
 			self.wrt("""
 	if( !function_exists( '$func' ) )
 		throw new ErrorException( "The database function $func is not defined." );
 	$$db =& $func();
 """, {'func': loc.provider.funcName } )
 		
+		# Convert into DBSource if not (ie. it is MDB2)
+		#NOTE: it is intentional that all entities use the same global cache of the MDB2Source
 		if isinstance( loc.provider, DBSchema.Provider_MDB2 ):
-			self.wr( "$mdb = new MDB2DBSource( $db );" );
-			name = "mdb";
+			self.wrt( """
+	if( isset( $$GLOBALS['$mdbcache'] ) ) {
+		$$mdb =& $$GLOBALS['$mdbcache'];
+		$$mdb->switchMDB( $$db );	//in case it switched, but we generally don't expect that, do we?
+	} else {
+		$$mdb = new MDB2DBSource( $$db, '$texttype' );
+		$$GLOBALS['$mdbcache'] =& $$mdb;
+	}
+""", { 'mdbcache': "__persephone_%s_mdbCache" % cname,
+	'texttype': loc.provider.textType
+	 } )
+			name = "mdb"
 		else:
-			name = "db";
+			name = "db"
 			
+		# return the DB object
 		self.wr( "return $%s;\n}\n" % name );
 
 		

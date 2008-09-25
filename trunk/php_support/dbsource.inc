@@ -65,10 +65,6 @@ class MDB2DBSource implements DBSource {
 	private $mdb;
 	private $textType;
 	
-	public function &getMDB() {
-		return $this->mdb;
-	}
-	
 	/**
 	 *
 	 * @param textType [in] speciifying a type other than 'text' allows you to use a custom
@@ -81,6 +77,18 @@ class MDB2DBSource implements DBSource {
 	public function __construct( MDB2_Driver_Common &$mdb, $textType = 'text' ) {
 		$this->mdb =& $mdb;
 		$this->textType = $textType;
+	}
+	
+	public function &getMDB() {
+		return $this->mdb;
+	}
+	
+	/** 
+	 * This function is mainly meant for the MDB2 direct mode in persephone to cache
+	 * a DBSource object but replace the MDB2.
+	 */
+	public function switchMDB( MDB2_Driver_Common &$mdb ) {
+		$this->mdb =& $mdb;
 	}
 	
 	public function checkError( &$item ) {

@@ -145,40 +145,27 @@ class PHPEmitter:
 			
 	def genGetDB( self, loc ):
 		self.wr("static private function &getDB() {\n" );
-		if isinstance( loc.provider, DBSchema.Provider_MDB2 ):
-			if loc.provider.varName != None:
-				self.wrt("""
+		
+		if loc.provider.varName != None:
+			self.wrt("""
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
-	$$q = new MDB2DBSource( $$GLOBALS['$var'] );
-	return $$q;
-}
+	$$db =& $$GLOBALS['$var'];
 """, { 'var': loc.provider.varName } )
-			else:
-				self.wrt("""
-	if( !function_exists( '$func' ) )
-		throw new ErrorException( "The database function $func is not defined." );
-	$$temp =& $func();
-	$$q = new MDB2DBSource( $$temp );
-	return $$q;
-}
-""", {'func': loc.provider.funcName } )
 		else:
-			if loc.provider.varName != None:
-				self.wrt("""
-	if( !isset( $$GLOBALS['$var'] ) )
-		throw new ErrorException( "The database variable $var is not defined." );
-	return $$GLOBALS['$var'];
-}
-""", { 'var': loc.provider.varName } )
-			else:
-				self.wrt("""
+			self.wrt("""
 	if( !function_exists( '$func' ) )
 		throw new ErrorException( "The database function $func is not defined." );
-	$$temp =& $func();
-	return $$temp;
-}
+	$$db =& $func();
 """, {'func': loc.provider.funcName } )
+		
+		if isinstance( loc.provider, DBSchema.Provider_MDB2 ):
+			self.wr( "$mdb = new MDB2DBSource( $db );" );
+			name = "mdb";
+		else:
+			name = "db";
+			
+		self.wr( "return $%s;\n}\n" % name );
 
 		
 	##########################################################

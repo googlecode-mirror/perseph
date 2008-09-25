@@ -79,11 +79,14 @@ class Processor:
 			if type == "DBSource" or type == 'MDB2':
 				if type == 'MDB2':
 					provider = DBSchema.Provider_MDB2( )
+					checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar","textType"] )
+					if 'textType' in varset:
+						provider.textType = varset['textType']
 				else:
 					provider = DBSchema.Provider_DBSource( )
+					checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar"] )
 				self.sc.providers[name] = provider
 					
-				checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar"] )
 				
 				# May use a variable or a function to lookup/return the DB
 				if 'var' in varset:

@@ -1,8 +1,14 @@
 default charset "UTF-8";
 
 provider MDBTest {
-	var mdb;
+	func getMDB;
 	type MDB2;
+	
+	/*Indicates which MDB2 type to use for textual columns (Strings,Text). By default
+	 the 'text' type will be used, but this allows you to use a custom type, required in
+	 cases where encoding translation must occur */
+	textType cstring;	
+		
 	
 	table basic {
 		ID<Integer> LAST_INSERT_ID;

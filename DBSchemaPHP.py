@@ -144,10 +144,10 @@ class PHPEmitter:
 			self.genKeyPart( en, loc, keys, keyName, keyParamStr )
 			
 	def genGetDB( self, loc ):
+		self.wr("static private function &getDB() {\n" );
 		if isinstance( loc.provider, DBSchema.Provider_MDB2 ):
 			if loc.provider.varName != None:
 				self.wrt("""
-static private function &getDB() {
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	$$q = new MDB2DBSource( $$GLOBALS['$var'] );
@@ -156,7 +156,6 @@ static private function &getDB() {
 """, { 'var': loc.provider.varName } )
 			else:
 				self.wrt("""
-static private function &getDB() {
 	if( !function_exists( '$func' ) )
 		throw new ErrorException( "The database function $func is not defined." );
 	$$temp =& $func();
@@ -167,7 +166,6 @@ static private function &getDB() {
 		else:
 			if loc.provider.varName != None:
 				self.wrt("""
-static private function &getDB() {
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	return $$GLOBALS['$var'];
@@ -175,7 +173,6 @@ static private function &getDB() {
 """, { 'var': loc.provider.varName } )
 			else:
 				self.wrt("""
-static private function &getDB() {
 	if( !function_exists( '$func' ) )
 		throw new ErrorException( "The database function $func is not defined." );
 	$$temp =& $func();

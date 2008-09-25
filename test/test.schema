@@ -82,9 +82,18 @@ entity DBSTest {
 	}
 }
 
-search KeySortSearch<DBSTest> {
+search SortSearch<DBSTest> {
 	filter Name ~= "Search:*";
 	sort Decimal ASC;
+}
+
+search KeySortSearch<DBSTest> {
+	filter Name ~= "Search:*";
+}
+
+search MultiSortSearch<DBSTest> {
+	filter Name ~= "Search:*";
+	sort Decimal,Name ASC;
 }
 
 mapper DBSTest {

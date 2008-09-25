@@ -411,7 +411,32 @@ class Processor:
 			filterNode = extNodeOpt( searchNode, SL.FILTER )
 			if filterNode != None:
 				search.filter = self.extractSearchFilter( filterNode.getChild(0), type )
+				
+			sortNode = extNodeOpt( searchNode, SL.SORT )
+			if sortNode != None:	
+				search.sort = self.extractSearchSort( sortNode, type )
 		
+	def extractSearchSort( self, node, entity ):
+		sort = DBSchema.Search_Sort()
+		
+		# extract direction
+		dir = node.getChild(0).text
+		if dir == 'ASC':
+			sort.dir = 'ASC'
+		elif dir == 'DESC':
+			sort.dir = 'DESC'
+		else:
+			errorOn( node, "Unrecognized sort ordering %s" % dir )
+			
+		# extract fields
+		for i in range( 1, node.getChildCount() ):
+			col = node.getChild(i)
+			if not col.text in entity.fields:
+				errorOn( col, "No such field in entity, %s" % col.text )
+				
+			sort.fields.append( entity.fields[col.text] )
+		
+		return sort
 		
 	opMap = {
 		SL.OPEQUALS: '=',

@@ -190,7 +190,11 @@ searchFilterExpr
 	:	FILTER sfeExpr ENDEXPR -> ^(FILTER sfeExpr);
 	
 searchSortExpr
-	:	SORT id order=(ASC|DESC) ENDEXPR -> ^(SORT id {$order});
+//	:	SORT id ( ',' id )* order=(ASC|DESC) ENDEXPR -> ^(SORT {$order} id*  );	//rewriting doesn't work, order is missing
+	:	SORT id ( ',' id )* searchSortOrder ENDEXPR -> ^(SORT searchSortOrder id*  );	//rewriting doesn't work, order is missing
+	
+searchSortOrder
+	:	ASC | DESC;
 	
 sfeExpr 
 	:	id sfeOP sfeRef -> ^(sfeOP id sfeRef);

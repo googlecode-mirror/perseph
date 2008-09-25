@@ -268,3 +268,8 @@ class Search_FilterFieldOp(Search_FilterField):
 class Search_FilterFieldPattern(Search_FilterField):
 	def __init__(self):
 		Search_FilterField.__init__(self)
+
+class Search_Sort:
+	def __init__(self):
+		self.dir = None	#<String> one of ASC or DESC
+		self.fields = [] #list<Entity_Field> of columns to sort by (in order of precedence)

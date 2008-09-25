@@ -76,8 +76,13 @@ class Processor:
 			varset = extVarSet( prov )
 			type = varset["type"]
 			provider = None
-			if type == "DBSource":
-				self.sc.providers[name] = provider = DBSchema.Provider_DBSource( )
+			if type == "DBSource" or type == 'MDB2':
+				if type == 'MDB2':
+					provider = DBSchema.Provider_MDB2( )
+				else:
+					provider = DBSchema.Provider_DBSource( )
+				self.sc.providers[name] = provider
+					
 				checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar"] )
 				
 				# May use a variable or a function to lookup/return the DB

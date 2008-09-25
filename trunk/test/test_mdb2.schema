@@ -1,0 +1,28 @@
+default charset "UTF-8";
+
+provider MDBTest {
+	var mdb;
+	type MDB2;
+	
+	table basic {
+		ID<Integer> LAST_INSERT_ID;
+		Name<String>;
+	}
+}
+
+entity MDBSTest {
+	fields {
+		ID<Integer> 	ALT_RECORD_KEY;
+		Name<String> 	ALT_RECORD_KEY TITLE MAXLEN(50);
+	}
+}
+
+mapper MDBSTest {
+	provider MDBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Name = Name;
+		}
+	}
+}

@@ -17,11 +17,14 @@ $(GENDIR):
 test: test-build
 	php $(TESTDIR)/alltests.php
 	
-test-build: parser $(GENDIR)/schema.inc
+test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
 $(GENDIR)/schema.inc: $(TESTDIR)/test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/test.schema $(GENDIR)/
+	
+$(GENDIR)/mdb2_schema.inc: $(TESTDIR)/test_mdb2.schema . | $(GENDIR)
+	python Persephone.py $(TESTDIR)/test_mdb2.schema $(GENDIR)/mdb2_
 	
 Persephone.py: | parser
 

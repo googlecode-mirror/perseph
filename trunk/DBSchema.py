@@ -76,12 +76,20 @@ class Provider:
 	def __init__(self):
 		self.tables = {}#Name:Provider_Table
 
-class Provider_DBSource (Provider):
+class Provider_DBSourceLike(Provider):
 	def __init__(self):
 		Provider.__init__( self )
 		self.varName = None #variable name in PHP which is this source
 		self.tablePrefixVar = None	#prefix variable for all tables
 		self.funcName = None;	#funcion in PHP which obtains the DBSource
+		
+class Provider_DBSource(Provider_DBSourceLike):
+	def __init__(self):
+		Provider_DBSourceLike.__init__( self )
+		
+class Provider_MDB2(Provider_DBSourceLike):
+	def __init__(self):
+		Provider_DBSourceLike.__init__( self )
 		
 		
 class Provider_Table:

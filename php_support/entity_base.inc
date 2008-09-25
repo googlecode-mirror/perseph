@@ -616,17 +616,19 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 	 *
 	 * @param key [in] if specified the index of the returned array will be the given member
 	 *		field, otherwise (if null) normal array extension is used
+	 * @param member [in] if specified this member will be loaded as the value rather than
+	 *		the entity itself
 	 */
-	public function loadAll( $key = null ) {
+	public function loadAll( $key = null, $member = null ) {
 		if( !$this->start )	
 			throw new Exception( "loadAll is only meant to be called on a full result" );
 			
 		$ret = array();
 		foreach( $this as $item ) {
 			if( $key === null )
-				$ret[] = $item;
+				$ret[] = $member === null ? $item : $item->$member;
 			else
-				$ret[$item->$key] = $item;
+				$ret[$item->$key] = $member === null ? $item : $item->$member;
 		}
 		return $ret;
 	}

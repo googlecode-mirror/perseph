@@ -211,10 +211,10 @@ class DBSTest_Basic extends TestCase {
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i-1]->decimal );
 			
-		//non-keyed sort
-		$ordered = SortSearch::search()->loadAll( );
+		//non-keyed sort, though direct value load
+		$ordered = SortSearch::search()->loadAll( null, 'decimal' );
 		for( $i = 1; $i <= 10; $i++ )
-			$this->assertEquals( $i, $ordered[$i-1]->decimal );
+			$this->assertEquals( $i, $ordered[$i-1] );
 		
 		//keyed (use Scheme search)
 		$ordered = KeySortSearch::search()->loadAll( 'decimal' );
@@ -235,7 +235,9 @@ class DBSTest_Basic extends TestCase {
 		$ordered = MultiSortSearch::search()->loadAll();
 		for( $i = 1; $i <= 10; $i++ ) {
 			$this->assertEquals( $i, $ordered[2*($i-1)]->decimal );
+			$this->assertTrue( $ordered[2*($i-1)]->bool );
 			$this->assertEquals( $i, $ordered[2*($i-1)+1]->decimal );
+			$this->assertFalse( $ordered[2*($i-1)+1]->bool );
 		}
 		
 		//test delete

@@ -537,13 +537,17 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) 
 		if( !( $qSort instanceof DBS_Sort_Single ) )
 			throw new Exception( "Unknown sort item: " . get_class( $qSort ) );
 		
-		$tuple = _find_member( $qSort->member, $fields );
-		if( $tuple === null )
-			throw new Exception( "Unknown field: " . $qSort->member );
-		list( $member, $dbname, $dbtype ) = $tuple;
+		$columns = array();
+		foreach( $qSort->members as $sorton ) {
+			$tuple = _find_member( $sorton, $fields );
+			if( $tuple === null )
+				throw new Exception( "Unknown field: " . $sorton );
+			list( $member, $dbname, $dbtype ) = $tuple;
+			$columns[] = $db->escapeColumn( $dbname );
+		}
 		
 		$sort = "ORDER BY " 
-			. $db->escapeColumn( $dbname )
+			. implode( ',', $columns )
 			. " {$qSort->mode}";
 	} else {
 		$sort = '';

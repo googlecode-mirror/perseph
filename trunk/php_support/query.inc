@@ -99,10 +99,16 @@ class DBS_Query {
 	/**
 	 * Sorts the results. If no such qualifier is used the results are in
 	 * an undefined order.
+	 *
+	 * @param member [in] either a single member, or an array of 
+	 *		members in precedence order to sort on
 	 */
 	static public function sort( $member, $mode ) {
+		if( !is_array( $member ) )
+			$member = array( $member );
+			
 		$ret = new DBS_Sort_Single();
-		$ret->member = $member;
+		$ret->members = $member;
 		$ret->mode = $mode;
 		return $ret;
 	}
@@ -170,7 +176,7 @@ class DBS_Sort_Item {
 }
 
 class DBS_Sort_Single extends DBS_Sort_Item {
-	public $member;
+	public $members;
 	public $mode;
 }
 

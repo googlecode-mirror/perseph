@@ -179,9 +179,14 @@ class DBSTest_Basic extends TestCase {
 	}
 	
 	function testSearch() {
-		for( $i = 1; $i <= 10; $i++ ) {
-			$q = DBSTest::createWithName( "Search:$i" );
-			$q->decimal = $i;
+		//unsure an unusual DB order to guarantee sorting is actually doing something
+		$nums = range( 1, 10 );
+		shuffle( $nums );
+		for( $i = 0; $i < 10; $i++ ) {
+			$val = $nums[$i];	
+			$q = DBSTest::createWithName( "Search:$val" );
+			$q->decimal = $val;
+			$q->bool = true;
 			$q->add();
 		}
 		
@@ -206,11 +211,33 @@ class DBSTest_Basic extends TestCase {
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i-1]->decimal );
 			
+		//non-keyed sort
+		$ordered = SortSearch::search()->loadAll( );
+		for( $i = 1; $i <= 10; $i++ )
+			$this->assertEquals( $i, $ordered[$i-1]->decimal );
+		
 		//keyed (use Scheme search)
 		$ordered = KeySortSearch::search()->loadAll( 'decimal' );
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i]->decimal );
 			
+		//multi-sort (on Name after decimal)
+		$nums = range( 1, 10 );
+		shuffle( $nums );
+		for( $i = 0; $i < 10; $i++ ) {
+			$val = $nums[$i];	
+			$q = DBSTest::createWithName( "Search:Z$val" );
+			$q->decimal = $val;
+			$q->bool = false;
+			$q->add();
+		}
+		
+		$ordered = MultiSortSearch::search()->loadAll();
+		for( $i = 1; $i <= 10; $i++ ) {
+			$this->assertEquals( $i, $ordered[2*($i-1)]->decimal );
+			$this->assertEquals( $i, $ordered[2*($i-1)+1]->decimal );
+		}
+		
 		//test delete
 		DBSTest::searchAndDelete( DBS_Query::matchStringPattern( 'name', 'Search:*' ) );
 		$this->assertEquals( 0, count( DBSTest::search( DBS_Query::matchStringPattern( 'name', 'Search:*' ) )->loadAll() ) );

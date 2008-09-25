@@ -315,9 +315,8 @@ protected function _maybeLoad() {
 
 	def getPHPMapArrayStr( self, tuples ):
 		buf = "array(\n"
-		for t in tuples:
-			buf += "%s,\n" % t
-		buf += ")\n"
+		buf += ",\n".join( tuples )
+		buf += "\n)\n"
 		return buf
 	
 	def genAddSave( self, en, loc ):
@@ -386,7 +385,7 @@ protected function _save( $$adding ) {
 		for field in fields:
 			if not field.isPersistSave():	#//for safety just don't save such fields
 				continue;
-			mem.append( self.dbField( field ) )
+ 			mem.append( self.dbField( field ) )
 		return self.getPHPMapArrayStr( mem )
 					
 	def genEntitySearch( self, en, loc ):
@@ -934,10 +933,17 @@ function &_${inst}_privConstruct() {
 		self.wr( ") { \n" )
 		self.wr( "\treturn %s::search(\n" % search.entity.phpClassName );
 		
+		params = []
 		if search.filter != None:
 			search.placeHolderAt = 0
-			self.wr( self.genSearchFilter( search, search.filter ) )
+			params.append( self.genSearchFilter( search, search.filter ) )
+		else:	# without a filter assume full matching
+			params.append( "DBS_Query::matchAll()" );
 			
+		if search.sort != None:
+			params.append( self.genSearchSort( search, search.sort ) )
+			
+		self.wr( ",".join( params ) )
 		self.wr( "\t);\n" );
 		
 		self.wr( "}\n}\n" )
@@ -958,6 +964,12 @@ function &_${inst}_privConstruct() {
 			else:
 				return "DBS_Query::match( '%s', %s, '%s' )" \
 					% ( filter.field.phpName, expr, filter.op )
+		
+	def genSearchSort( self, search, sort ):
+		cols = [ "'%s'" % field.phpName for field in sort.fields]
+		return "DBS_Query::sort( %s, DBS_Query::%s )" \
+			% ( self.getPHPMapArrayStr( cols ), 
+				"SORT_ASC" if sort.dir == 'ASC' else "SORT_DESC" )
 		
 		
 

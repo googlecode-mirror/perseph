@@ -54,6 +54,15 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( $n->name, $l->name );
 	}
 	
+	function testFindFail() {
+		try {
+			$n = DBSTest::findWithName( "NeverInDB" );
+			$this->fail();
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::NOT_IN_DB, $ex->getCode() );
+		}
+		
+	}
 	/**
 	 * The duplicate name should fail since the DB has it marked as Unique
 	 */

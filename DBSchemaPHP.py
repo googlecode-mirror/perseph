@@ -194,7 +194,7 @@ static public function &findWith${keyName}( $keyParamStr ) {
 	$$ret =& self::with${keyName}( $keyParamStr );
 	
 	if( !$$ret->_maybeLoad() )
-		throw new Exception( "Failed to find a record ($keyName) / ($keyParamStr)" );
+		throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, " ($keyName) / ($keyParamStr)" );
 	$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
 		
 	return $$ret;

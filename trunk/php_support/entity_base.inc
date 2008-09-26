@@ -178,10 +178,10 @@ abstract class DBS_EntityBase {
 	
 	public function find() {
 		if( $this->_status != self::STATUS_UNKNOWN )
-			throw new Exception( "Find called on non-unknown status" );
+			throw new DBS_DBException( DBS_DBException::FIND_NOT_UNKNOWN );
 			
 		if( !$this->_maybeLoad() )
-			throw new Exception( "Failed to find a matching record." );
+			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
 		$this->_status = self::STATUS_EXTANT;
 	}
 	
@@ -276,6 +276,7 @@ class DBS_LogicException extends DBS_Exception {
 	const ONLY_ADD_NEW = 3;
 	const NO_LOAD_DEFINED = 4;
 	const NO_SAVE_DEFINED = 5;
+	const FIND_NOT_UNKNOWN = 6;
 	
 	static private $codeToMsg = array(
 		self::SAVE_INCOMPLETE_LOAD => 'Attempting to save entity resulting from an incomplete load/search',
@@ -283,6 +284,7 @@ class DBS_LogicException extends DBS_Exception {
 		self::ONLY_ADD_NEW => "Can only add entities with New status.",
 		self::NO_LOAD_DEFINED => "No loading mechanism has been defined for this entity.",
 		self::NO_SAVE_DEFINED => "No saving mechanism has been defined for this entity.",
+		self::FIND_NOT_UNKNOWN => "Find called on non-unknown status",
 		);
 	public function __construct( $code ) {
 		parent::__construct( self::$codeToMsg[$code], $code );
@@ -295,6 +297,7 @@ class DBS_DBException extends DBS_Exception {
 	const LOAD_FAILED = 3;
 	const SAVE_FAILED = 4;
 	const SAVE_ZERO_FIELDS = 5;
+	const NOT_IN_DB = 6;
 	
 	static private $codeToMsg = array(
 		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
@@ -302,11 +305,12 @@ class DBS_DBException extends DBS_Exception {
 		self::LOAD_FAILED => "A load operation has failed.",
 		self::SAVE_FAILED => "A save operation has failed.",
 		self::SAVE_ZERO_FIELDS => "A save was attempted with no modified fields, or defaults on add. There is no way to do this with most DBs, thus it isn't supported.",
+		self::NOT_IN_DB => "Failed to find a record.",
 		);
 		
 	public $sql;	//a possible associated SQL statement, or null if none
-	public function __construct( $code, $sql = null ) {
-		parent::__construct( self::$codeToMsg[$code], $code );
+	public function __construct( $code, $sql = null, $msg = '' ) {
+		parent::__construct( self::$codeToMsg[$code] . $msg, $code );
 		$this->sql = $sql;
 	}
 }

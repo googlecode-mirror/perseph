@@ -429,6 +429,8 @@ function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields 
 			$where .= ' AND ';
 			
 		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
+		if( !method_exists( $into, $cnv ) )
+			throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
 		$value = $into->$cnv( $into->__get( $member ) );
 		$where .= $db->escapeColumn( $dbname ) . ' = ' . $db->quote( $value, $dbtype );
 	}	

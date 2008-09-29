@@ -407,14 +407,27 @@ function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 	return $cols;
 }
 
+function dbs_cnvfunc_db_to_entity( &$entity, $member, $table, $dbname ) {
+	$cnv = "_cnv_F{$table}_{$dbname}_T{$member}";
+	if( !method_exists( $entity, $cnv ) )
+		throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
+	return $cnv;
+}
+
+function dbs_cnvfunc_entity_to_db( &$entity, $member, $table, $dbname ) {
+	$cnv = "_cnv_F{$member}_T{$table}_{$dbname}";
+	if( !method_exists( $entity, $cnv ) )
+		throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
+	return $cnv;
+}
+
 function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, $fieldLimit = null ) {
 	foreach( $fields as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
 			
-		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
-		
+		$cnv = dbs_cnvfunc_db_to_entity( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $db->decode( $db->getResult( $result, $dbname ), $dbtype ) );
 		$into->__set( $member, $value );
 		$into->__markClean( $member );
@@ -428,9 +441,7 @@ function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields 
 		if( strlen( $where ) )
 			$where .= ' AND ';
 			
-		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
-		if( !method_exists( $into, $cnv ) )
-			throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
+		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $into->__get( $member ) );
 		$where .= $db->escapeColumn( $dbname ) . ' = ' . $db->quote( $value, $dbtype );
 	}	
@@ -466,7 +477,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 		list( $member, $dbname, $dbtype ) = $tuple;
 			
 		if( $q instanceof DBS_Where_Match ) {
-			$cnv = "_cnv_F{$q->member}_T{$table[1]}_{$dbname}";
+			$cnv = dbs_cnvfunc_entity_to_db( $proto, $member, $table[1], $dbname );
 			$value = $proto->$cnv( $q->value );
 			
 			$op = $q->op;	//TODO: Check for correctness
@@ -710,7 +721,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		if( !$into->__isDirty( $member ) )
 			continue;
 			
-		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
+		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$cols[] = $dbname;
 		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
 	}
@@ -721,7 +732,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	foreach( $keys as $tuple ) {
 		list( $member, $dbname, $dbtype, $value ) = $tuple;
 		
-		$cnv = "_cnv_F{$member}_T{$table[1]}_{$dbname}";
+		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$keycols[] = $dbname;
 		$keyvals[] = $db->quote( $into->$cnv( $value ), $dbtype );
 	}
@@ -784,8 +795,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		if( $into->__has( $member ) )
 			throw new Exception( "LastInsert field $member already set in data!" );
 		
-		$cnv = "_cnv_F{$table[1]}_{$dbname}_T{$member}";
-		
+		$cnv = dbs_cnvfunc_db_to_entity( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $id );
 		$into->__set( $member, $value );
 		$into->__markClean( $member );

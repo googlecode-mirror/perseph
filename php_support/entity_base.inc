@@ -64,29 +64,10 @@ abstract class DBS_EntityBase {
 	}
 	
 	/**
-	 * Allows specifically saying the object should be treated as a new entity now. Useful
-	 * in entities without primary keys to reuse the object to add multiple items.
-	 */
-	public function __declNew() {
-		$this->_status = self::STATUS_NEW;
-	}
-	
-	/**
-	 * This can be used in situations where you wish to save/chagne a field and do not
-	 * need to load the data before hand. It should be limited to optimization scenarios
-	 * only.
+	 * NOTE: This should not be used, it is a private support function.
 	 */
 	public function __declExtant() {
 		$this->_status = self::STATUS_EXTANT;
-	}
-	
-	/**
-	 * Allows specifically stating the status of the object is unknown.  This should not 
-	 * ever really be needed and is used now strictly to makeup for limitations in the
-	 * DBS System.
-	 */
-	public function __declUnknown() { 
-		$this->_status = self::STATUS_UNKNOWN;
 	}
 	
 	private function _fieldName( $field ) {
@@ -165,10 +146,10 @@ abstract class DBS_EntityBase {
 	}
 	
 	public function __isset( $field ) {
-		throw new Exception( "Not supported" );
+		throw new Exception( "Not supported: ambiguous wrt __defined and __has" );
 	}
 	public function __unset( $field ) {
-		throw new Exception( "Not supported" );
+		throw new Exception( "Not supported: ambigious wrt __defined and __has" );
 	}
 	
 	/**
@@ -249,6 +230,10 @@ abstract class DBS_EntityBase {
 	
 	public function isNew() {
 		return $this->_status === DBS_EntityBase::STATUS_NEW;
+	}
+	
+	public function isExtant() {
+		return $this->_status === DBS_EntityBase::STATUS_EXTANT;
 	}
 	
 	public function exists() {
@@ -362,12 +347,14 @@ class DBS_FieldException extends DBS_Exception {
 	const UNAVAILABLE = 3;
 	const MISSING_REQ = 4;
 	const SET_FIELD = 5;	//OR'd with one of the SetField types
+	const LOAD_DIRTY = 6;
 	
 	static private $codeToMsg = array(
 		self::SAVE_LOAD_ONLY => "Attempt to save LOAD_ONLY field",
 		self::UNDEFINED => "Field not defined",
 		self::UNAVAILABLE => "Field not available on this instance",
 		self::MISSING_REQ => "Required field for operation not specified",
+		self::LOAD_DIRTY => "Attempting to load into dirty field.",
 		);
 	public $field; //<String> the field on which the exception occurred
 	
@@ -462,6 +449,9 @@ function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, 
 		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
 			continue;
+					
+		if( $into->isExtant() && $into->__isDirty( $member ) )
+			throw new DBS_FieldException( $member, DBS_FieldException::LOAD_DIRTY );
 			
 		$cnv = dbs_cnvfunc_db_to_entity( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $db->decode( $db->getResult( $result, $dbname ), $dbtype ) );
@@ -751,12 +741,14 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 	$vals = array();
 	$keycols = array();
 	$keyvals = array();
+	$clean = array();	//saved members will be marked as clean after saving
 	
 	foreach( $fields as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
 		if( !$into->__isDirty( $member ) )
 			continue;
 			
+		$clean[] = $member;
 		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$cols[] = $dbname;
 		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
@@ -822,6 +814,10 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		throw new DBS_DBException( DBS_DBException::SAVE_FAILED, $sql );
 	$db->endResult( $res );
 	
+	//clean all saved fields
+	foreach( $clean as $cl )
+		$into->__markClean( $cl );
+		
 	//if we are using the lastInsert mechanism, then handle it here
 	if( $newRecord && $lastInsert !== null ) {
 		$id = $db->getNewID();

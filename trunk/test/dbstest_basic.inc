@@ -68,6 +68,21 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 415, $n->float );
 	}
 	
+	function testReloadDirty() {
+		$n = DBSTest::createWithName( 'ReloadDirty' );
+		$n->float = 123;
+		$n->add();
+		
+		$n->float = 412;
+		try {
+			$n->reload();
+			$this->fail();
+		} catch( DBS_FieldException $ex ) {
+			$this->assertEquals( 'float', $ex->field );
+			$this->assertEquals( DBS_FieldException::LOAD_DIRTY, $ex->getCode() );
+		}
+	}
+	
 	function testFindFail() {
 		try {
 			$n = DBSTest::findWithName( "NeverInDB" );
@@ -184,7 +199,9 @@ class DBSTest_Basic extends TestCase {
 		$q = DBSTest::createWithName( 'dirty' );
 		$q->decimal = 10.5;
 		$q->float = 128;
+		$this->assertTrue( $q->__isDirty( 'float' ) );
 		$q->add();
+		$this->assertFalse( $q->__isDirty( 'float' ) );
 		
 		$q->decimal = 20.25;
 		$q->float = 456;

@@ -173,6 +173,9 @@ class MDB2DBSource implements DBSource {
 			$this->mdb->loadModule('Datatype', null, true);
 		$halfraw = $this->mdb->datatype->convertResult( $value, $mtype );
 		
+		if( $value === null )
+			return $value;
+			
 		switch( strtolower( $type ) ) {
 			case 'decimal':
 				$out = floatval( $halfraw );	//MDB leaves them as strings (probably correct, but well...)
@@ -198,6 +201,8 @@ class MDB2DBSource implements DBSource {
 	public function quote( $value, $type ) {
 		$mtype = $this->getMDBType( $type );
 					
+		//TODO: convert Null for save
+			
 		switch( strtolower( $type ) ) {
 			case 'date':
 			case 'datetime':

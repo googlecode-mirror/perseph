@@ -1066,6 +1066,10 @@ function &_${inst}_privConstruct() {
 	# TODO: Should this not be part of the processor?
 	def constantExpr( self, fieldType, value ):
 		tname = fieldType.name
+		# Handle null values
+		if value == None:
+			return 'null';
+		
 		if tname == 'String' or tname =='Text':
 			return "'%s'" % self.addslashes( value )
 		elif tname == 'Integer':
@@ -1077,9 +1081,9 @@ function &_${inst}_privConstruct() {
 				return True
 			if value == 'False':
 				return False
-			raise Error, "Invalid Bool value for constant %s => %s"  % ( tname, value )
+			raise Excpetion, "Invalid Bool value for constant %s => %s"  % ( tname, value )
 		else:
-			raise Error, "Unknown type for constant %s " % tname
+			raise Exception, "Unknown type for constant %s " % tname
 		
 	##
 	# like the PHP function of the same name

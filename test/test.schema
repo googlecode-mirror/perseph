@@ -70,7 +70,7 @@ entity DBSTest {
 		Bool<Bool> DEFAULT(True);
 		Decimal<Decimal>;
 		Float<Float> DEFAULT(123.5);
-		NameRef<DBSName> ALLOW_NULL;
+		NameRef<DBSName> ALLOW_NULL DEFAULT(NULL);
 		MemoryOnly<Integer>;
 		OtherDecimal<Decimal>;
 	}

@@ -193,7 +193,7 @@ class PHPEmitter:
 static public function &findWith${keyName}( $keyParamStr ) {
 	$$ret =& self::with${keyName}( $keyParamStr );
 	
-	if( !$$ret->_maybeLoad() )
+	if( !$$ret->_maybeLoad( false ) )
 		throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, " ($keyName) / ($keyParamStr)" );
 	$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
 		
@@ -203,7 +203,7 @@ static public function &findWith${keyName}( $keyParamStr ) {
 static public function &findOrCreateWith${keyName}( $keyParamStr ) {
 	$$ret =& self::with${keyName}($keyParamStr);
 	
-	if( $$ret->_maybeLoad() )
+	if( $$ret->_maybeLoad( false ) )
 		$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
 	else
 		$$ret->_status = DBS_EntityBase::STATUS_NEW;
@@ -300,8 +300,8 @@ static public function &with${keyName}($keyParamStr) {
 		keys = en.getRecordKeyFields()
 		self.wrt("""
 //public only for helpers (so search can indicate item was loaded)
-public function  _set_load_keys() {
-	if( $$this->_load_keys !== null )	
+public function  _set_load_keys( $$reload ) {
+	if( !$$reload && $$this->_load_keys !== null )	
 		throw new Exception( "Not expecting a duplicate load / not supported" );
 		
 	$$this->_load_keys = array();
@@ -311,8 +311,8 @@ public function  _set_load_keys() {
 	return count( $$this->_load_keys ) > 0;
 }
 
-protected function _maybeLoad() {
-	$$this->_set_load_keys();
+protected function _maybeLoad( $$reload ) {
+	$$this->_set_load_keys( $$reload );
 		
 	if( count( $$this->_load_keys ) == 0 )
 		throw new Exception( "No keys specified/set for loading" );

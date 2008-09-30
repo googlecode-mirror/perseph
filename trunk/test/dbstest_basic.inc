@@ -54,6 +54,20 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( $n->name, $l->name );
 	}
 	
+	function testReload() {
+		$n = DBSTest::createWithName( 'ReloadMe' );
+		$n->float = 123;
+		$n->add();
+		
+		$same = DBSTest::findWithName( 'ReloadMe' );
+		$same->float = 415;
+		$same->save();
+		
+		$this->assertEquals( 123, $n->float );
+		$n->reload();
+		$this->assertEquals( 415, $n->float );
+	}
+	
 	function testFindFail() {
 		try {
 			$n = DBSTest::findWithName( "NeverInDB" );

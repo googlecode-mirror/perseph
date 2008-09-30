@@ -114,7 +114,7 @@ abstract class DBS_EntityBase {
 			return $this->_data[$field];
 			
 		//attempt to load if we may already exist
-		if( $this->_status === self::STATUS_UNKNOWN && $this->_maybeLoad() ) {
+		if( $this->_status === self::STATUS_UNKNOWN && $this->_maybeLoad( false ) ) {
 			if( array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
 				return $this->_data[$field];
 		}
@@ -191,20 +191,39 @@ abstract class DBS_EntityBase {
 		return $this->_data_names[$field];
 	}
 	
+	/**
+	 * Finds the entity in the backing store.
+	 */
 	public function find() {
 		if( $this->_status != self::STATUS_UNKNOWN )
-			throw new DBS_DBException( DBS_DBException::FIND_NOT_UNKNOWN );
+			throw new DBS_LogicException( DBS_LogicException::FIND_NOT_UNKNOWN );
 			
-		if( !$this->_maybeLoad() )
+		if( !$this->_maybeLoad( false ) )
 			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
 		$this->_status = self::STATUS_EXTANT;
 	}
 	
+	/**
+	 * Forces a reload from the backing store using the keys of the object.  This
+	 * cannot be called if there are modified fields -- they must be resolved first.
+	 */
+	public function reload() {
+		if( $this->_status != self::STATUS_EXTANT )
+			throw new DBS_LogicException( DBS_LogicException::RELOAD_NOT_EXTANT );
+			
+		if( !$this->_maybeLoad( true ) )
+			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
+	}
+	
+	/**
+	 * Finds the entity in the backing store or creates it if not found -- not that
+	 * creating it does not automatically save it in the backing store.
+	 */
 	public function findOrCreate() {
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new Exception( "FindOrCreate called on non-unknown status" );
 			
-		if( $this->_maybeLoad() )
+		if( $this->_maybeLoad( false ) )
 			$this->_status = DBS_EntityBase::STATUS_EXTANT;
 		else
 			$this->_status = DBS_EntityBase::STATUS_NEW;
@@ -238,7 +257,7 @@ abstract class DBS_EntityBase {
 		if( $this->_status != DBS_EntityBase::STATUS_UNKNOWN )
 			return false;
 			
-		if( $this->_maybeLoad() ) {
+		if( $this->_maybeLoad( false ) ) {
 			$this->_status = DBS_EntityBase::STATUS_EXTANT;
 			return true;
 		} else {
@@ -258,7 +277,7 @@ abstract class DBS_EntityBase {
 			$this->save();
 	}
 	
-	protected function _maybeLoad() {
+	protected function _maybeLoad( $reload ) {
 		//allow this not to exist in case the enity has no associated mapper -- strict in memory or temporary entities
 		throw new DBS_LoginException( DBS_LogicException::NO_LOAD_DEFINED );
 	}
@@ -292,6 +311,7 @@ class DBS_LogicException extends DBS_Exception {
 	const NO_LOAD_DEFINED = 4;
 	const NO_SAVE_DEFINED = 5;
 	const FIND_NOT_UNKNOWN = 6;
+	const RELOAD_NOT_EXTANT = 7;
 	
 	static private $codeToMsg = array(
 		self::SAVE_INCOMPLETE_LOAD => 'Attempting to save entity resulting from an incomplete load/search',
@@ -300,6 +320,7 @@ class DBS_LogicException extends DBS_Exception {
 		self::NO_LOAD_DEFINED => "No loading mechanism has been defined for this entity.",
 		self::NO_SAVE_DEFINED => "No saving mechanism has been defined for this entity.",
 		self::FIND_NOT_UNKNOWN => "Find called on non-unknown status",
+		self::RELOAD_NOT_EXTANT => "Attempting to reload an entity that is in the backing store",
 		);
 	public function __construct( $code ) {
 		parent::__construct( self::$codeToMsg[$code], $code );
@@ -678,7 +699,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 		$into->__declExtant();
 		
 		_dbs_dbsource_result_acquire( $this->db, $this->res, $into, $this->table, $this->fields, $this->fieldLimit );
-		if( !$into->_set_load_keys() )
+		if( !$into->_set_load_keys( false ) )
 			$into->_logic_block_save = DBS_LogicException::SAVE_INCOMPLETE_LOAD;
 		return $into;
 	}

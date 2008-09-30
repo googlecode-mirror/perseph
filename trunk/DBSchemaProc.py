@@ -171,6 +171,9 @@ class Processor:
 					elif opt[0] == 'DEFAULT':
 						field.hasDefault = True
 						field.defaultValue = opt[1]
+						#TODO: only handle NULL if a raw string, not quoted
+						if field.defaultValue == 'NULL':
+							field.defaultValue = None
 					elif opt[0] == 'TITLE':
 						field.title = True
 					elif opt[0] == 'MAXLEN':

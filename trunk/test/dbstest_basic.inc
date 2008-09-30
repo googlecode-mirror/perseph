@@ -128,6 +128,17 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( "Two", $n->nameRef->name );
 	}
 	
+	function testNull() {
+		$n = DBSTest::createWithName( "NullGet" );
+		$this->assertEquals( null, $n->nameRef );
+		try {
+			$q = $n->dateTime;
+			$this->fail();
+		} catch( DBS_FieldException $ex ) {
+			$this->assertEquals( DBS_FieldException::UNAVAILABLE, $ex->getCode() );
+		}
+	}
+	
 	function testFindCreate() {
 		$q = DBSTest::createWithName( 'FindCreate' );
 		$q->add();

@@ -32,6 +32,12 @@ class DBS_Ref {
 	}
 }
 
+/**
+ * TODO: Ensure these things are actually copy/clone safe.  Currently all data is stored within arrays
+ * which are never reallocated, so in theory the *real* objects are always passed by reference (as deep
+ * copies are not done?)
+ * Some variables are however not arrays, and these need to be handled correctly.
+ */
 abstract class DBS_EntityBase {
 	
 	const STATUS_UNKNOWN = 0;
@@ -90,6 +96,15 @@ abstract class DBS_EntityBase {
 			return $this->_data_aliases[ $field ];
 			
 		throw new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );
+	}
+	
+	/**
+	 * Indicates whether the field is define on this entity, whether or not
+	 * it is actually set (contrast to __has)
+	 */
+	public function __defined( $field ) {
+		return isset( $this->_data_names[$field] )
+			|| isset( $this->_data_aliases[$field] );
 	}
 	
 	public function &__getref( $field ) {

@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS `basic`;
 `Decimal` DECIMAL( 10, 5 ) NOT NULL ,
 `Float` FLOAT NOT NULL ,
 `NameRef` INT( 2 ) NULL ,
+`NullStr` VARCHAR( 10 ) NULL,
 PRIMARY KEY ( `ID` ) ,
 UNIQUE (`Name`)
 );

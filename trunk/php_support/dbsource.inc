@@ -201,21 +201,24 @@ class MDB2DBSource implements DBSource {
 	public function quote( $value, $type ) {
 		$mtype = $this->getMDBType( $type );
 					
-		//TODO: convert Null for save
-			
-		switch( strtolower( $type ) ) {
-			case 'date':
-			case 'datetime':
-				@$halfraw = MDB2_Date::unix2mdbstamp( $value );
-				break;
+		if( $value === null ) {
+			$halfraw = null;
+		} else {
 				
-			case 'time':
-				$halfraw = _dbs_encode_time( $value );
-				break;
-				
-			default:
-				$halfraw = $value;
-				break;
+			switch( strtolower( $type ) ) {
+				case 'date':
+				case 'datetime':
+					@$halfraw = MDB2_Date::unix2mdbstamp( $value );
+					break;
+					
+				case 'time':
+					$halfraw = _dbs_encode_time( $value );
+					break;
+					
+				default:
+					$halfraw = $value;
+					break;
+			}
 		}
 		
 		$q = $this->mdb->quote( $halfraw, $mtype );

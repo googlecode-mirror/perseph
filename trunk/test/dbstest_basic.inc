@@ -143,7 +143,7 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( "Two", $n->nameRef->name );
 	}
 	
-	function testNull() {
+	function testNullAccess() {
 		$n = DBSTest::createWithName( "NullGet" );
 		$this->assertEquals( null, $n->nameRef );
 		try {
@@ -152,6 +152,17 @@ class DBSTest_Basic extends TestCase {
 		} catch( DBS_FieldException $ex ) {
 			$this->assertEquals( DBS_FieldException::UNAVAILABLE, $ex->getCode() );
 		}
+	}
+	
+	function testNullSaveLoad() {
+		$n = DBSTest::createWithName( "NullAdd" );
+		$n->nullStr = null;
+		$this->assertNull( $n->nullStr );
+		$n->add();
+		 
+		 $l = DBSTest::findWithID( $n->id );
+		 $this->assertNull( $l->nullStr );
+	
 	}
 	
 	function testFindCreate() {

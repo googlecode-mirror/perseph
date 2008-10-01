@@ -25,6 +25,7 @@ provider DBTest {
 		Decimal<Decimal>;
 		Float<Float>;
 		NameRef<Integer>;
+		NullStr<String>;
 	}
 	
 	table twokeys {
@@ -73,6 +74,7 @@ entity DBSTest {
 		NameRef<DBSName> ALLOW_NULL DEFAULT(NULL);
 		MemoryOnly<Integer>;
 		OtherDecimal<Decimal>;
+		NullStr<String> ALLOW_NULL;
 	}
 	
 	aliases {
@@ -113,6 +115,7 @@ mapper DBSTest {
 			
 			/* Link DB value directly to entity field record key */
 			@NameRef = NameRef.ID;
+			@NullStr = NullStr;
 		}
 	}
 }

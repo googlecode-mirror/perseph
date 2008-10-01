@@ -66,6 +66,17 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 123, $n->float );
 		$n->reload();
 		$this->assertEquals( 415, $n->float );
+		
+		//test some tricky scenarios (failed in practice)
+		$n = NullKey::createWithNothing( );
+		$n->decimal = 10;
+		$n->add();
+		$n->reload();
+		
+		$n = NullKey2::createWithNothing( );
+		$n->decimal = 11;
+		$n->add();
+		$n->reload();
 	}
 	
 	function testReloadDirty() {
@@ -497,6 +508,13 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 11, $q->decimal );
 		
 		$q->name = "nullkey" . time();
+		$q->save();
+		
+		//test when we set an explicit default of null (to match on null values in keys)
+		$q = NullKey2::createWithNothing();
+		$q->decimal = 10;
+		$q->add();
+		$q->decimal++;
 		$q->save();
 	}
 	

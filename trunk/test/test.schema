@@ -283,3 +283,26 @@ mapper NullKey {
 		}
 	}
 }
+
+entity NullKey2 {
+	fields {
+		ID<Integer> ALT_RECORD_KEY;
+		/* See the NOTE on getKeyBlock in DBSchemaPHP to understand why this is such
+			a special case -- the above in NullKey also is, but as there is no default it isn't
+			considered under normal circumstances anyways.  This covers a rather special
+			use case -- but a nonetheless valid one. */
+		Name<String> ALT_RECORD_KEY ALLOW_NULL DEFAULT(NULL);	/*Unique in DB*/
+		Decimal<Decimal>;
+	}
+}
+
+mapper NullKey2 {
+	provider DBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Name = Name;
+			@Decimal = Decimal;
+		}
+	}
+}

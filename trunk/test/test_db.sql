@@ -41,6 +41,7 @@ DROP TABLE IF EXISTS `convert`;
 `Labels` VARCHAR( 255 ) NOT NULL ,
 `Index` INT( 11 ) NOT NULL AUTO_INCREMENT ,
 `LabelCount` INT( 5 ) NOT NULL ,
+`Code` VARCHAR( 5 ) DEFAULT('xx-yy'),
 PRIMARY KEY ( `Index` )
 ) ;
 

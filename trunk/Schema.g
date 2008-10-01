@@ -130,10 +130,14 @@ mapperUsing
 	:	USING id OPENBLOCK mapperField* CLOSEBLOCK -> ^(USING id mapperField*);
 	
 mapperFieldExpr
+	:	mapperFieldSimpleExpr
+	|	id typeDef  '(' mapperFieldSimpleExpr ( ',' mapperFieldSimpleExpr )* ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr+)
+	;
+
+mapperFieldSimpleExpr
 	:	'@' id -> ^(DBFIELDNAME id)
 	|	id -> ^(ENTFIELDNAME id)
 	|	id '.' id -> ^(ENTSUBFIELD id id)
-	|	id typeDef  '(' mapperFieldExpr ')' -> ^(FUNCTION id typeDef mapperFieldExpr)
 	;
 
 // $>

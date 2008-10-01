@@ -148,6 +148,8 @@ entity DBSStrings {
 			an entity. (em: I'm not so happy about this, it should have some kind of DEFAULT(@SAVE) marked! */
 		MyID<Integer> RECORD_KEY;
 		Labels<Array<String>>;
+		Class<String> MAXLEN(2);
+		Category<String> MAXLEN(2);
 	}
 }
 
@@ -160,6 +162,8 @@ mapper DBSStrings {
 			/* Use a custom conversion funtion to convert from/to a comma separated string to/from an array */
 			convert_labels<Array<String>>( @Labels ) = Labels;
 			@LabelCount <= count_labels<Integer>( Labels );
+			
+			/*@Code = concat_code<String>( Class, Category );*/
 		}
 	}
 }

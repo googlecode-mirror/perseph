@@ -163,6 +163,9 @@ mapper DBSStrings {
 			convert_labels<Array<String>>( @Labels ) = Labels;
 			@LabelCount <= count_labels<Integer>( Labels );
 			
+			/* The below simply lacks a unifying concept of how this would work with relation to searching,
+				loading, and saving. It may be beyond what Persephone is currently trying to do, so it won't
+				be implemented now.*/
 			/*@Code = concat_code<String>( Class, Category );*/
 		}
 	}

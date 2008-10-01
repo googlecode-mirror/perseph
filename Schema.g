@@ -131,7 +131,8 @@ mapperUsing
 	
 mapperFieldExpr
 	:	mapperFieldSimpleExpr
-	|	id typeDef  '(' mapperFieldSimpleExpr ( ',' mapperFieldSimpleExpr )* ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr+)
+	//|	id typeDef  '(' mapperFieldSimpleExpr ( ',' mapperFieldSimpleExpr )* ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr+)
+	|	id typeDef  '(' mapperFieldSimpleExpr ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr)
 	;
 
 mapperFieldSimpleExpr

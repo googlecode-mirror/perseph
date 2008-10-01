@@ -1017,6 +1017,11 @@ function &_${inst}_privConstruct() {
 	# looks through "this" for keys and outputs code to collect all of those
 	# keys via a provided statement
 	#
+	# NOTE: To deal with standard DB practice of allowing duplicate NULL values
+	# in Key fields, something of type KEY_TYPE_ALT with a NULL value will not
+	# be considered a key.  This does not apply to KEY_TYPE_RECORD since in
+	# that case the combined key must be unique, not the individual column.
+	#
 	# @param fields [in] the fields to consider for keys
 	# @param checkAdding [in] allow that load only fields to be absent if "$adding" is true
 	# @param statement [in] assignment statement for each key
@@ -1039,8 +1044,11 @@ function &_${inst}_privConstruct() {
 					)
 			elif key.keyType == DBSchema.KEY_TYPE_ALT:
 				buf += self._if(
-					self._this_has( key ),
-					statement( key )
+						self._this_has( key ),
+						self._if(
+							"$this->%s !== null" % key.phpName,
+							statement( key )
+						)
 					)
 			else:
 				raise Exception, "Unsupported key type in entity:  %s " % key.name

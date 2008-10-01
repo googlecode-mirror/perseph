@@ -469,7 +469,10 @@ function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields 
 			
 		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $into->__get( $member ) );
-		$where .= $db->escapeColumn( $dbname ) . ' = ' . $db->quote( $value, $dbtype );
+		if( $value === null )
+			$where .= $db->escapeColumn( $dbname ) . ' IS NULL';
+		else
+			$where .= $db->escapeColumn( $dbname ) . ' = ' . $db->quote( $value, $dbtype );
 	}	
 	
 	$cols = _dbs_dbsource_sql_col( $db, $fields );
@@ -503,11 +506,23 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 		list( $member, $dbname, $dbtype ) = $tuple;
 			
 		if( $q instanceof DBS_Where_Match ) {
-			$cnv = dbs_cnvfunc_entity_to_db( $proto, $member, $table[1], $dbname );
-			$value = $proto->$cnv( $q->value );
+			if( $q->value === null ) {
+				//special null wackiness
+				if( $q->op == '=' ) {
+					$op = 'IS';
+					$value = 'NULL';
+				} else if( $q->op == '!=' ) {
+					$op = 'IS NOT';
+					$value = 'NULL';
+				} else
+					throw new Exception( "NULL can only be matched with = or !=" );
+			} else {
+				$cnv = dbs_cnvfunc_entity_to_db( $proto, $member, $table[1], $dbname );
+				$value = $proto->$cnv( $q->value );
 			
-			$op = $q->op;	//TODO: Check for correctness
-			$value = $db->quote( $value, $dbtype );
+				$op = $q->op;	//TODO: Check for correctness
+				$value = $db->quote( $value, $dbtype );
+			}
 		} else if( $q instanceof DBS_Where_MatchString ) {
 			if( $dbtype !== 'String' && $dbtype !== 'Text' )
 				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $dbtype );
@@ -761,8 +776,10 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 		list( $member, $dbname, $dbtype, $value ) = $tuple;
 		
 		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
+		//don't pass null's to quote, since it actually changes the syntax, quoting won't help :(
+		$unquoted = $into->$cnv( $value );
+		$keyvals[] = $unquoted === null ? null : $db->quote( $unquoted, $dbtype );
 		$keycols[] = $dbname;
-		$keyvals[] = $db->quote( $into->$cnv( $value ), $dbtype );
 	}
 	
 	//if key based we must check for existence first
@@ -772,7 +789,10 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields,
 			if( $i )
 				$keywhere .= ' AND ';
 			$keywhere .= $db->escapeColumn( $keycols[$i] );
-			$keywhere .= '=' . $keyvals[$i];
+			if( $keyvals[$i] === null )
+				$keywhere .= ' IS NULL';
+			else
+				$keywhere .= '=' . $keyvals[$i];
 		}
 		$sql = "SELECT Count(*) AS Count FROM {$db->escapeTable($table[0])} WHERE $keywhere";
 		$res = $db->query( $sql );

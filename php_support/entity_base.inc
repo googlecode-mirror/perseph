@@ -45,6 +45,10 @@ abstract class DBS_EntityBase {
 	const STATUS_EXTANT = 2;
 	const STATUS_DELETED = 3;	//should prevent all operations
 	
+	/* a special LOADING case is needed so that __getref doesn't incorrectly
+		attempt to load data while already loading. */
+	protected $_isLoading = false;
+	
 	protected $_status = self::STATUS_UNKNOWN;
 	
 	protected $_data = array();	//to hold the actual field data
@@ -95,7 +99,7 @@ abstract class DBS_EntityBase {
 			return $this->_data[$field];
 			
 		//attempt to load if we may already exist
-		if( $this->_status === self::STATUS_UNKNOWN && $this->_maybeLoad( false ) ) {
+		if( $this->_status === self::STATUS_UNKNOWN && !$this->_isLoading && $this->maybeLoad( false ) ) {
 			if( array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
 				return $this->_data[$field];
 		}
@@ -179,7 +183,7 @@ abstract class DBS_EntityBase {
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new DBS_LogicException( DBS_LogicException::FIND_NOT_UNKNOWN );
 			
-		if( !$this->_maybeLoad( false ) )
+		if( !$this->maybeLoad( false ) )
 			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
 		$this->_status = self::STATUS_EXTANT;
 	}
@@ -192,8 +196,21 @@ abstract class DBS_EntityBase {
 		if( $this->_status != self::STATUS_EXTANT )
 			throw new DBS_LogicException( DBS_LogicException::RELOAD_NOT_EXTANT );
 			
-		if( !$this->_maybeLoad( true ) )
+		if( !$this->maybeLoad( true ) )
 			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
+	}
+	
+	/**
+	 * Use this to ensure teh status is correctly set all the time, since _maybeLoad
+	 * will have to change the status to LOADING.
+	 */
+	protected function maybeLoad( $reload ) {
+		$ret = $this->_maybeLoad( $reload );
+		if( $ret )
+			$this->_status = DBS_EntityBase::STATUS_EXTANT;
+		else
+			$this->_status = DBS_EntityBase::STATUS_NEW;
+		return $ret;
 	}
 	
 	/**
@@ -204,10 +221,7 @@ abstract class DBS_EntityBase {
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new Exception( "FindOrCreate called on non-unknown status" );
 			
-		if( $this->_maybeLoad( false ) )
-			$this->_status = DBS_EntityBase::STATUS_EXTANT;
-		else
-			$this->_status = DBS_EntityBase::STATUS_NEW;
+		return $this->maybeLoad( false);
 	}
 	
 	public function add() {
@@ -242,13 +256,7 @@ abstract class DBS_EntityBase {
 		if( $this->_status != DBS_EntityBase::STATUS_UNKNOWN )
 			return false;
 			
-		if( $this->_maybeLoad( false ) ) {
-			$this->_status = DBS_EntityBase::STATUS_EXTANT;
-			return true;
-		} else {
-			$this->_status = DBS_EntityBase::STATUS_NEW;
-			return false;
-		}
+		return $this->maybeLoad( false );
 	}
 	
 	/**
@@ -264,11 +272,11 @@ abstract class DBS_EntityBase {
 	
 	protected function _maybeLoad( $reload ) {
 		//allow this not to exist in case the enity has no associated mapper -- strict in memory or temporary entities
-		throw new DBS_LoginException( DBS_LogicException::NO_LOAD_DEFINED );
+		throw new DBS_LogicException( DBS_LogicException::NO_LOAD_DEFINED );
 	}
 	
 	protected function _save( $adding ) {
-		throw new DBS_LoginException( DBS_LogicException::NO_SAVE_DEFINED );
+		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
 	}
 	
 	abstract protected function _checkType( $field, $value );

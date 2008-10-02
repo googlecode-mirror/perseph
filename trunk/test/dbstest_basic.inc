@@ -518,6 +518,16 @@ class DBSTest_Basic extends TestCase {
 		$q->save();
 	}
 	
+	function testFindNullKey() {
+		try {
+			//this exercises an unusual case with Default values in a load key
+			$q = NullKey2::findWithID( 0 );	//doesn't exist
+			$this->fail();
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::NOT_IN_DB, $ex->getCode() );
+		}
+	}
+	
 	function testNonSaves() {
 		$q = NullKey::createWithNothing();
 		try {

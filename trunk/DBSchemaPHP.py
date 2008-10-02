@@ -193,7 +193,7 @@ class PHPEmitter:
 static public function &findWith${keyName}( $keyParamStr ) {
 	$$ret =& self::with${keyName}( $keyParamStr );
 	
-	if( !$$ret->_maybeLoad( false ) )
+	if( !$$ret->maybeLoad( false ) )
 		throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, " ($keyName) / ($keyParamStr)" );
 	$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
 		
@@ -202,12 +202,7 @@ static public function &findWith${keyName}( $keyParamStr ) {
 
 static public function &findOrCreateWith${keyName}( $keyParamStr ) {
 	$$ret =& self::with${keyName}($keyParamStr);
-	
-	if( $$ret->_maybeLoad( false ) )
-		$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
-	else
-		$$ret->_status = DBS_EntityBase::STATUS_NEW;
-	
+	$$ret->maybeLoad( false );
 	return $$ret;
 }
 
@@ -312,22 +307,26 @@ public function  _set_load_keys( $$reload ) {
 }
 
 protected function _maybeLoad( $$reload ) {
+	$$this->_isLoading = true;
 	$$this->_set_load_keys( $$reload );
 		
-	if( count( $$this->_load_keys ) == 0 )
+	if( count( $$this->_load_keys ) == 0 ) {
+		$$this->_isLoading = false;
 		throw new Exception( "No keys specified/set for loading" );
+	}
 		
-	if( !dbs_dbsource_load( 
+	$$ret = dbs_dbsource_load( 
 		self::getDB(),
 		$table,
 		$$this, 
 		$$this->_load_keys,
 		$members
-		) ) {
+		);
+	$$this->_isLoading = false;	//TODO: should we catch exceptions and turn this off as well??
+	if( !$$ret ) {
 		$$this->_load_keys = null;	//reset these keys as we didn't actually load
 		return false;
 	}
-		
 	return true;
 }
 """, { 

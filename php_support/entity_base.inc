@@ -339,7 +339,10 @@ class DBS_DBException extends DBS_Exception {
 		
 	public $sql;	//a possible associated SQL statement, or null if none
 	public function __construct( $code, $sql = null, $msg = '' ) {
-		parent::__construct( self::$codeToMsg[$code] . $msg, $code );
+		$fullmsg =  self::$codeToMsg[$code] . $msg;
+		if( $sql !== null )
+			$fullmsg .= ": $sql";
+		parent::__construct( $fullmsg, $code );
 		$this->sql = $sql;
 	}
 }
@@ -549,6 +552,9 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 		return $db->escapeColumn( $dbname ) . $op . $value;
 	} 
 	
+	if( $q instanceof DBS_Where_MatchSQL )
+		return $q->sql;
+		
 	if( $q instanceof DBS_Where_Group ) {
 		$buf = " ( ";
 		for( $i =0; $i < count( $q->members); $i++ ) {

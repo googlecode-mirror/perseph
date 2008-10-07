@@ -69,6 +69,17 @@ class DBS_Query {
 		return self::_group( "AND", $args );
 	}
 	
+	/**
+	 * Allows custom SQL to be added to the final query. This can be used
+	 * in conjuction with groups as well.
+	 *
+	 * Note that no escaping of the provided SQL will be done, you will be
+	 * responsible for that.
+	 */
+	static public function matchSQL( $sql ) {
+		return new DBS_Where_MatchSQL( $sql );
+	}
+	
 	static private function _group( $type, $args ) {
 		//support passing array as well as multi-params
 		if( count( $args ) === 1 && is_array( $args[0] ) )
@@ -133,6 +144,11 @@ class DBS_Query {
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// NOTE: Items below this line are not meant to be used directly, instead only the above class should
+// be used to create these objects.  They may change at any time and are not considered part of the
+// public API.
+
 class DBS_Where_Item {
 }
 
@@ -141,6 +157,14 @@ class DBS_Where_Member extends DBS_Where_Item {
 }
 
 class DBS_Where_MatchAll extends DBS_Where_Item {
+}
+
+class DBS_Where_MatchSQL extends DBS_Where_Item {
+	public $sql;	//<String>
+	
+	public function __construct( $sql ) {
+		$this->sql = $sql;
+	}
 }
 
 class DBS_Where_Match extends DBS_Where_Member {

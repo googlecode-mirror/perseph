@@ -111,8 +111,8 @@ class PHPEmitter:
 		self.wr( "require_once 'persephone/query.inc';\n" );
 		
 	def genEntity( self, en ):
+		self.genEntityTypeDescriptor( en )
 		self.genOpenEntityClass( en )
-		self.genEntityDataTypes( en )
 		if en.name in self.sc.mappers:
 			self.genMapper( en, self.sc.mappers[en.name] )
 		self.genCloseEntityClass( en )
@@ -519,10 +519,14 @@ static public function &createWithNothing() {
 		
 	##################################################################
 	# 
-	def genEntityDataTypes( self, en ):
-		self.wr( "//*** genEntityDataTypes\n" )
+	def genEntityTypeDescriptor( self, en ):
+		self.wrt( """
+//*** genEntityTypeDescriptor		
+class ${class}TypeDescriptor extends DBS_TypeDescriptor {
+""", { 'class': en.phpClassName } )
+		
 		##
-		self.wr( "\nprotected $_data_names = array(\n" )
+		self.wr( "\npublic $names = array(\n" )
 		for field in en.fields.itervalues():
 			self.wrt(
 """'$name' => array( $nonbasetype, $basetype ),
@@ -534,7 +538,7 @@ static public function &createWithNothing() {
 		self.wr( ');\n' )
 		
 		##
-		self.wr( "\nprotected $_data_defaults = array(\n" )
+		self.wr( "\npublic $defaults = array(\n" )
 		for field in en.fields.itervalues():
 			if not field.hasDefault:
 				continue
@@ -546,7 +550,7 @@ static public function &createWithNothing() {
 		self.wr( ');\n' )
 				
 		##
-		self.wr( "\nprotected $_data_aliases = array(\n" )
+		self.wr( "\npublic $aliases = array(\n" )
 		for alias in en.aliases.iteritems():
 			self.wrt("""	'$alias' => '$name',\n""", {
 				'alias': self.memberName(alias[0]),
@@ -557,7 +561,7 @@ static public function &createWithNothing() {
 		# Produce the checkType function. This produces a switch statement on
 		# the field name and checks the type of the field in the case block.
 		self.wr( """	
-	protected function _checkType( $field, $value ) {
+	public function checkType( $field, $value ) {
 		switch( $field ) {
 		""")
 		for field in en.fields.itervalues():
@@ -585,7 +589,9 @@ static public function &createWithNothing() {
 			self.wr( "\tbreak;\n" );
 		self.wr("""
 		}
-	}
+	} //end checkType
+	
+} //end class
 		""")
 	
 	##################################################################
@@ -593,7 +599,10 @@ static public function &createWithNothing() {
 	def genOpenEntityClass( self, en ):
 		self.wrt("""
 class $class extends DBS_EntityBase {
+	static public $$typeDescriptor;
+	
 	protected function __construct() {
+		$$this->_data_type = self::$$typeDescriptor;
 		parent::__construct();
 	} 
 	
@@ -608,12 +617,14 @@ class $class extends DBS_EntityBase {
 	def genCloseEntityClass( self, en ):
 		self.wrt( 
 """} //end of class
+$class::$$typeDescriptor = new ${class}TypeDescriptor();
 
 function &_${inst}_privConstruct() {
 	return ${inst}::_privConstruct();
 }
 
-""", {	'inst': en.phpInstClassName	} )
+""", { 'class': en.phpClassName,
+		'inst': en.phpInstClassName	} )
 		
 		
 		

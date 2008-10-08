@@ -32,6 +32,14 @@ class DBS_Ref {
 	}
 }
 
+abstract class DBS_TypeDescriptor {
+	public $names = array();	//names=>types of all members, to be overridden in derived class
+	public $defaults = array();	//names=>defaults of all members with defaults
+	public $aliases = array();	//alias=>name of available aliases
+	
+	abstract protected function checkType( $field, $value );
+}
+
 /**
  * TODO: Ensure these things are actually copy/clone safe.  Currently all data is stored within arrays
  * which are never reallocated, so in theory the *real* objects are always passed by reference (as deep
@@ -40,24 +48,21 @@ class DBS_Ref {
  */
 abstract class DBS_EntityBase {
 	
+	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
+	
 	const STATUS_UNKNOWN = 0;
 	const STATUS_NEW = 1;
 	const STATUS_EXTANT = 2;
 	const STATUS_DELETED = 3;	//should prevent all operations
+	protected $_status = self::STATUS_UNKNOWN;
 	
 	/* a special LOADING case is needed so that __getref doesn't incorrectly
 		attempt to load data while already loading. */
 	protected $_isLoading = false;
 	
-	protected $_status = self::STATUS_UNKNOWN;
-	
-	protected $_data = array();	//to hold the actual field data
-	protected $_data_has = array();	//fields which are actually set (to distinguish null as a real value)
-	protected $_data_dirty = array();	//has the field be modified or changed in some way
-				
-	protected $_data_names = array();	//names=>types of all members, to be overridden in derived class
-	protected $_data_defaults = array();	//names=>defaults of all members with defaults
-	protected $_data_aliases = array();	//alias=>name of available aliases
+	protected $_data = array();	//array<name=>Value> to hold the actual field data
+	protected $_data_has = array();	//array<name=>Bool> fields which are actually set (to distinguish null as a real value)
+	protected $_data_dirty = array();	//array<name=>Bool> has the field be modified or changed in some way
 	
 	protected $_load_keys = null;	//which keys were used to load this instance
 	
@@ -75,10 +80,10 @@ abstract class DBS_EntityBase {
 	}
 	
 	private function _fieldName( $field ) {
-		if( isset( $this->_data_names[ $field ] ) )
+		if( isset( $this->_data_type->names[ $field ] ) )
 			return $field;
-		if( isset( $this->_data_aliases[ $field ] ) )
-			return $this->_data_aliases[ $field ];
+		if( isset( $this->_data_type->aliases[ $field ] ) )
+			return $this->_data_type->aliases[ $field ];
 			
 		throw new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );
 	}
@@ -88,8 +93,8 @@ abstract class DBS_EntityBase {
 	 * it is actually set (contrast to __has)
 	 */
 	public function __defined( $field ) {
-		return isset( $this->_data_names[$field] )
-			|| isset( $this->_data_aliases[$field] );
+		return isset( $this->_data_type->names[$field] )
+			|| isset( $this->_data_type->aliases[$field] );
 	}
 	
 	public function &__getref( $field ) {
@@ -105,8 +110,8 @@ abstract class DBS_EntityBase {
 		}
 			
 		//defaults must come after attempting to load, since real data overrides a default
-		if( array_key_exists( $field, $this->_data_defaults ) )
-			return $this->_data_defaults[$field];
+		if( array_key_exists( $field, $this->_data_type->defaults ) )
+			return $this->_data_type->defaults[$field];
 			
 		throw new DBS_FieldException( $field, DBS_FieldException::UNAVAILABLE );
 	}
@@ -122,10 +127,10 @@ abstract class DBS_EntityBase {
 		$field = $this->_fieldName( $field );
 			
 		if( $value instanceof DBS_Ref ) {
-			$this->_checkType( $field, $value->ref );
+			$this->_data_type->checkType( $field, $value->ref );
 			$this->_data[$field] =& $value->ref;
 		} else {
-			$this->_checkType( $field, $value );
+			$this->_data_type->checkType( $field, $value );
 			$this->_data[$field] = $value;
 		}
 		$this->_data_has[$field] = true;
@@ -146,7 +151,7 @@ abstract class DBS_EntityBase {
 		$field = $this->_fieldName( $field );
 			
 		return array_get_default( $field, $this->_data_has, false )
-			|| array_key_exists( $field, $this->_data_defaults );
+			|| array_key_exists( $field, $this->_data_type->defaults );
 	}
 	
 	public function __isset( $field ) {
@@ -168,12 +173,12 @@ abstract class DBS_EntityBase {
 			throw new Exception( "isDirty is ambiguous when status is unknown" );
 		$field = $this->_fieldName( $field );
 		return array_get_default( $field, $this->_data_dirty, false )
-			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_defaults ) );
+			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
 	}
 	
 	public function __getTypeData( $field ) {
 		$field = $this->_fieldName( $field );
-		return $this->_data_names[$field];
+		return $this->_data_type->names[$field];
 	}
 	
 	/**
@@ -278,8 +283,6 @@ abstract class DBS_EntityBase {
 	protected function _save( $adding ) {
 		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
 	}
-	
-	abstract protected function _checkType( $field, $value );
 }
 
 /**

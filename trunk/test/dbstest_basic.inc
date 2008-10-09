@@ -408,7 +408,7 @@ class DBSTest_Basic extends TestCase {
 		
 		//also test via searching, since it uses an alternate load mechanism
 		$allq = DBSTest::search( DBS_Query::match( 'name', 'Yet Newer' ) )->loadAll();
-		$q =& $allq[0];
+		$q = $allq[0];
 		$q->name = 'Again Newer';
 		$q->decimal = 12345;
 		$q->save();
@@ -418,7 +418,7 @@ class DBSTest_Basic extends TestCase {
 		
 		//okay, check case of attempting to save a value from incomplete search
 		$allq = DBSTest::search( DBS_Query::match( 'decimal', 12345 ), DBS_Query::fieldLimit( 'decimal' ) )->loadAll();
-		$q =& $allq[0];
+		$q = $allq[0];
 		$q->decimal = 12;
 		try {
 			$q->save();

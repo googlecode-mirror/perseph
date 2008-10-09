@@ -64,7 +64,8 @@ entity DBSTest {
 		Name<String> 
 			ALT_RECORD_KEY TITLE MAXLEN(50)
 			LABEL("Logical Name")
-			DESC("A description which can be used for forms or for general reference.");
+			DESC("A description which can be used for forms or for general reference.")
+			ALLOW_NULL;
 		Date<Date>;
 		Time<Time>;
 		DateTime<DateTime> ALLOW_NULL;

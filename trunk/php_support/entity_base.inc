@@ -40,12 +40,6 @@ abstract class DBS_TypeDescriptor {
 	abstract protected function checkType( $field, $value );
 }
 
-/**
- * TODO: Ensure these things are actually copy/clone safe.  Currently all data is stored within arrays
- * which are never reallocated, so in theory the *real* objects are always passed by reference (as deep
- * copies are not done?)
- * Some variables are however not arrays, and these need to be handled correctly.
- */
 abstract class DBS_EntityBase {
 	
 	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
@@ -118,6 +112,15 @@ abstract class DBS_EntityBase {
 	
 	public function __get( $field ) {
 		return $this->__getref( $field );
+	}
+	
+	/**
+	 * Objects in PHP 5 are like C pointers in that the actual object will never actually by
+	 * copied in normal semantics, only via a clone operator.  In the persephone sense
+	 * this doesn't have a clear meaning and is thus blocked.
+	 */
+	public function __clone() {
+		throw new Exception( "Entity instances cannot be cloned." );
 	}
 	
 	/**
@@ -444,21 +447,21 @@ function _dbs_dbsource_sql_col( &$db, $fields, $fieldLimit = null ) {
 	return $cols;
 }
 
-function dbs_cnvfunc_db_to_entity( &$entity, $member, $table, $dbname ) {
+function dbs_cnvfunc_db_to_entity( $entity, $member, $table, $dbname ) {
 	$cnv = "_cnv_F{$table}_{$dbname}_T{$member}";
 	if( !method_exists( $entity, $cnv ) )
 		throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
 	return $cnv;
 }
 
-function dbs_cnvfunc_entity_to_db( &$entity, $member, $table, $dbname ) {
+function dbs_cnvfunc_entity_to_db( $entity, $member, $table, $dbname ) {
 	$cnv = "_cnv_F{$member}_T{$table}_{$dbname}";
 	if( !method_exists( $entity, $cnv ) )
 		throw new Exception( "Generated PHP files are invalid, incorrect use, function does not exist: $cnv" );
 	return $cnv;
 }
 
-function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, $fieldLimit = null ) {
+function _dbs_dbsource_result_acquire( &$db, $result, $into, $table, $fields, $fieldLimit = null ) {
 	foreach( $fields as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
@@ -474,7 +477,7 @@ function _dbs_dbsource_result_acquire( &$db, &$result, &$into, $table, $fields, 
 	}
 }
 
-function dbs_dbsource_load( &$db, $table, DBS_EntityBase &$into, $keys, $fields ) {
+function dbs_dbsource_load( &$db, $table, DBS_EntityBase $into, $keys, $fields ) {
 	$where = '';
 	foreach( $keys as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
@@ -511,7 +514,7 @@ function _find_member( $member, $fields ) {
 	return null;
 }
 
-function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto ) {
+function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto ) {
 	if( $q instanceof DBS_Where_Member ) {
 		//TODO: This should actually be *ALL* matching fields!
 		$tuple = _find_member( $q->member, $fields );
@@ -572,7 +575,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, &$proto 
 	throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 }
 
-function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) {
+function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, $proto ) {
 	$qWhere = null;
 	$qSort = null;
 	$qLimit = null;
@@ -641,7 +644,7 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, &$proto ) 
 }
 
 function dbs_dbsource_search( &$db, $table, $item_construct, $search_fields, $load_fields, $opts ) {
-	$proto =& $item_construct();
+	$proto = $item_construct();
 	list( $dbWhere, $dbSort, $dbLimit, $fieldLimit ) = _dbs_dbsource_extract_options( $db, $table, $search_fields, $opts, $proto );
 
 	$cols = _dbs_dbsource_sql_col( $db, $load_fields, $fieldLimit );
@@ -708,7 +711,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 		return $ret;
 	}
 	
-	public function &current() {
+	public function current() {
 		//PHP: it seems current is called before a call to next in foreach (no docs available on this behaviour however)
 		if( $this->start )
 			$this->next();
@@ -717,7 +720,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 			throw new Exception( "Attempting to get current item on non-started / completed DB request" );
 		
 		$c = $this->item_construct;
-		$into =& $c();
+		$into = $c();
 		$into->__declExtant();
 		
 		_dbs_dbsource_result_acquire( $this->db, $this->res, $into, $this->table, $this->fields, $this->fieldLimit );
@@ -756,7 +759,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 }
 
 function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
-	$proto =& $item_construct();
+	$proto = $item_construct();
 	list( $dbWhere, $dbSort, $dbLimit ) = _dbs_dbsource_extract_options( $db, $table, $fields, $opts, $proto );
 	$sql = "DELETE FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->exec( $sql );
@@ -768,7 +771,7 @@ function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
  * Support function for _save created by phpemitter
  *
  */
-function dbs_dbsource_save( &$db, $table, DBS_EntityBase &$into, $keys, $fields, $lastInsert ) {
+function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, $lastInsert ) {
 	$cols = array();
 	$vals = array();
 	$keycols = array();

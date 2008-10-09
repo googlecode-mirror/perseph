@@ -31,12 +31,12 @@ abstract class DBS_FormBase {
 	/**
 	 * Extracts data from the form into the entity provided.
 	 */
-	abstract public function extract( &$entity );
+	abstract public function extract( $entity );
 	
 	/**
 	 * Take the values from the entity and put them in the form
 	 */
-	abstract public function inject( &$entity );
+	abstract public function inject( $entity );
 	
 	/**
 	 * Obtains what action was called on this form. Note that
@@ -220,7 +220,7 @@ function _dbs_form_loadentityselect( $results, $key, $text ) {
  *			memberName -> value
  *		If value is null the item will not be set (this is for convenience)
  */
-function &dbs_standard_form( $formclass, $entitykey, $defaultsForNew = null ) {
+function dbs_standard_form( $formclass, $entitykey, $defaultsForNew = null ) {
 	if( !call_user_func( "$formclass::hasAction" ) ) {
 		$key = array_get_default( $entitykey, $_REQUEST, null );	//TODO: unlike the get_request_def this doesn't handle encoding correctly!!!
 		$entityname = eval( "return $formclass::ENTITY;" );

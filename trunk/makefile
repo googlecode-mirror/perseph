@@ -13,10 +13,15 @@ GENDIR=test/gen
 $(GENDIR):
 	mkdir $(GENDIR)
 	
-.PHONY: test
-test: test-build
-	php $(TESTDIR)/alltests.php
+.PHONY: test phptest webtest
+test: phptest webtest
 	
+phptest: test-build
+	php $(TESTDIR)/alltests.php
+
+webtest: test-build
+	cd $(TESTDIR) && testplan web_sanity.test
+
 test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file

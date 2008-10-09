@@ -190,8 +190,8 @@ class PHPEmitter:
 		self.wr( "//*** genKeyPart\n" )
 		#Emit the finder to load from the DB (TODO: ensure only one record exists!)
 		self.wrt("""
-static public function &findWith${keyName}( $keyParamStr ) {
-	$$ret =& self::with${keyName}( $keyParamStr );
+static public function findWith${keyName}( $keyParamStr ) {
+	$$ret = self::with${keyName}( $keyParamStr );
 	
 	if( !$$ret->maybeLoad( false ) )
 		throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, " ($keyName) / ($keyParamStr)" );
@@ -200,20 +200,20 @@ static public function &findWith${keyName}( $keyParamStr ) {
 	return $$ret;
 }
 
-static public function &findOrCreateWith${keyName}( $keyParamStr ) {
-	$$ret =& self::with${keyName}($keyParamStr);
+static public function findOrCreateWith${keyName}( $keyParamStr ) {
+	$$ret = self::with${keyName}($keyParamStr);
 	$$ret->maybeLoad( false );
 	return $$ret;
 }
 
-static public function &createWith${keyName}($keyParamStr) {
-	$$ret =& self::with${keyName}($keyParamStr);
+static public function createWith${keyName}($keyParamStr) {
+	$$ret = self::with${keyName}($keyParamStr);
 	$$ret->_status = DBS_EntityBase::STATUS_NEW;
 	return $$ret;
 }
 
 //create an object with the specified key (no other fields will be loaded until needed)
-static public function &with${keyName}($keyParamStr) {
+static public function with${keyName}($keyParamStr) {
 	$$ret = new $instClassName();
 	$keyAssignBlock
 	return $$ret;
@@ -505,12 +505,12 @@ public function delete() {
 	def genEmpty( self, en, loc ):
 		self.wr( "//*** genEmpty\n" )
 		self.wrt("""
-static public function &withNothing() {
+static public function withNothing() {
 	$$ret = new $class();
 	return $$ret;
 }
 
-static public function &createWithNothing() {
+static public function createWithNothing() {
 	$$ret = new $class();
 	$$ret->_status = DBS_EntityBase::STATUS_NEW;
 	return $$ret;
@@ -606,7 +606,7 @@ class $class extends DBS_EntityBase {
 		parent::__construct();
 	} 
 	
-	static public function &_privConstruct() {
+	static public function _privConstruct() {
 		$$item = new $inst();
 		return $$item;
 	}
@@ -615,11 +615,10 @@ class $class extends DBS_EntityBase {
 		} )
 
 	def genCloseEntityClass( self, en ):
-		self.wrt( 
-"""} //end of class
+		self.wrt( """} //end of class
 $class::$$typeDescriptor = new ${class}TypeDescriptor();
 
-function &_${inst}_privConstruct() {
+function _${inst}_privConstruct() {
 	return ${inst}::_privConstruct();
 }
 
@@ -643,25 +642,25 @@ function &_${inst}_privConstruct() {
 		
 		private $$createFrom;
 		
-		protected function __construct( &$$form ) {
+		protected function __construct( $$form ) {
 			parent::__construct($$form);
 		}
 		
-		static public function &fromRequest() {
-			$$ret =& self::_setup();
+		static public function fromRequest() {
+			$$ret = self::_setup();
 			$$ret->isNew = self::isNew();
 			return $$ret;
 		}
 		
 		//
-		static public function &create( $$from = null ) {
-			$$ret =& self::_setup();
+		static public function create( $$from = null ) {
+			$$ret = self::_setup();
 			$$ret->createFrom = $$from;
 			$$ret->isNew = $$from === null || $$from->isNew();
 			return $$ret;
 		}
 		
-		static private function &_setup( ) {
+		static private function _setup( ) {
 			$$form = new HTML_QuickForm( '${class}', 'POST', '', '', 
 				array( 'class' => 'dbsform' ) );
 		""", { 'class': form.phpClassName,
@@ -702,17 +701,17 @@ function &_${inst}_privConstruct() {
 		
 		protected function addActions() {
 			if( $$this->isNew )
-				$$submit[] =& $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
+				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
 			else
-				$$submit[] =& $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
+				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
 			$delete
 			$$this->form->addGroup( $$submit, DBS_FormBase_QuickForm::T_SUBMITROW );
 		}
 		
-		public function inject( &$$entity, $$overrideRequest = false ) {
+		public function inject( $$entity, $$overrideRequest = false ) {
 			$$values = array();
 		""",{ 'class': form.phpClassName,
-				'delete': '$submit[] =& $this->form->createElement( \'submit\', DBS_FormBase_QuickForm::T_ACTION_DELETE, \'Delete\' );' if form.allowDelete else '',
+				'delete': '$submit[] = $this->form->createElement( \'submit\', DBS_FormBase_QuickForm::T_ACTION_DELETE, \'Delete\' );' if form.allowDelete else '',
 				 })
 				
 		for formfield in form.fields:
@@ -738,11 +737,11 @@ function &_${inst}_privConstruct() {
 				$$this->form->setDefaults( $$values );
 		}
 	
-		public function extractKeys( &$$entity ) {
+		public function extractKeys( $$entity ) {
 			${extractKeys}
 		}
 		
-		public function extract( &$$entity ) {
+		public function extract( $$entity ) {
 			${extract}
 		}
 	
@@ -896,7 +895,7 @@ function &_${inst}_privConstruct() {
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			link = self.formLinkFieldOf( ent.fieldType )
 			atype = link.fieldType
-			sub = 'unset($ent); $ent =& ' + ent.fieldType.phpClassName + "::withNothing();\n"
+			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withNothing();\n"
 			sub += "$ent->%s = $raw;\n" % self.memberName( link.name )
 			assign = '= new DBS_Ref( $ent )'
 		else:

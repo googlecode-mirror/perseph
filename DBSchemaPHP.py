@@ -683,6 +683,7 @@ function _${inst}_privConstruct() {
 				
 			if formfield.readonly:
 				self.wr( "\t$form->addElement( 'static', '_ro_%s', %s );\n" % ( field.phpFormName, field.phpFormLabel ) )
+				self.wr( "\t$form->addElement( 'hidden', '_hro_%s' );\n" % field.phpFormName )
 				continue
 			
 			if formfield.hidden:	 # why do we need a hidden?
@@ -702,10 +703,14 @@ function _${inst}_privConstruct() {
 					% ( field.phpFormName, field.phpFormLabel )	)
 
 
-		for key in form.entity.getRecordKeyFields():
-			self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
-			
+		#for key in form.entity.getRecordKeyFields():
+		#	self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
+		self.wr( "\t$form->addElement( 'hidden', '_key_ident' );\n" )	
 		self.wrt("""
+		}
+		
+		protected function getIdentifier( ) {
+			return $$this->form->exportValue( '_key_ident' );
 		}
 		
 		protected function addActions() {
@@ -732,13 +737,15 @@ function _${inst}_privConstruct() {
 			self.wr( "$values['%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field ) ) )
 			if formfield.readonly: #//set above in _setup
 				self.wr( "$values['_ro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field )  ) )
+				self.wr( "$values['_hro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field )  ) )
 				
 			self.wr( "}\n" )
 		
-		for key in form.entity.getRecordKeyFields():
+		self.wr( "$values['_key_ident'] = $entity->getIdentifier();\n" )
+		#for key in form.entity.getRecordKeyFields():
 			#//only inject those values set on the object, this requires a forced load (TODO: what about lazy loading... perhaps only if status is not EXTANT )
-			self.wr( "if( $entity->__has( '%s' ) )" % key.phpName )
-			self.wr( "$values['_key_%s'] = %s;\n " % ( key.phpFormName, self.formInFunc( key ) ) )
+		#	self.wr( "if( $entity->__has( '%s' ) )" % key.phpName )
+		#	self.wr( "$values['_key_%s'] = %s;\n " % ( key.phpFormName, self.formInFunc( key ) ) )
 			
 		self.wrt("""
 			if( $$overrideRequest )

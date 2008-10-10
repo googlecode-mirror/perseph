@@ -143,8 +143,8 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 			if( $this->isNew ) {
 				$rule = call_user_func( "{$this->ENTITY}::createWithNothing" );
 			} else {
-				$rule = call_user_func( "{$this->ENTITY}::withNothing" );
-				$this->extractKeys( $rule );
+				$rule = call_user_func( "{$this->ENTITY}::withIdentifier", $this->getIdentifier() );
+				//$this->extractKeys( $rule );
 				$rule->find();
 			}
 			

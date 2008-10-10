@@ -680,9 +680,10 @@ function _${inst}_privConstruct() {
 		protected function addActions() {
 			if( $$this->isNew )
 				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
-			else
+			else {
 				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
-			$delete
+				$delete
+			}
 			$$this->form->addGroup( $$submit, DBS_FormBase_QuickForm::T_SUBMITROW );
 		}
 		

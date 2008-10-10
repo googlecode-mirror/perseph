@@ -62,3 +62,11 @@ CREATE TABLE `link` (
 	`BasicID` INT(11) NOT NULL,
 	PRIMARY KEY(`ID`)
 );
+
+DROP TABLE IF EXISTS `link2`;
+
+CREATE TABLE `link2` (
+	`NameA` INT(11) NOT NULL,
+	`NameB` INT(11) NOT NULL,
+	`Value` INT
+);

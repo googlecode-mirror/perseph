@@ -638,30 +638,10 @@ function _${inst}_privConstruct() {
 					
 	class Form${class} extends DBS_FormBase_QuickForm {
 	
-		const ENTITY = '${entity}';
+		public $$ENTITY = '${entity}';
 		
-		private $$createFrom;
-		
-		protected function __construct( $$form ) {
-			parent::__construct($$form);
-		}
-		
-		static public function fromRequest() {
-			$$ret = self::_setup();
-			$$ret->isNew = self::isNew();
-			return $$ret;
-		}
-		
-		//
-		static public function create( $$from = null ) {
-			$$ret = self::_setup();
-			$$ret->createFrom = $$from;
-			$$ret->isNew = $$from === null || $$from->isNew();
-			return $$ret;
-		}
-		
-		static private function _setup( ) {
-			$$form = new HTML_QuickForm( '${class}', 'POST', '', '', 
+		protected function _setup( ) {
+			$$this->form = $$form = new HTML_QuickForm( '${class}', 'POST', '', '', 
 				array( 'class' => 'dbsform' ) );
 		""", { 'class': form.phpClassName,
 			'entity': form.entity.phpClassName,
@@ -695,8 +675,6 @@ function _${inst}_privConstruct() {
 			self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
 			
 		self.wrt("""
-			$$ret = new Form${class}( $$form );
-			return $$ret;
 		}
 		
 		protected function addActions() {
@@ -743,51 +721,6 @@ function _${inst}_privConstruct() {
 		
 		public function extract( $$entity ) {
 			${extract}
-		}
-	
-		public function execute() {
-			if( !$$this->hasAction() ) {
-				if( $$this->createFrom !== null )
-					$$this->inject( $$this->createFrom );
-			}
-				
-			$$showForm = true;
-			if( $$this->validate() ) {
-				if( $$this->isNew ) {
-					$$rule = ${class}::createWithNothing();
-				} else {
-					$$rule = ${class}::withNothing();
-					$$this->extractKeys( $$rule );
-					$$rule->find();
-				}
-				
-				try {
-					$$this->extract( $$rule );
-					if( $$this->getAction() == DBS_FormBase::ACTION_SAVE ) {
-						$$rule->save();
-						$$this->inject( $$rule, true );	//capture any logic/new values from entity
-						print( "<p class='success'>Saved.</p>" );
-					} else if( $$this->getAction() == DBS_FormBase::ACTION_ADD ) {
-						$$rule->add();
-						$$this->isNew = false;
-						$$this->inject( $$rule, true );	//capture any logic/new values from entity
-						print( "<p class='success'>Added.</p>" );
-					} else if( $$this->getAction() == DBS_FormBase::ACTION_DELETE ) {
-						$$rule->delete();
-						$$showForm = false;
-						print( "<p class='success'>Deleted.</p>" );
-					}
-				} catch( DBS_SetFieldException $$ex ) {
-					//just do something quick and dirty for now, TODO: combine with HTMLQuickForm to report validation errors
-					print( "<p class='error'>{$$ex->getMessage()}</p>" );
-				}
-				//TODO: Other exceptions...
-			}
-			
-			if( $$showForm ) {
-				$$this->addActions();
-				echo $$this->toHTML();
-			}
 		}
 	
 	}

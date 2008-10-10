@@ -55,7 +55,7 @@ abstract class DBS_FormBase {
 	 * @return [out] true indicates that some action  has been performed with the
 	 *		form, false indicates no action has yet been performed.
 	 */
-	//static abstract public function hasAction();
+	abstract public function hasAction();
 	
 	/**
 	 * Produces the HTML rendering of the form
@@ -75,10 +75,22 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 	
 	protected $form;	//<HTML_QuickForm>
 	protected $isNew = false; //<Bool>
+	protected $createFrom;	//<Entity> created from this entity
 	
-	protected function __construct( HTML_QuickForm &$form ) {
-		$this->form =& $form;
+	public $ENTITY = null;	//the class of the entity involved 
+	
+	public function initFromRequest() {
+		$this->_setup();
+		$this->isNew = $this->isNew();
 	}
+	
+	public function initCreate( $from = null ) {
+		$this->_setup();
+		$this->createFrom = $from;
+		$this->isNew = $from === null || $from->isNew();
+	}
+	
+	abstract protected function _setup();
 	
 	public function validate() {
 		return $this->form->validate();
@@ -108,7 +120,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 		}
 	}
 		
-	static public function hasAction() {
+	public function hasAction() {
 		//don't use exportValue since it requires the actions to have already been added
 		//in the form, and stick this directly in the template
 		return array_get_default( self::T_ACTIONMARKER, $_REQUEST, '0' ) == '1';
@@ -119,6 +131,51 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 	}
 	
 	const T_MARKNEW = '_dbsfq_new';
+	
+	public function execute() {
+		if( !$this->hasAction() ) {
+			if( $this->createFrom !== null )
+				$this->inject( $this->createFrom );
+		}
+			
+		$showForm = true;
+		if( $this->validate() ) {
+			if( $this->isNew ) {
+				$rule = call_user_func( "{$this->ENTITY}::createWithNothing" );
+			} else {
+				$rule = call_user_func( "{$this->ENTITY}::withNothing" );
+				$this->extractKeys( $rule );
+				$rule->find();
+			}
+			
+			try {
+				$this->extract( $rule );
+				if( $this->getAction() == DBS_FormBase::ACTION_SAVE ) {
+					$rule->save();
+					$this->inject( $rule, true );	//capture any logic/new values from entity
+					print( "<p class='success'>Saved.</p>" );
+				} else if( $this->getAction() == DBS_FormBase::ACTION_ADD ) {
+					$rule->add();
+					$this->isNew = false;
+					$this->inject( $rule, true );	//capture any logic/new values from entity
+					print( "<p class='success'>Added.</p>" );
+				} else if( $this->getAction() == DBS_FormBase::ACTION_DELETE ) {
+					$rule->delete();
+					$showForm = false;
+					print( "<p class='success'>Deleted.</p>" );
+				}
+			} catch( DBS_SetFieldException $ex ) {
+				//just do something quick and dirty for now, TODO: combine with HTMLQuickForm to report validation errors
+				print( "<p class='error'>{$ex->getMessage()}</p>" );
+			}
+			//TODO: Other exceptions...
+		}
+		
+		if( $showForm ) {
+			$this->addActions();
+			echo $this->toHTML();
+		}
+	}
 	
 	public function toHTML() {
 		
@@ -220,10 +277,10 @@ function _dbs_form_loadentityselect( $results, $key, $text ) {
  *			memberName -> value
  *		If value is null the item will not be set (this is for convenience)
  */
-function dbs_standard_form( $formclass, $entitykey, $defaultsForNew = null ) {
-	if( !call_user_func( "$formclass::hasAction" ) ) {
+function dbs_standard_form( $form, $entitykey, $defaultsForNew = null ) {
+	if( !$form->hasAction() ) {
 		$key = array_get_default( $entitykey, $_REQUEST, null );	//TODO: unlike the get_request_def this doesn't handle encoding correctly!!!
-		$entityname = eval( "return $formclass::ENTITY;" );
+		$entityname = $form->ENTITY;
 		//for PHP 5.3 (and can also replace call_user_func)
 		//$entityname = $formclass::ENTITY
 		if( $key !== null ) 
@@ -237,11 +294,10 @@ function dbs_standard_form( $formclass, $entitykey, $defaultsForNew = null ) {
 		} else
 			$rule = null;
 			
-		$form = call_user_func( "$formclass::create", $rule );
+		$form->initCreate( $rule );
 	} else {
-		$form = call_user_func( "$formclass::fromRequest" );
+		$form->initFromRequest( );
 	}
-	
 	return $form;
 }
 

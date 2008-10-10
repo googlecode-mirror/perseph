@@ -5,7 +5,7 @@
 	std_header();
 	
 	dbs_standard_form(
-		'FormSampleFormFull',
+		new FormSampleFormFull(),
 		'ID',
 		array( ) 
 		)->execute();

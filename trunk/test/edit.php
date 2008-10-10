@@ -5,7 +5,7 @@
 	std_header();
 	
 	dbs_standard_form(
-		'FormSampleFormQuick',
+		new FormSampleFormQuick(),
 		'ID',
 		array( ) 
 		)->execute();

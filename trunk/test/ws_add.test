@@ -6,7 +6,7 @@ SubmitForm with
 	%Params:_dbs_Name% %Item:Name%-First
 end
 
-set %Item:ID% as typeString %Response://input[@name='_key__dbs_ID']/@value%
+set %Item:ID% as typeString %Response://input[@name='_hro__dbs_ID']/@value%
 notice ID:%Item:ID%
 
 # We shouldn't care about this -- and that is waht I'm changing now

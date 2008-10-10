@@ -1,2 +1,4 @@
 Click xpath://a[contains(@href,'%Item:ID%')][contains(text(),'Full')]
 check //td[contains(text(),'ID')]/following-sibling::td[1][contains(text(),'%Item:ID%')]
+
+# TODO: Save (watch for unset/in-memory fields)

@@ -44,6 +44,12 @@ provider DBTest {
 		ID<Integer> LAST_INSERT_ID;
 		BasicID<Integer>;
 	}
+	
+	table link2 {
+		NameA<Integer>;
+		NameB<Integer>;
+		Value<Integer>;
+	}
 }
 
 provider DBTest2 {
@@ -305,6 +311,26 @@ mapper NullKey2 {
 			@ID => ID;
 			@Name = Name;
 			@Decimal = Decimal;
+		}
+	}
+}
+
+
+entity DBSLinkNames {
+	fields {
+		Left<DBSName> RECORD_KEY;
+		Right<DBSName> RECORD_KEY;
+		Value<Integer>;
+	}
+}
+
+mapper DBSLinkNames {
+	provider DBTest;
+	fields {
+		using link2 {
+			@NameA = Left.ID;
+			@NameB = Right.ID;
+			@Value = Value;
 		}
 	}
 }

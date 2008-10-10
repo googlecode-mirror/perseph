@@ -6,6 +6,7 @@ class DBSTest_Clean extends TestCase {
 		DBSStrings::searchAndDelete( DBS_Query::matchAll() );
 		DBSTwoKeys::searchAndDelete( DBS_Query::matchAll() );
 		DBSName::searchAndDelete( DBS_Query::matchAll() );
+		DBSLinkNames::searchAndDelete( DBS_Query::matchAll() );
 		
 		# Setup names table
 		$names = array( 
@@ -71,6 +72,15 @@ class DBSTest_Basic extends TestCase {
 		$l = DBSTest::withName( $n->name );
 		$m = DBSTest::withIdentifier( $l->getIdentifier() );
 		$this->assertEquals( 516, $q->float );
+		
+		//with an explicit null
+		$n = DBSTest::createWithNothing();
+		$n->float = 879;
+		$n->name = null;
+		$n->add();
+		
+		$l = DBSTest::withIdentifier( $n->getIdentifier() );
+		$this->assertEquals( 879, $l->float );
 	}
 	
 	function testReload() {
@@ -566,6 +576,26 @@ class DBSTest_Basic extends TestCase {
 		} catch( DBS_DBException $ex ) {
 			$this->assertEquals( DBS_DBException::SAVE_ZERO_FIELDS, $ex->getCode() );
 		}
+	}
+	
+	function testLinkNames() {
+		$a = DBSName::createWithID( 1001 );
+		$a->name = 'One';
+		$a->add();
+		
+		$b = DBSName::createWithID( 1002 );
+		$b->name = 'Two';
+		$b->add();
+		
+		$q = DBSLinkNames::createWithNothing();
+		$q->left = $a;
+		$q->right = $b;
+		$q->value = 123;
+		$q->add();
+		
+		$l = DBSLinkNames::withIdentifier( $q->getIdentifier() );
+		$l->find();
+		$this->assertEquals( 123, $l->value );
 	}
 }
 

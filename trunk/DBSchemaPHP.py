@@ -520,6 +520,8 @@ static public function createWithNothing() {
 		
 	##################################################################
 	#  The identifier get and ctro
+	# FEATURE: if there is only one key, or a simpler form, then use that -- having
+	# this serialized form is excessive in most cases
 	def genIdentifier( self, en ):
 		self.wr("//*** genIdentifier\n" );
 		self.wr("""
@@ -791,21 +793,12 @@ function _${inst}_privConstruct() {
 			buf += self.formOutFunc( key )
 		return buf
 		
-	def formLinkFieldOf( self, ent ):
-		keys = ent.getRecordKeyFields()
-		if len( keys ) != 1:
-			raise Exception, "Type %s has too many keys" % ent.name
-		return keys[0]			
-	
-	
 	def formTypeOf( self, atype ):
 		atype = atype.getRootType()
 		if isinstance( atype, DBSchema.Entity ):
-			#link = self.formLinkFieldOf( atype )
 			if atype.getTitle() != None:
 				return 'select'
 			return 'string'	#TODO: maybe, if only one key we could use a specific type like before
-			#atype = link.fieldType;
 		
 		if atype.name in ['String','Integer','Decimal', 'Float','DateTime','Date','Time']:
 		 	return 'text'
@@ -832,7 +825,6 @@ function _${inst}_privConstruct() {
 			
 		# linked entities load the keys/names of all the possible items and present it as a select box
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			#link = self.formLinkFieldOf( ent.fieldType )
 			title = ent.fieldType.getTitle()
 			if title != None:
 				#//just match all records by default
@@ -850,8 +842,6 @@ function _${inst}_privConstruct() {
 	# TODO: Handle nulls in sub field references
 	def serialInFunc( self, ent, _class ):
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			#link = self.formLinkFieldOf( ent.fieldType )
-			#atype = link.fieldType
 			atypename = 'String'
 			sub = '->identifier' #+ self.memberName( link.name )
 		else:
@@ -872,11 +862,8 @@ function _${inst}_privConstruct() {
 	def serialOutFunc( self, ent, _class ):
 		# when referencing objects we'll use the lazy loading "withNothing"
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			#link = self.formLinkFieldOf( ent.fieldType )
-			#atype = link.fieldType
 			atypename = 'String'
 			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withIdentifier( $raw );\n"
-			#sub += "$ent->%s = $raw;\n" % self.memberName( link.name )
 			assign = '= new DBS_Ref( $ent )'
 		else:
 			atypename = ent.fieldType.getRootType().name

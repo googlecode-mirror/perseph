@@ -54,6 +54,25 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( $n->name, $l->name );
 	}
 	
+	function testIdentifier() {
+		$n = DBSTest::createWithName( "ByID" );
+		$n->float = 516;
+		$n->add();
+		
+		$q = DBSTest::withIdentifier( $n->getIdentifier() );
+		$this->assertEquals( 516, $q->float );
+		
+		//with partial keys
+		$l = DBSTest::withID( $n->id );
+		$m = DBSTest::withIdentifier( $l->getIdentifier() );
+		$m->find();
+		$this->assertEquals( 516, $q->float );
+		
+		$l = DBSTest::withName( $n->name );
+		$m = DBSTest::withIdentifier( $l->getIdentifier() );
+		$this->assertEquals( 516, $q->float );
+	}
+	
 	function testReload() {
 		$n = DBSTest::createWithName( 'ReloadMe' );
 		$n->float = 123;

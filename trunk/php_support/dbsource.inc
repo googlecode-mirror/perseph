@@ -511,11 +511,14 @@ abstract class DBSourceBase implements DBSource {
 
 function _dbs_decode_time( $value ) {
 	$parts = explode( ':', $value );
+	if( count( $parts ) != 3 )	
+		return null;
+		
 	return $parts[0] * 3600 + $parts[1] * 60 + $parts[2];
 }
 
 function _dbs_encode_time( $value ) {
-	return floor($value/3600) .':' .( floor($value/60) % 60 ) .':' . ($value % 60);
+	return sprintf( "%d:%02d:%02d", floor($value/3600), floor($value/60) % 60, $value % 60 );
 }
 
 //NOTE: This is not used anymore is it...?

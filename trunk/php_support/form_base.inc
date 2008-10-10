@@ -233,7 +233,7 @@ function _dbs_formin_Float( $value ) { return $value === null ? '' : '' . $value
 function _dbs_formin_Bool( $value ) {	return $value === null ? '' : $value ? '1' : '0'; }
 function _dbs_formin_DateTime( $value ) {	return $value === null ? '' : date( 'Y-m-d H:i:s', $value ); }
 function _dbs_formin_Date( $value ) {	return $value === null ? '' : date( 'Y-m-d', $value ); }
-function _dbs_formin_Time( $value ) {	return $value === null ? '' : _dbs_form_encode_time($value ); }
+function _dbs_formin_Time( $value ) {	return $value === null ? '' : _dbs_encode_time($value ); }
 
 function _dbs_formout_Integer( $value ) { return $value === '' ? null : intval( $value ); }
 function _dbs_formout_String( $value ) {	return $value; }
@@ -243,19 +243,7 @@ function _dbs_formout_Float( $value ) { return $value === '' ? null : floatval( 
 function _dbs_formout_Bool( $value ) {	return $value === '' ? null : '1' === $value; }
 function _dbs_formout_DateTime( $value ) { return $value === '' ? null : strtotime( $value ); }
 function _dbs_formout_Date( $value ) { return $value === '' ? null : strtotime( $value ); }
-function _dbs_formout_Time( $value ) { return $value === '' ? null : _dbs_form_decode_time( $value ); }
-
-function _dbs_form_decode_time( $value ) {
-	$parts = explode( ':', $value );
-	if( count( $parts ) != 3 )	
-		return null;
-		
-	return $parts[0] * 3600 + $parts[1] * 60 + $parts[2];
-}
-
-function _dbs_form_encode_time( $value ) {
-	return sprintf( "%d:%02d:%02d", floor($value/3600), floor($value/60) % 60, $value % 60 );
-}
+function _dbs_formout_Time( $value ) { return $value === '' ? null : _dbs_decode_time( $value ); }
 
 function _dbs_form_loadentityselect( $results, $key, $text ) {
 	$ret = array();

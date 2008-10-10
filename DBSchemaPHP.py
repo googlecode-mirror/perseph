@@ -113,6 +113,8 @@ class PHPEmitter:
 	def genEntity( self, en ):
 		self.genEntityTypeDescriptor( en )
 		self.genOpenEntityClass( en )
+		self.genIdentifier( en )
+		self.genEmpty( en )
 		if en.name in self.sc.mappers:
 			self.genMapper( en, self.sc.mappers[en.name] )
 		self.genCloseEntityClass( en )
@@ -123,7 +125,6 @@ class PHPEmitter:
 		self.genAddSave( en, loc )
 		self.genEntitySearch( en, loc )
 		self.genDelete( en, loc )
-		self.genEmpty( en, loc )
 		
 		self.wr( "//*** genMapper\n" )
 		self.genGetDB( loc )
@@ -502,7 +503,7 @@ public function delete() {
 	
 	##################################################################
 	# The Nothing constructors 
-	def genEmpty( self, en, loc ):
+	def genEmpty( self, en ):
 		self.wr( "//*** genEmpty\n" )
 		self.wrt("""
 static public function withNothing() {
@@ -517,6 +518,36 @@ static public function createWithNothing() {
 }
 		""", { 'class': en.phpInstClassName } )
 		
+	##################################################################
+	#  The identifier get and ctro
+	def genIdentifier( self, en ):
+		self.wr("//*** genIdentifier\n" );
+		self.wr("""
+static public function withIdentifier( $ident ) {
+	$data = unserialize( $ident );
+	if( $data === false )
+		throw new Exception( "Invalid identifier" );
+	$entity = self::withNothing();
+			""")
+		for key in en.getRecordKeyFields():
+			self.wr( self._if(
+				"array_key_exists( '%s', $data )" % key.phpName,
+				"$raw = $data['%s']; %s\n" % ( key.phpName, self.identOutFunc( key ) )
+				) )
+		self.wr( "return $entity; }\n" );
+	
+		self.wr( "public function getIdentifier() {" );
+		self.wr( "$entity = $this;\n" );
+		buf = "$data = array();\n"
+		for key in en.getRecordKeyFields():
+			buf += self._if(
+				self._this_has( key ),
+				"$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+				)
+		self.wr( buf );
+
+		self.wr( "return serialize( $data );\n}\n" );
+
 	##################################################################
 	# 
 	def genEntityTypeDescriptor( self, en ):
@@ -763,10 +794,11 @@ function _${inst}_privConstruct() {
 	def formTypeOf( self, atype ):
 		atype = atype.getRootType()
 		if isinstance( atype, DBSchema.Entity ):
-			link = self.formLinkFieldOf( atype )
+			#link = self.formLinkFieldOf( atype )
 			if atype.getTitle() != None:
 				return 'select'
-			atype = link.fieldType;
+			return 'string'	#TODO: maybe, if only one key we could use a specific type like before
+			#atype = link.fieldType;
 		
 		if atype.name in ['String','Integer','Decimal', 'Float','DateTime','Date','Time']:
 		 	return 'text'
@@ -793,12 +825,12 @@ function _${inst}_privConstruct() {
 			
 		# linked entities load the keys/names of all the possible items and present it as a select box
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			link = self.formLinkFieldOf( ent.fieldType )
+			#link = self.formLinkFieldOf( ent.fieldType )
 			title = ent.fieldType.getTitle()
 			if title != None:
 				#//just match all records by default
-				return " _dbs_form_loadentityselect( %s::search( DBS_Query::matchAll() ), '%s','%s' )" \
-					% ( ent.fieldType.phpClassName, self.memberName( link.name ), self.memberName( title.name ) )
+				return " _dbs_form_loadentityselect( %s::search( DBS_Query::matchAll() ), 'identifier','%s' )" \
+					% ( ent.fieldType.phpClassName,  self.memberName( title.name ) )
 		
 		if ent.fieldType.name in [ 'String', 'Text' ] and ent.maxLen != None:
 			return "array( 'maxlength' => %d ) " % ent.maxLen
@@ -809,40 +841,51 @@ function _${inst}_privConstruct() {
 	# Creates the PHP fragment to take a value from the entity and prepare it for
 	# for form.
 	# TODO: Handle nulls in sub field references
-	def formInFunc( self, ent ):
+	def serialInFunc( self, ent, _class ):
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			link = self.formLinkFieldOf( ent.fieldType )
-			atype = link.fieldType
-			sub = '->' + self.memberName( link.name )
+			#link = self.formLinkFieldOf( ent.fieldType )
+			#atype = link.fieldType
+			atypename = 'String'
+			sub = '->identifier' #+ self.memberName( link.name )
 		else:
-			atype = ent.fieldType.getRootType()
+			atypename = ent.fieldType.getRootType().name
 			sub = ''
 				
-		return "_dbs_formin_%s( $entity->%s%s )"	% ( atype.name, ent.phpName, sub )
+		return "_dbs_%s_%s( $entity->%s%s )"	% ( _class, atypename, ent.phpName, sub )
 	
+	def formInFunc( self, ent ):
+		return self.serialInFunc( ent, 'formin' )
+	
+	def identInFunc( self, ent ):
+		return self.serialInFunc( ent, 'identin' )
 	
 	##
 	# Creates the PHP fragment to take a value from the form and convert it to
 	# the entity field type.
-	def formOutFunc( self, ent ):
+	def serialOutFunc( self, ent, _class ):
 		# when referencing objects we'll use the lazy loading "withNothing"
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			link = self.formLinkFieldOf( ent.fieldType )
-			atype = link.fieldType
-			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withNothing();\n"
-			sub += "$ent->%s = $raw;\n" % self.memberName( link.name )
+			#link = self.formLinkFieldOf( ent.fieldType )
+			#atype = link.fieldType
+			atypename = 'String'
+			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withIdentifier( $raw );\n"
+			#sub += "$ent->%s = $raw;\n" % self.memberName( link.name )
 			assign = '= new DBS_Ref( $ent )'
 		else:
-			atype = ent.fieldType.getRootType()
+			atypename = ent.fieldType.getRootType().name
 			assign = '= $raw'
 			sub = ''
 		
-		buf = "$raw = _dbs_formout_%s($raw);\n" % atype.name
+		buf = "$raw = _dbs_%s_%s($raw);\n" % ( _class, atypename )
 		buf += sub
 		buf += "$entity->%s %s;\n" % ( ent.phpName, assign )
 		return buf
 	
+	def formOutFunc( self, ent ):
+		return self.serialOutFunc( ent, 'formout' )
 	
+	def identOutFunc( self, ent ):
+		return self.serialOutFunc( ent, 'identout' )
 		
 	#/***************************************************************************
 	#* Listing Generation

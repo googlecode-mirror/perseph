@@ -8,6 +8,7 @@ require_once 'PHPUnit/Framework.php';
 
 require_once dirname(__FILE__).'/../php_support/dbsource.inc';
 require_once dirname(__FILE__).'/../php_support/mdb2_datatype.inc';
+require_once dirname(__FILE__).'/../php_support/form_base.inc';
 
 //Derive only from this testcase, other GLOBALS references will fail!
 //Refer to <http://www.phpunit.de/ticket/497> which has now been fixed -- we await a new release

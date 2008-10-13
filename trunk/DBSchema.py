@@ -61,7 +61,7 @@ class Root:
 			"Float": Type( "Float" ),
 			"Bool": Type( "Bool" ),
 			"Text": Type( "Text" ),
-			"Object": Type( "Object" ),
+			"Entity": Type( "Entity" ),
 			}
 		self.defaults = {}
 		self.providers = {}
@@ -129,6 +129,12 @@ class Entity(Type):
 		self.fields = {}	#String: Entity_Field
 		self.aliases = {}#AliasString:InternalString
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
+	
+	def getRootType(self):
+		return Type("Entity")
+	
+	def baseType(self):
+		return False
 	
 	##
 	# Obtains the sets of keys which can identify this record for loading/saving

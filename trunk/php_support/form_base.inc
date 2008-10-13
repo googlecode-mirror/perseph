@@ -178,10 +178,8 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 			//TODO: Other exceptions...
 		}
 		
-		if( $showForm ) {
-			$this->addActions();
+		if( $showForm )
 			echo $this->toHTML();
-		}
 	}
 	
 }
@@ -191,6 +189,10 @@ require_once 'HTML/QuickForm/Renderer/Default.php';
 
 /**
  * A convenience class to use QuickForm with a standard layout for a form.
+ *
+ * NOTE: we split of the initial form creation and actions as the action part
+ * changes depending on validation (which requires the basics to be setup
+ * already).
  */
 abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	
@@ -198,6 +200,104 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	
 	public function validate() {
 		return $this->form->validate();
+	}
+	
+	protected $elements = array();
+	
+	/**
+	 * A parallel to the QuickForm addElement this will add an appropriate field for
+	 * the member -- extracting default options as appropriate.
+	 *
+	 * @param type [in] QuickForm type
+	 * @param field [in] field in the entity mapped to this element
+	 * @param label [in] label to use, if null the persephone default label will be used
+	 * @param options [in] options for this element.
+	 *		NOTE: unlike QuickForm, the options for a "select" type should be passed
+	 *		as an sub-array under the name "options"
+	 */
+	protected function addElement( $type, $field, $label = null, $options = null ) {
+		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
+		
+		if( $label === null )
+			$label = $typeDesc->getDefaultLabel( $field );
+			
+		if( $type == 'static' ) {
+			$this->form->addElement( 'static', "_ro__dbs_{$field}", $label );
+			//add a readable form for JS or checking programs
+			$this->form->addElement( 'hidden', "_hro__dbs_${field}" );
+			
+			$this->elements[] = array( $field, false, "_ro__dbs_{$field}" );
+			$this->elements[] = array( $field, false, "_hro__dbs_{$field}" );
+		} else if( $type == 'select' ) {
+			$selOpts = $options['options'];
+			$this->form->addElement( 'select', "_dbs_{$field}", $label, $selOpts );
+			$this->elements[] = array( $field, true, "_dbs_{$field}" );
+		} else {
+			$this->form->addElement( $type, "_dbs_{$field}", $label, $options );
+			$this->elements[] = array( $field, true, "_dbs_{$field}" );
+		}
+	}
+	
+	/** 
+	 * NOTE: derived classes must call the parent version of this function!
+	 */
+	protected function _setup() {
+		$this->form = new HTML_QuickForm( get_class($this), 'POST', '', '', array( 'class' => 'dbsform' ) );
+		$this->form->addElement( 'hidden', '_key_ident' );
+	}
+	
+	
+	public function inject( $entity, $overrideRequest = false ) {
+		$values = array();
+		
+		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
+		
+		foreach( $this->elements as $element ) {
+			if( $entity->__has( $element[0] ) ) {
+				
+				$baseType = $typeDesc->getBaseType( $element[0] );
+				$raw = $entity->__get( $element[0] );
+				if( $baseType === 'Entity' )
+					$raw = $raw->identifier;
+				else {
+					$func = "_dbs_formin_{$baseType}";
+					$raw = $func( $raw );
+				}
+					
+				$values[$element[2]] = $raw;
+			}
+		}
+		
+		$values['_key_ident'] = $entity->getIdentifier();
+		
+		if( $overrideRequest )
+			$this->form->setConstants( $values );
+		else
+			$this->form->setDefaults( $values );
+		
+	}
+	
+	protected function getIdentifier( ) {
+		return $this->form->exportValue( '_key_ident' );
+	}
+	
+	public function extract( $entity ) {
+		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
+		foreach( $this->elements as $element ) {
+			if( !$element[1] )
+				continue;
+				
+			$baseType = $typeDesc->getBaseType( $element[0] );
+			$raw = $this->form->exportValue( $element[2] );
+			if( $baseType === 'Entity' ) {
+				$raw = call_user_func( "{$typeDesc->getCustomType($element[0])}::withIdentifier", $raw );
+			} else {
+				$func = "_dbs_formout_{$baseType}";
+				$raw = $func( $raw );
+			}
+			
+			$entity->__set( $element[0], $raw );
+		}
 	}
 	
 	protected function addActions() {
@@ -218,7 +318,14 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			$this->form->addGroup( $submit, DBS_FormBase_QuickForm::T_SUBMITROW );
 	}
 	
+	private $actionsAdded = false;
+	
 	public function toHTML() {
+		//hopefully this is done after having validated the form
+		if( !$this->actionsAdded ) {
+			$this->addActions();
+			$this->actionsAdded =true;
+		}
 		
 		//////////////////////////////////////////////////////////////////////////////////////
 		//The other template engines, being used with QuickForm suffer from a significant

@@ -2,23 +2,23 @@ Click link:Add
 
 SubmitForm with
 	%SubmitButton% value:Add
-	%Params:_dbs_Date% %Item:Date%
-	%Params:_dbs_Name% %Item:Name%-First
+	%Params:_dbs_date% %Item:Date%
+	%Params:_dbs_name% %Item:Name%-First
 end
 
-set %Item:ID% as typeString %Response://input[@name='_hro__dbs_ID']/@value%
+set %Item:ID% as typeString %Response://input[@name='_hro__dbs_id']/@value%
 notice ID:%Item:ID%
 
 # We shouldn't care about this -- and that is waht I'm changing now
 #checkpoint eqString %Item:Name% %Response://input[@name='_key__dbs_Name']/@value%
-checkpoint eqString %Item:Date% %Response://input[@name='_dbs_Date']/@value%
+checkpoint eqString %Item:Date% %Response://input[@name='_dbs_date']/@value%
 
 # Change the name (to ensure key matching is working, but we automatically select ID so this isn't quite fair)
 SubmitForm with
 	%SubmitButton% value:Save
-	%Params:_dbs_Name% %Item:Name%
+	%Params:_dbs_name% %Item:Name%
 end
 	
-checkpoint eqString %Item:Name% %Response://input[@name='_dbs_Name']/@value%
+checkpoint eqString %Item:Name% %Response://input[@name='_dbs_name']/@value%
 
 Click link:Return to listing

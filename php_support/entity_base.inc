@@ -32,10 +32,27 @@ class DBS_Ref {
 	}
 }
 
+/**
+ * WARNING: DO NOT USE the data members in this descriptor directly. They are public only
+ * since other framework classes need them.  If you need this data use *ONLY* the accessor
+ * functions to be shielded from changes
+ */
 abstract class DBS_TypeDescriptor {
-	public $names = array();	//names=>types of all members, to be overridden in derived class
+	public $names = array();	//names=> (customtype, basetype) of all members, to be overridden in derived class
 	public $defaults = array();	//names=>defaults of all members with defaults
 	public $aliases = array();	//alias=>name of available aliases
+	
+	public function getBaseType( $field ) {
+		return $this->names[$field][1];
+	}
+	
+	public function getCustomType( $field ) {
+		return $this->names[$field][0];
+	}
+	
+	public function getDefaultLabel( $field ) {
+		return $field;	//TODO: this exists in persephone, so capture it here
+	}
 	
 	abstract protected function checkType( $field, $value );
 }

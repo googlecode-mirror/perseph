@@ -633,6 +633,10 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		self.wrt("""
 class $class extends DBS_EntityBase {
 	static public $$typeDescriptor;
+	//needed since you can't yet lookup up Statics dynamically (by class name)
+	static public function getTypeDescriptor() {
+		return self::$$typeDescriptor;
+	}
 	
 	protected function __construct() {
 		$$this->_data_type = self::$$typeDescriptor;
@@ -676,8 +680,7 @@ function _${inst}_privConstruct() {
 		protected $$allowDelete = $allowDelete;
 		
 		protected function _setup( ) {
-			$$this->form = $$form = new HTML_QuickForm( '${class}', 'POST', '', '', 
-				array( 'class' => 'dbsform' ) );
+			parent::_setup();
 		""", { 'class': form.phpClassName,
 			'entity': form.entity.phpClassName,
 			'allowDelete': 'true' if form.allowDelete else 'false'
@@ -687,81 +690,32 @@ function _${inst}_privConstruct() {
 			field = form.entity.fields[formfield.name]
 				
 			if formfield.readonly:
-				self.wr( "\t$form->addElement( 'static', '_ro_%s', %s );\n" % ( field.phpFormName, field.phpFormLabel ) )
-				self.wr( "\t$form->addElement( 'hidden', '_hro_%s' );\n" % field.phpFormName )
+				self.wr( "\t$this->addElement( 'static', '%s', %s );\n" % ( field.phpName, field.phpFormLabel ) )
 				continue
 			
 			if formfield.hidden:	 # why do we need a hidden?
-				self.wr( "\t$form->addElement( 'hidden', '%s' );\n" % field.phpFormName );
+				self.wr( "\t$this->addElement( 'hidden', '%s' );\n" % field.phpName );
 				continue
 			
-			self.wr( "\t$form->addElement( '%s', '%s', %s, %s );\n" 
-				% ( self.formTypeOf( field.fieldType ), field.phpFormName, field.phpFormLabel, self.formOptionsOf( field ) ) )
+			self.wr( "\t$this->addElement( '%s', '%s', %s, %s );\n" 
+				% ( self.formTypeOf( field.fieldType ), field.phpName, field.phpFormLabel, self.formOptionsOf( field ) ) )
 				
-			if field.maxLen != None:
-				self.wr( "\t$form->addRule( '%s', 	%s . ' may not be longer than %d characters.', 'maxlength', %d, 'client' );\n"
-					% ( field.phpFormName, field.phpFormLabel, field.maxLen, field.maxLen )	)
+			#if field.maxLen != None:
+			#	self.wr( "\t$form->addRule( '%s', 	%s . ' may not be longer than %d characters.', 'maxlength', %d, 'client' );\n"
+			#		% ( field.phpFormName, field.phpFormLabel, field.maxLen, field.maxLen )	)
 						
 			#	//TODO: isNumeric function, but where?
-			if field.fieldType.name == 'Integer' or field.fieldType.name == 'Decimal' or field.fieldType.name == 'Float':
-				self.wr( "\t$form->addRule( '%s', %s . ' must be numeric.', 'numeric', true, 'client' );\n" 
-					% ( field.phpFormName, field.phpFormLabel )	)
+			#if field.fieldType.name == 'Integer' or field.fieldType.name == 'Decimal' or field.fieldType.name == 'Float':
+			#	self.wr( "\t$form->addRule( '%s', %s . ' must be numeric.', 'numeric', true, 'client' );\n" 
+			#		% ( field.phpFormName, field.phpFormLabel )	)
 
 
 		#for key in form.entity.getRecordKeyFields():
 		#	self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
-		self.wr( "\t$form->addElement( 'hidden', '_key_ident' );\n" )	
 		self.wrt("""
 		}
-		
-		protected function getIdentifier( ) {
-			return $$this->form->exportValue( '_key_ident' );
-		}
-		
-		public function inject( $$entity, $$overrideRequest = false ) {
-			$$values = array();
-		""",{ 'class': form.phpClassName,
-				 })
-				
-		for formfield in form.fields:
-			field = form.entity.fields[formfield.name]
-				
-			#//only inject those values set on the object, this requires a forced load (TODO: what about lazy loading... perhaps only if status is not EXTANT )
-			self.wr( "if( $entity->__has( '%s' ) ) {\n" % formfield.phpMemberName )
-			self.wr( "$values['%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field ) ) )
-			if formfield.readonly: #//set above in _setup
-				self.wr( "$values['_ro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field )  ) )
-				self.wr( "$values['_hro_%s'] = %s;\n " % ( field.phpFormName, self.formInFunc( field )  ) )
-				
-			self.wr( "}\n" )
-		
-		self.wr( "$values['_key_ident'] = $entity->getIdentifier();\n" )
-		#for key in form.entity.getRecordKeyFields():
-			#//only inject those values set on the object, this requires a forced load (TODO: what about lazy loading... perhaps only if status is not EXTANT )
-		#	self.wr( "if( $entity->__has( '%s' ) )" % key.phpName )
-		#	self.wr( "$values['_key_%s'] = %s;\n " % ( key.phpFormName, self.formInFunc( key ) ) )
-			
-		self.wrt("""
-			if( $$overrideRequest )
-				$$this->form->setConstants( $$values );
-			else
-				$$this->form->setDefaults( $$values );
-		}
-	
-		public function extractKeys( $$entity ) {
-			${extractKeys}
-		}
-		
-		public function extract( $$entity ) {
-			${extract}
-		}
-	
 	}
-?>""", { 'class': form.entity.phpClassName,
-	'extractKeys': self.formExtractKeys( form ),
-	'extract': self.formExtract( form ),
-	 } )
-	
+?>""", { } )
 	
 	def formExtract( self, form ):
 		buf = ""
@@ -786,12 +740,12 @@ function _${inst}_privConstruct() {
 		return buf
 		
 	def formTypeOf( self, atype ):
-		atype = atype.getRootType()
 		if isinstance( atype, DBSchema.Entity ):
 			if atype.getTitle() != None:
 				return 'select'
 			return 'string'	#TODO: maybe, if only one key we could use a specific type like before
 		
+		atype = atype.getRootType()
 		if atype.name in ['String','Integer','Decimal', 'Float','DateTime','Date','Time']:
 		 	return 'text'
 		if atype.name == 'Text':
@@ -813,14 +767,14 @@ function _${inst}_privConstruct() {
 	# Creates the PHP fragment for the HTMLQuickForm options for the field.
 	def formOptionsOf( self, ent ):
 		if ent.fieldType.getRootType().name == 'Bool':
-			return "array( 0 => 'False', 1 => 'True' )"
+			return "array( 'options' => array( 0 => 'False', 1 => 'True' ) )"
 			
 		# linked entities load the keys/names of all the possible items and present it as a select box
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			title = ent.fieldType.getTitle()
 			if title != None:
 				#//just match all records by default
-				return " _dbs_form_loadentityselect( %s::search( DBS_Query::matchAll() ), 'identifier','%s' )" \
+				return "array( 'options' => _dbs_form_loadentityselect( %s::search( DBS_Query::matchAll() ), 'identifier','%s' ) )" \
 					% ( ent.fieldType.phpClassName,  self.memberName( title.name ) )
 		
 		if ent.fieldType.name in [ 'String', 'Text' ] and ent.maxLen != None:

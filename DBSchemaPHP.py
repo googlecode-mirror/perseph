@@ -338,11 +338,14 @@ protected function _maybeLoad( $$reload ) {
 			} )
 				
 
-	def getPHPMapArrayStr( self, tuples ):
+	def getPHPArrayStr( self, tuples ):
 		buf = "array(\n"
 		buf += ",\n".join( tuples )
 		buf += "\n)\n"
 		return buf
+	
+	def getPHPMapArrayStr( self, tuples ):
+		return self.getPHPArrayStr( [ "'%s' => %s" % ( t, tuples[t] ) for t in tuples ] )
 	
 	def genAddSave( self, en, loc ):
 		self.wr( "//*** genAddSave\n" )
@@ -411,7 +414,7 @@ protected function _save( $$adding ) {
 			if not field.isPersistSave():	#//for safety just don't save such fields
 				continue;
  			mem.append( self.dbField( field ) )
-		return self.getPHPMapArrayStr( mem )
+		return self.getPHPArrayStr( mem )
 					
 	def genEntitySearch( self, en, loc ):
 		self.wr( "//*** genEntitySearch\n" )
@@ -451,7 +454,7 @@ static public function search( ) {
 			if forWhat == self.FOR_LOAD and not field.isPersistLoad():
 				continue;
 			mem.append( self.dbField( field ) )
-		return self.getPHPMapArrayStr( mem )
+		return self.getPHPArrayStr( mem )
 	
 	def genDelete( self, en, loc ):
 		self.wr( "//*** genDelete\n" )
@@ -556,17 +559,22 @@ static public function withIdentifier( $ident ) {
 		self.wrt( """
 //*** genEntityTypeDescriptor		
 class ${class}TypeDescriptor extends DBS_TypeDescriptor {
-""", { 'class': en.phpClassName } )
+	public $$options = array(
+		'titleField' => $titleField,
+		);
+""", { 'class': en.phpClassName,
+	'titleField': "'%s'" % en.titleField.phpName if en.titleField != None else 'null' } )
 		
 		##
 		self.wr( "\npublic $names = array(\n" )
 		for field in en.fields.itervalues():
 			self.wrt(
-"""'$name' => array( $nonbasetype, $basetype ),
+"""'$name' => array( $nonbasetype, $basetype, $options ),
 			""", { 
 				'name': field.phpName,
 				'nonbasetype': 'null'  if field.fieldType.baseType() else "'%s'" % field.fieldType.name,
-				'basetype': "'%s'" % field.fieldType.getRootType().name 
+				'basetype': "'%s'" % field.fieldType.getRootType().name ,
+				'options': self.getFieldOptions( en, field )
 				} )
 		self.wr( ');\n' )
 		
@@ -627,6 +635,14 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 } //end class
 		""")
 	
+	def getFieldOptions( self, en, field ):
+		options = {}
+		if field.maxLen != None:
+			options['maxLength'] = '%d' % field.maxLen
+		options['label'] = "'%s'" % field.label
+		
+		return self.getPHPMapArrayStr( options )
+		
 	##################################################################
 	# 
 	def genOpenEntityClass( self, en ):
@@ -919,7 +935,7 @@ function _${inst}_privConstruct() {
 	def genSearchSort( self, search, sort ):
 		cols = [ "'%s'" % field.phpName for field in sort.fields]
 		return "DBS_Query::sort( %s, DBS_Query::%s )" \
-			% ( self.getPHPMapArrayStr( cols ), 
+			% ( self.getPHPArrayStr( cols ), 
 				"SORT_ASC" if sort.dir == 'ASC' else "SORT_DESC" )
 		
 		

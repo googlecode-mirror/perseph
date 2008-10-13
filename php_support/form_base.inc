@@ -233,9 +233,50 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			$this->form->addElement( 'select', "_dbs_{$field}", $label, $selOpts );
 			$this->elements[] = array( $field, true, "_dbs_{$field}" );
 		} else {
+			//add max length if there
+			$maxLen = $typeDesc->getFieldOption( $field, 'maxLength' );
+			if( $maxLen !== null && !array_key_exists( 'maxlength', $options ) )	//don't overwrite an existing value
+				$options['maxlength'] = $maxLen;
+				
 			$this->form->addElement( $type, "_dbs_{$field}", $label, $options );
 			$this->elements[] = array( $field, true, "_dbs_{$field}" );
+			
+			//check numeric types
+			if( array_search( $typeDesc->getBaseType( $field ), array( 'Integer', 'Decimal', 'Float' ) ) !== false )
+				$this->form->addRule( "_dbs_{$field}", "{$label} must be numeric.", 'numeric', true, 'client' );
 		}
+	}
+	
+	protected function addStaticElement( $field, $label = null ) {
+		$this->addElement( 'static', $field, $label );
+	}
+	
+	protected function addTypicalElement( $field, $label = null ) {
+		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
+		$baseType = $typeDesc->getBaseType( $field );
+		if( array_search( $baseType, array( 'String', 'Integer', 'Decimal', 'Float', 'DateTime', 'Date', 'Time' ) ) !== false )
+			$this->addElement( 'text', $field, $label );
+		else if( $baseType === 'Text' )
+			$this->addElement( 'textarea', $field, $label );
+		else if( $baseType === 'Bool' )
+			$this->addSelectElement( $field, array( 0 => 'False', 1 => 'True' ), $label );		
+		else
+			throw new Exception( "Unsupported type: $baseType" );
+	}
+	
+	protected function addSelectElement( $field, $options, $label = null ) {
+		assert( 'count($options) > 0' );
+		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
+		$baseType = $typeDesc->getBaseType( $field );
+		if( $baseType === 'Entity' ) {
+			$customType = $typeDesc->getCustomType($field);
+			$titleField = call_user_func( "{$customType}::getTypeDescriptor" )->getOption( 'titleField' );
+			if( $titleField === null )
+				throw new Exception( "{$customType} does not define a title field for {$baseType}::{$field}" );
+			$this->addElement( 'select', $field, $label, array( 'options' => _dbs_form_loadentityselect( $options, 'identifier', $titleField ) ) );
+		} else
+			$this->addElement( 'select', $field, $label, array( 'options' => $options ) );
+		
 	}
 	
 	/** 

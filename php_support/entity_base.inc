@@ -38,9 +38,10 @@ class DBS_Ref {
  * functions to be shielded from changes
  */
 abstract class DBS_TypeDescriptor {
-	public $names = array();	//names=> (customtype, basetype) of all members, to be overridden in derived class
+	public $names = array();	//names=> (customtype, basetype, options) of all members, to be overridden in derived class
 	public $defaults = array();	//names=>defaults of all members with defaults
 	public $aliases = array();	//alias=>name of available aliases
+	public $options = array();
 	
 	public function getBaseType( $field ) {
 		return $this->names[$field][1];
@@ -51,7 +52,36 @@ abstract class DBS_TypeDescriptor {
 	}
 	
 	public function getDefaultLabel( $field ) {
-		return $field;	//TODO: this exists in persephone, so capture it here
+		$opt = $this->getFieldOption( $field, 'label' );
+		if( $opt !== null )
+			return $opt;
+		return $field;
+	}
+	
+	/**
+	 * Returns an option value with the given name. This may be null -- in which
+	 * case the default is returned.
+	 *
+	 * Known options:
+	 *		title	=> <Bool> is this a title field (Warning: only ever true, null if false)
+	 *		maxLength => <Integer> maximum length of a field
+	 *		label => <String> label of the field
+	 */
+	public function getFieldOption( $field, $name, $def = null ) {
+		if( isset( $this->names[$field][2][$name] ) )
+			return $this->names[$field][2][$name];
+		return $def;
+	}
+	
+	/**
+	 * As with getFieldOption any of these can be null.
+	 * Known options:
+	 *		titleField => <Field> which field represents a title
+	 */
+	public function getOption( $name, $def = null ) {
+		if( isset( $this->options[$name] ) )
+			return $this->options[$name];
+		return $def;
 	}
 	
 	abstract protected function checkType( $field, $value );
@@ -60,6 +90,10 @@ abstract class DBS_TypeDescriptor {
 abstract class DBS_EntityBase {
 	
 	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
+	
+	public function getType() {
+		return $this->data_type;
+	}
 	
 	const STATUS_UNKNOWN = 0;
 	const STATUS_NEW = 1;

@@ -79,8 +79,10 @@ entity DBSTest {
 		Decimal<Decimal>;
 		Float<Float> DEFAULT(123.5);
 		NameRef<DBSName> ALLOW_NULL DEFAULT(NULL);
-		MemoryOnly<Integer>;
-		OtherDecimal<Decimal>;
+		MemoryOnly<Integer>
+			LABEL("In Memory Integer");
+		OtherDecimal<Decimal>
+			LABEL("Save Only Decimal");
 		NullStr<String> ALLOW_NULL;
 	}
 	

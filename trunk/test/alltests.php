@@ -35,7 +35,8 @@ class DBSchema_AllTests
 		echo( "Running as MySQLSource...\n" );
 		$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
 		$db_test->setErrorLogging( false );
-		PHPUnit_TextUI_TestRunner::run(self::suite(false));
+		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(false));
+		$okay = $ret->wasSuccessful();
 		
 		echo( "Running as MDB2DBSource...\n" );
 		@$mdb =& MDB2::factory( 
@@ -64,7 +65,10 @@ class DBSchema_AllTests
 		//$db_test->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
 		//check_db_error( $db_test->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
 		//$db_test->loadModule( 'Extended' );	//also not needed by dbsource
-		PHPUnit_TextUI_TestRunner::run(self::suite(true));
+		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(true));
+		$okay &= $ret->wasSuccessful();
+		
+		return $okay;
 	}
 	
 	public static function suite( $directMDB2 )
@@ -78,7 +82,8 @@ class DBSchema_AllTests
 	}
 }
 
-DBSchema_AllTests::main();
+$ret = DBSchema_AllTests::main();
+exit( $ret ? 0 : 1 );
 
 /**
  * To test the function lookup of DB is also working

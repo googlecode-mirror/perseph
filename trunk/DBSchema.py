@@ -117,7 +117,6 @@ class Entity_Field:
 		self.keyType = KEY_TYPE_NONE
 		self.hasDefault = False #<Boolean>
 		self.defaultValue = None
-		self.title = False #<String> the logical title of the entity
 		self.maxLen = None #Null<Integer>if non-null indicates the maximum logical length to the entity
 		self.allowNull = False #<Boolean> does the field allow a null assignment
 		self.label = None #<String> logical label of the field, defaults to name
@@ -129,6 +128,7 @@ class Entity(Type):
 		self.fields = {}	#String: Entity_Field
 		self.aliases = {}#AliasString:InternalString
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
+		self.titleField = None	#<Entity_Field> logical title of the entity
 	
 	def getRootType(self):
 		return Type("Entity")
@@ -165,10 +165,7 @@ class Entity(Type):
 	# Obtains the field marked as title in this entity
 	# @return [out] title field, or None
 	def getTitle( self ):
-		for field in self.fields.itervalues():
-			if field.title:
-				return field
-		return None
+		return self.titleField
 	
 	
 class Mapper:

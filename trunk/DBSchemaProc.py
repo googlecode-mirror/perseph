@@ -175,7 +175,9 @@ class Processor:
 						if field.defaultValue == 'NULL':
 							field.defaultValue = None
 					elif opt[0] == 'TITLE':
-						field.title = True
+						if entity.titleField != None:
+							errorOn( fieldSpec, "entity has duplicate TITLE" )
+						entity.titleField = field
 					elif opt[0] == 'MAXLEN':
 						field.maxLen = int( opt[1] )
 					elif opt[0] == 'ALLOW_NULL':

@@ -77,6 +77,9 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 	protected $isNew = false; //<Bool>
 	protected $createFrom;	//<Entity> created from this entity
 	
+	protected $allowAddSave = true;	//can the item be added/saved
+	protected $allowDelete = true;	//can the item be deleted
+	
 	public $ENTITY = null;	//the class of the entity involved 
 	
 	public function initFromRequest() {
@@ -175,6 +178,24 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 			$this->addActions();
 			echo $this->toHTML();
 		}
+	}
+	
+	protected function addActions() {
+		$submit = array();
+		
+		if( $this->allowAddSave ) {
+			if( $this->isNew )
+				$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
+			else 
+				$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
+		}
+		
+		if( $this->allowDelete && !$this->isNew )
+			$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_DELETE, 'Delete' );
+		
+		//allow nothign to be there -- perhaps only web form or read-only
+		if( count( $submit ) )
+			$this->form->addGroup( $submit, DBS_FormBase_QuickForm::T_SUBMITROW );
 	}
 	
 	public function toHTML() {

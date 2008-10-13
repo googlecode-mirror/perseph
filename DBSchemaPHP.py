@@ -673,11 +673,14 @@ function _${inst}_privConstruct() {
 	
 		public $$ENTITY = '${entity}';
 		
+		protected $$allowDelete = $allowDelete;
+		
 		protected function _setup( ) {
 			$$this->form = $$form = new HTML_QuickForm( '${class}', 'POST', '', '', 
 				array( 'class' => 'dbsform' ) );
 		""", { 'class': form.phpClassName,
 			'entity': form.entity.phpClassName,
+			'allowDelete': 'true' if form.allowDelete else 'false'
 			})
 
 		for formfield in form.fields:
@@ -715,20 +718,9 @@ function _${inst}_privConstruct() {
 			return $$this->form->exportValue( '_key_ident' );
 		}
 		
-		protected function addActions() {
-			if( $$this->isNew )
-				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
-			else {
-				$$submit[] = $$this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
-				$delete
-			}
-			$$this->form->addGroup( $$submit, DBS_FormBase_QuickForm::T_SUBMITROW );
-		}
-		
 		public function inject( $$entity, $$overrideRequest = false ) {
 			$$values = array();
 		""",{ 'class': form.phpClassName,
-				'delete': '$submit[] = $this->form->createElement( \'submit\', DBS_FormBase_QuickForm::T_ACTION_DELETE, \'Delete\' );' if form.allowDelete else '',
 				 })
 				
 		for formfield in form.fields:

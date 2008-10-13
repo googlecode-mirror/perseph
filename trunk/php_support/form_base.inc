@@ -56,37 +56,39 @@ abstract class DBS_FormBase {
 	 *		form, false indicates no action has yet been performed.
 	 */
 	abstract public function hasAction();
-	
-	/**
-	 * Produces the HTML rendering of the form
-	 */
-	abstract public function toHTML();
 }
 
-require_once 'HTML/QuickForm.php';
-require_once 'HTML/QuickForm/Renderer/Default.php';	
-
 /**
- * TODO: This does not handle the situation where the user can edit keys
- * and save the same record. The Entity framework can handle this, but
- * here it would require passing the original keys in the form.
+ * A common base class (abstract) for HTML forms.
  */
-abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
+abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
+
+	public $ENTITY = null;	//the class of the entity involved  (Override in derived class)
 	
-	protected $form;	//<HTML_QuickForm>
-	protected $isNew = false; //<Bool>
-	protected $createFrom;	//<Entity> created from this entity
+	protected $isNew = false; //<Bool> a new object is being created (set by this class)
+	protected $createFrom;	//<Entity> created from this entity (set by this class)
 	
-	protected $allowAddSave = true;	//can the item be added/saved
-	protected $allowDelete = true;	//can the item be deleted
+	protected $allowAddSave = true;	//can the item be added/saved (Override in derived class)
+	protected $allowDelete = true;	//can the item be deleted (Override in derived class)
 	
-	public $ENTITY = null;	//the class of the entity involved 
-	
+	/** 
+	 * Initializes the form from the request parameters. This is called
+	 * when a form is submitted.
+	 */
 	public function initFromRequest() {
 		$this->_setup();
-		$this->isNew = $this->isNew();
+		$this->isNew = $this->isRequestNew();
 	}
 	
+	/**
+	 * Initiailizes a new form using the provided entity.  This entity
+	 * should be marked for retrieval in the request such that initFromRequest
+	 * can obtain it.	 
+	 * This is called when a form is first created (before first submission)
+	 *
+	 * @param from [*] if not null loads the form to edit this object, otherwise
+	 *		a new object will be created
+	 */
 	public function initCreate( $from = null ) {
 		$this->_setup();
 		$this->createFrom = $from;
@@ -95,15 +97,19 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 	
 	abstract protected function _setup();
 	
-	public function validate() {
-		return $this->form->validate();
-	}
+	/**
+	 * Called from execute to display the form.
+	 *
+	 * @return [out] returns the HTML rendering of the form
+	 */
+	abstract public function toHTML();
 	
-	const T_SUBMITROW = 'submitrow';
+	const T_SUBMITROW = 'submitrow'; //TODO: unique name per form, to distinguish multiple forms
 	const T_ACTION_SAVE = 'save';
 	const T_ACTION_DELETE = 'delete';
 	const T_ACTION_ADD = 'add';
 	const T_ACTIONMARKER = '_dbs_actionmarker';	//TODO: unique name per form, to distinguish in hasAction
+	const T_MARKNEW = '_dbsfq_new';	//TODO: unique per form
 	
 	public function getAction() {
 		//see note in hasAction about exportValue
@@ -129,11 +135,9 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 		return array_get_default( self::T_ACTIONMARKER, $_REQUEST, '0' ) == '1';
 	}
 	
-	static public function isNew() {
+	public function isRequestNew() {
 		return array_get_default( self::T_MARKNEW, $_REQUEST, '0' ) == '1';
 	}
-	
-	const T_MARKNEW = '_dbsfq_new';
 	
 	public function execute() {
 		if( !$this->hasAction() ) {
@@ -178,6 +182,22 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 			$this->addActions();
 			echo $this->toHTML();
 		}
+	}
+	
+}
+
+require_once 'HTML/QuickForm.php';
+require_once 'HTML/QuickForm/Renderer/Default.php';	
+
+/**
+ * A convenience class to use QuickForm with a standard layout for a form.
+ */
+abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
+	
+	protected $form;	//<HTML_QuickForm>
+	
+	public function validate() {
+		return $this->form->validate();
 	}
 	
 	protected function addActions() {
@@ -243,7 +263,6 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase {
 		$this->form->accept( $render );
 		return $render->toHtml();
 	}
-	
 }
 
 function _dbs_formin_Integer( $value ) { return $value === null ? '' : '' . $value; }

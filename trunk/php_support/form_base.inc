@@ -30,11 +30,17 @@ abstract class DBS_FormBase {
 	
 	/**
 	 * Extracts data from the form into the entity provided.
+	 *
+	 * @param enity [out] into where should the values be extract (may not be null)
 	 */
 	abstract public function extract( $entity );
 	
 	/**
-	 * Take the values from the entity and put them in the form
+	 * Take the values from the entity and put them in the form. 
+	 *
+	 * @param entity [in] from where to take the values, null may be
+	 *		used to say from nowhere (in which case only defaults and special
+	 *		settings will be injected)
 	 */
 	abstract public function inject( $entity );
 	
@@ -95,6 +101,37 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 		$this->isNew = $from === null || $from->isNew();
 	}
 	
+	/**
+	 * Adds a name=value pair to the form so that on submission the server will
+	 * get it back.
+	 *
+	 * NOTE: Must be called before an "init" request
+	 * NOTE: Derived classes must use the values collected here
+	 */
+	public function addPrivate( $name, $value ) {
+		$this->privateValues[$name] = $value;
+	}
+	protected $privateValues = array();
+	
+	/**
+	 * Sets field values for entities when new entities are being created.
+	 * Note that fields set in the form will override these.  For example, if
+	 * you specifc a text field for "Name" with a default, the first display
+	 * of the form will use that default, but on submission it will used whatever
+	 * the user entered.
+	 *
+	 * However, if the field is of type "static" then the value will *NOT* be
+	 * submitted and the new default will be used again. So you need to
+	 * specify the same set of defaults each time the form is created.
+	 * (Not submitting read-only fields is a security feature to prevent the
+	 * user from overwriting them.  In future versions we could support
+	 * encrypting the defaults.)
+	 */
+	public function setDefaultsForNew( $defaults ) {
+		$this->defaultsForNew = $defaults;
+	}
+	protected $defaultForNew = array();
+	
 	abstract protected function _setup();
 	
 	/**
@@ -141,8 +178,7 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	
 	public function execute() {
 		if( !$this->hasAction() ) {
-			if( $this->createFrom !== null )
-				$this->inject( $this->createFrom );
+			$this->inject( $this->createFrom );
 		}
 			
 		$showForm = true;
@@ -184,234 +220,6 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	
 }
 
-require_once 'HTML/QuickForm.php';
-require_once 'HTML/QuickForm/Renderer/Default.php';	
-
-/**
- * A convenience class to use QuickForm with a standard layout for a form.
- *
- * NOTE: we split of the initial form creation and actions as the action part
- * changes depending on validation (which requires the basics to be setup
- * already).
- */
-abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
-	
-	protected $form;	//<HTML_QuickForm>
-	
-	public function validate() {
-		return $this->form->validate();
-	}
-	
-	protected $elements = array();
-	
-	/**
-	 * A parallel to the QuickForm addElement this will add an appropriate field for
-	 * the member -- extracting default options as appropriate.
-	 *
-	 * @param type [in] QuickForm type
-	 * @param field [in] field in the entity mapped to this element
-	 * @param label [in] label to use, if null the persephone default label will be used
-	 * @param options [in] options for this element.
-	 *		NOTE: unlike QuickForm, the options for a "select" type should be passed
-	 *		as an sub-array under the name "options"
-	 */
-	protected function addElement( $type, $field, $label = null, $options = null ) {
-		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
-		
-		if( $label === null )
-			$label = $typeDesc->getDefaultLabel( $field );
-			
-		if( $type == 'static' ) {
-			$this->form->addElement( 'static', "_ro__dbs_{$field}", $label );
-			//add a readable form for JS or checking programs
-			$this->form->addElement( 'hidden', "_hro__dbs_${field}" );
-			
-			$this->elements[] = array( $field, false, "_ro__dbs_{$field}" );
-			$this->elements[] = array( $field, false, "_hro__dbs_{$field}" );
-		} else if( $type == 'select' ) {
-			$selOpts = $options['options'];
-			$this->form->addElement( 'select', "_dbs_{$field}", $label, $selOpts );
-			$this->elements[] = array( $field, true, "_dbs_{$field}" );
-		} else {
-			//add max length if there
-			$maxLen = $typeDesc->getFieldOption( $field, 'maxLength' );
-			if( $maxLen !== null && !array_key_exists( 'maxlength', $options ) )	//don't overwrite an existing value
-				$options['maxlength'] = $maxLen;
-				
-			$this->form->addElement( $type, "_dbs_{$field}", $label, $options );
-			$this->elements[] = array( $field, true, "_dbs_{$field}" );
-			
-			//check numeric types
-			if( array_search( $typeDesc->getBaseType( $field ), array( 'Integer', 'Decimal', 'Float' ) ) !== false )
-				$this->form->addRule( "_dbs_{$field}", "{$label} must be numeric.", 'numeric', true, 'client' );
-		}
-	}
-	
-	protected function addStaticElement( $field, $label = null ) {
-		$this->addElement( 'static', $field, $label );
-	}
-	
-	protected function addTypicalElement( $field, $label = null ) {
-		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
-		$baseType = $typeDesc->getBaseType( $field );
-		if( array_search( $baseType, array( 'String', 'Integer', 'Decimal', 'Float', 'DateTime', 'Date', 'Time' ) ) !== false )
-			$this->addElement( 'text', $field, $label );
-		else if( $baseType === 'Text' )
-			$this->addElement( 'textarea', $field, $label );
-		else if( $baseType === 'Bool' )
-			$this->addSelectElement( $field, array( 0 => 'False', 1 => 'True' ), $label );		
-		else
-			throw new Exception( "Unsupported type: $baseType" );
-	}
-	
-	protected function addSelectElement( $field, $options, $label = null ) {
-		assert( 'count($options) > 0' );
-		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
-		$baseType = $typeDesc->getBaseType( $field );
-		if( $baseType === 'Entity' ) {
-			$customType = $typeDesc->getCustomType($field);
-			$titleField = call_user_func( "{$customType}::getTypeDescriptor" )->getOption( 'titleField' );
-			if( $titleField === null )
-				throw new Exception( "{$customType} does not define a title field for {$baseType}::{$field}" );
-			$this->addElement( 'select', $field, $label, array( 'options' => _dbs_form_loadentityselect( $options, 'identifier', $titleField ) ) );
-		} else
-			$this->addElement( 'select', $field, $label, array( 'options' => $options ) );
-		
-	}
-	
-	/** 
-	 * NOTE: derived classes must call the parent version of this function!
-	 */
-	protected function _setup() {
-		$this->form = new HTML_QuickForm( get_class($this), 'POST', '', '', array( 'class' => 'dbsform' ) );
-		$this->form->addElement( 'hidden', '_key_ident' );
-	}
-	
-	
-	public function inject( $entity, $overrideRequest = false ) {
-		$values = array();
-		
-		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
-		
-		foreach( $this->elements as $element ) {
-			if( $entity->__has( $element[0] ) ) {
-				
-				$baseType = $typeDesc->getBaseType( $element[0] );
-				$raw = $entity->__get( $element[0] );
-				if( $baseType === 'Entity' )
-					$raw = $raw->identifier;
-				else {
-					$func = "_dbs_formin_{$baseType}";
-					$raw = $func( $raw );
-				}
-					
-				$values[$element[2]] = $raw;
-			}
-		}
-		
-		$values['_key_ident'] = $entity->getIdentifier();
-		
-		if( $overrideRequest )
-			$this->form->setConstants( $values );
-		else
-			$this->form->setDefaults( $values );
-		
-	}
-	
-	protected function getIdentifier( ) {
-		return $this->form->exportValue( '_key_ident' );
-	}
-	
-	public function extract( $entity ) {
-		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
-		foreach( $this->elements as $element ) {
-			if( !$element[1] )
-				continue;
-				
-			$baseType = $typeDesc->getBaseType( $element[0] );
-			$raw = $this->form->exportValue( $element[2] );
-			if( $baseType === 'Entity' ) {
-				$raw = call_user_func( "{$typeDesc->getCustomType($element[0])}::withIdentifier", $raw );
-			} else {
-				$func = "_dbs_formout_{$baseType}";
-				$raw = $func( $raw );
-			}
-			
-			$entity->__set( $element[0], $raw );
-		}
-	}
-	
-	protected function addActions() {
-		$submit = array();
-		
-		if( $this->allowAddSave ) {
-			if( $this->isNew )
-				$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_ADD, 'Add' );
-			else 
-				$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_SAVE, 'Save' );
-		}
-		
-		if( $this->allowDelete && !$this->isNew )
-			$submit[] = $this->form->createElement( 'submit', DBS_FormBase_QuickForm::T_ACTION_DELETE, 'Delete' );
-		
-		//allow nothign to be there -- perhaps only web form or read-only
-		if( count( $submit ) )
-			$this->form->addGroup( $submit, DBS_FormBase_QuickForm::T_SUBMITROW );
-	}
-	
-	private $actionsAdded = false;
-	
-	public function toHTML() {
-		//hopefully this is done after having validated the form
-		if( !$this->actionsAdded ) {
-			$this->addActions();
-			$this->actionsAdded =true;
-		}
-		
-		//////////////////////////////////////////////////////////////////////////////////////
-		//The other template engines, being used with QuickForm suffer from a significant
-		//lack of documentation, and several bugs, this one is also too limited, but it'll be
-		//fine for now.
-		$render = new HTML_QuickForm_Renderer_Default();
-		$render->setFormTemplate( "
-			<form{attributes}>
-				<input type='hidden' name='" . self::T_ACTIONMARKER . "' value='1'/>
-				<input type='hidden' name='" . self::T_MARKNEW . "' value='" . ($this->isNew ? '1' : '0') . "'/>
-				<table class='data_bound'><tr><td><fieldset class='data table'><table class='data'>
-					{content}
-				</table></fieldset></tr></td></table>
-			</form>
-			");
-		$render->setElementTemplate( "
-		<tr>
-			<td class='name'>
-				<!-- BEGIN required --><span style=\"color: #ff0000\">*</span><!-- END required -->
-				{label}
-			</td>
-			<td class='value'>
-				{element}
-				<!-- BEGIN error --><br/><span style=\"color: #ff0000\">{error}</span><!-- END error -->
-			</td>
-		</tr>
-			");
-		$render->setHeaderTemplate( "
-			<tr class='header'>
-				<td colspan='2'>{header}</td>
-			</tr>
-			");		
-		$render->setGroupTemplate( "
-			<tr class='submit'>
-				<td colspan='2' class='submit'>
-					{content}
-				</td>
-			</tr>
-			", "submitrow"
-			);
-	
-		$this->form->accept( $render );
-		return $render->toHtml();
-	}
-}
 
 function _dbs_formin_Integer( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_String( $value ) {	return $value === null ? '' : $value; }
@@ -448,12 +256,8 @@ function _dbs_form_loadentityselect( $results, $key, $text ) {
  * @param entitykey [in] which findWith function to use (such as "ID") and
  *		also specifies the request parameter used to indicate this parameter, 
  *		if not specified in request then a new item is assumed
- * @param defaultsForNew [in] if the key is not in the request, then these
- *		defaults are set in the form.  Form:
- *			memberName -> value
- *		If value is null the item will not be set (this is for convenience)
  */
-function dbs_standard_form( $form, $entitykey, $defaultsForNew = null ) {
+function dbs_standard_form( $form, $entitykey ) {
 	if( !$form->hasAction() ) {
 		$key = array_get_default( $entitykey, $_REQUEST, null );	//TODO: unlike the get_request_def this doesn't handle encoding correctly!!!
 		$entityname = $form->ENTITY;
@@ -461,13 +265,7 @@ function dbs_standard_form( $form, $entitykey, $defaultsForNew = null ) {
 		//$entityname = $formclass::ENTITY
 		if( $key !== null ) 
 			$rule = call_user_func( "$entityname::findWith$entitykey", $key );
-		else if( $defaultsForNew !== null ) {
-			$rule = call_user_func( "$entityname::createWithNothing" );
-			foreach( $defaultsForNew as $member => $value ) {
-				if( $value !== null )
-					$rule->$member = $value;
-			}
-		} else
+		else
 			$rule = null;
 			
 		$form->initCreate( $rule );

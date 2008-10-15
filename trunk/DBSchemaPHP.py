@@ -687,7 +687,7 @@ function _${inst}_privConstruct() {
 		self.wrt("""<?php
 		
 	require_once dirname(__FILE__).'/schema.inc';
-	require_once 'persephone/form_base.inc';
+	require_once 'persephone/html_quickform.inc';
 					
 	class Form${class} extends DBS_FormBase_QuickForm {
 	

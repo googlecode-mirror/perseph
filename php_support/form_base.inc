@@ -130,7 +130,7 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	public function setDefaultsForNew( $defaults ) {
 		$this->defaultsForNew = $defaults;
 	}
-	protected $defaultForNew = array();
+	protected $defaultsForNew = array();
 	
 	abstract protected function _setup();
 	

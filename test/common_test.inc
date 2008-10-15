@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__).'/../php_support/error_handling.inc';
+require_once dirname(__FILE__).'/gen/schema.inc';
 	
 //date_default_timezone_set('Europe/Berlin'); 
 date_default_timezone_set('UTC'); //TODO: consider impact of this in Date conversions... (already breaks!)

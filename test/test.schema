@@ -221,28 +221,6 @@ mapper DBSLink {
 	}
 }
 
-form SampleFormQuick {
-	entity DBSTest;
-	allowDelete true; /* the record may be deleted -- a delete option is given to the user */
-	
-	fields {
-		ID READ_ONLY;	/*Add special HIDDEN READ_ONLY field*/
-		Name;
-		Date;
-		Float READ_ONLY;
-	}
-}
-
-form SampleFormFull {
-	entity DBSTest;
-	addFields all;	/* All fields in entity will also be included, not just those specified here */
-	
-	fields {
-		ID READ_ONLY;
-	}
-}
-
-
 listing SampleList {
 	entity DBSTest;
 	

@@ -34,12 +34,10 @@ def retrofit_schema( emitter ):
 	def phpClassName( en ):
 		return emitter.className( en.name )
 	DBSchema.Entity.phpClassName = property( phpClassName )
-	DBSchema.Form.phpClassName = property( phpClassName )
 	DBSchema.Listing.phpClassName = property( phpClassName )
 	
 	def phpMemberName( self ):
 		return emitter.memberName( self.name )
-	DBSchema.Form_Field.phpMemberName = property( phpMemberName )
 	
 	def phpInstClassName( en ):
 		if en.className != None:
@@ -52,14 +50,6 @@ def retrofit_schema( emitter ):
 		return "array( '%s', '%s', '%s', $this->%s )" \
 			% ( self.phpName, field.db_field.name, field.db_field.fieldType.name, self.phpName )
 	DBSchema.Entity_Field.phpLoadDescriptor = phpLoadDescriptor
-	
-	def phpFormName( en ):
-		return emitter.formNameOf( en )
-	DBSchema.Entity_Field.phpFormName = property( phpFormName )
-	
-	def phpFormLabel( en ):
-		return emitter.formLabelOf( en )
-	DBSchema.Entity_Field.phpFormLabel = property( phpFormLabel )
 	
 	def phpTableRef( prov, table ):
 		return "array( %s'%s', '%s' )" \
@@ -80,9 +70,6 @@ class PHPEmitter:
 	def emit( self, base ):
 		self.base = base
 		self.emitFile( "schema", self.genSchema )
-		
-		for form in self.sc.forms.itervalues():
-			self.emitFile( form.name + ".form", lambda: self.genForm( form ) )
 		
 		for listing in self.sc.listings.itervalues():
 			self.emitFile( listing.name + ".listing", lambda: self.genListing( listing ) )
@@ -541,7 +528,9 @@ static public function withIdentifier( $ident ) {
 				) )
 		self.wr( "return $entity; }\n" );
 	
-		self.wr( "public function getIdentifier() {" );
+		# The any identifier just uses what fields are available to identify the key
+		# more than one may exist for an entity
+		self.wr( "public function getAnyIdentifier() {" );
 		self.wr( "$entity = $this;\n" );
 		buf = "$data = array();\n"
 		for key in en.getRecordKeyFields():
@@ -553,6 +542,17 @@ static public function withIdentifier( $ident ) {
 
 		self.wr( "return serialize( $data );\n}\n" );
 
+		# There is only one solo identifier for any object, it is the one that best matches
+		# user's expectations so is simply called identifier
+		self.wr( "public function getIdentifier() {" );
+		self.wr( "$entity = $this;\n" );
+		buf = "$data = array();\n"
+		for key in en.getRecordKeyFields():
+			buf += "$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+		self.wr( buf );
+
+		self.wr( "return serialize( $data );\n}\n" );
+		
 	##################################################################
 	# 
 	def genEntityTypeDescriptor( self, en ):
@@ -679,125 +679,6 @@ function _${inst}_privConstruct() {
 		'inst': en.phpInstClassName	} )
 		
 		
-		
-	#/***************************************************************************
-	#* Form Generation
-	#***************************************************************************/	
-	def genForm( self, form ):
-		self.wrt("""<?php
-		
-	require_once dirname(__FILE__).'/schema.inc';
-	require_once 'persephone/html_quickform.inc';
-					
-	class Form${class} extends DBS_FormBase_QuickForm {
-	
-		public $$ENTITY = '${entity}';
-		
-		protected $$allowDelete = $allowDelete;
-		
-		protected function _setup( ) {
-			parent::_setup();
-		""", { 'class': form.phpClassName,
-			'entity': form.entity.phpClassName,
-			'allowDelete': 'true' if form.allowDelete else 'false'
-			})
-
-		for formfield in form.fields:
-			field = form.entity.fields[formfield.name]
-				
-			if formfield.readonly:
-				self.wr( "\t$this->addElement( 'static', '%s', %s );\n" % ( field.phpName, field.phpFormLabel ) )
-				continue
-			
-			if formfield.hidden:	 # why do we need a hidden?
-				self.wr( "\t$this->addElement( 'hidden', '%s' );\n" % field.phpName );
-				continue
-			
-			self.wr( "\t$this->addElement( '%s', '%s', %s, %s );\n" 
-				% ( self.formTypeOf( field.fieldType ), field.phpName, field.phpFormLabel, self.formOptionsOf( field ) ) )
-				
-			#if field.maxLen != None:
-			#	self.wr( "\t$form->addRule( '%s', 	%s . ' may not be longer than %d characters.', 'maxlength', %d, 'client' );\n"
-			#		% ( field.phpFormName, field.phpFormLabel, field.maxLen, field.maxLen )	)
-						
-			#	//TODO: isNumeric function, but where?
-			#if field.fieldType.name == 'Integer' or field.fieldType.name == 'Decimal' or field.fieldType.name == 'Float':
-			#	self.wr( "\t$form->addRule( '%s', %s . ' must be numeric.', 'numeric', true, 'client' );\n" 
-			#		% ( field.phpFormName, field.phpFormLabel )	)
-
-
-		#for key in form.entity.getRecordKeyFields():
-		#	self.wr( "\t$form->addElement( 'hidden', '_key_%s' );\n" % ( key.phpFormName ) )
-		self.wrt("""
-		}
-	}
-?>""", { } )
-	
-	def formExtract( self, form ):
-		buf = ""
-		for formfield in form.fields:
-			field = form.entity.fields[formfield.name]
-			
-			if formfield.readonly:
-				continue;
-				
-			#//TODO: references for entitites
-			buf += "$raw = $this->form->exportValue('%s');\n" % field.phpFormName
-			buf += self.formOutFunc( field )
-		return buf
-		
-	# TODO: Likely some cleanup is needed/some options to handle cases
-	# with multiple keySets where not everything is specified
-	def formExtractKeys( self, form ):
-		buf = ""
-		for key in form.entity.getRecordKeyFields():
-			buf += "$raw = $this->form->exportValue('_key_%s');\n" % key.phpFormName
-			buf += self.formOutFunc( key )
-		return buf
-		
-	def formTypeOf( self, atype ):
-		if isinstance( atype, DBSchema.Entity ):
-			if atype.getTitle() != None:
-				return 'select'
-			return 'string'	#TODO: maybe, if only one key we could use a specific type like before
-		
-		atype = atype.getRootType()
-		if atype.name in ['String','Integer','Decimal', 'Float','DateTime','Date','Time']:
-		 	return 'text'
-		if atype.name == 'Text':
-			return 'textarea';
-		if atype.name == 'Bool':
-			return 'select';
-		
-		raise Exception, "Unsupported Form type: %s " % atype.name
-	
-	
-	def formNameOf( self, ent ):
-		return "_dbs_%s" % ent.name #//TODO: proper/safe naming
-	
-	
-	def formLabelOf( self, form_field ):
-		return '\'' + xml( form_field.label ) + '\''	#//TODO:FEATURE: some label lookup/replacement
-	
-	##
-	# Creates the PHP fragment for the HTMLQuickForm options for the field.
-	def formOptionsOf( self, ent ):
-		if ent.fieldType.getRootType().name == 'Bool':
-			return "array( 'options' => array( 0 => 'False', 1 => 'True' ) )"
-			
-		# linked entities load the keys/names of all the possible items and present it as a select box
-		if isinstance( ent.fieldType, DBSchema.Entity ):
-			title = ent.fieldType.getTitle()
-			if title != None:
-				#//just match all records by default
-				return "array( 'options' => _dbs_form_loadentityselect( %s::search( DBS_Query::matchAll() ), 'identifier','%s' ) )" \
-					% ( ent.fieldType.phpClassName,  self.memberName( title.name ) )
-		
-		if ent.fieldType.name in [ 'String', 'Text' ] and ent.maxLen != None:
-			return "array( 'maxlength' => %d ) " % ent.maxLen
-			
-		return 'array()'
-	
 	##
 	# Creates the PHP fragment to take a value from the entity and prepare it for
 	# for form.
@@ -811,9 +692,6 @@ function _${inst}_privConstruct() {
 			sub = ''
 				
 		return "_dbs_%s_%s( $entity->%s%s )"	% ( _class, atypename, ent.phpName, sub )
-	
-	def formInFunc( self, ent ):
-		return self.serialInFunc( ent, 'formin' )
 	
 	def identInFunc( self, ent ):
 		return self.serialInFunc( ent, 'identin' )
@@ -836,9 +714,6 @@ function _${inst}_privConstruct() {
 		buf += sub
 		buf += "$entity->%s %s;\n" % ( ent.phpName, assign )
 		return buf
-	
-	def formOutFunc( self, ent ):
-		return self.serialOutFunc( ent, 'formout' )
 	
 	def identOutFunc( self, ent ):
 		return self.serialOutFunc( ent, 'identout' )

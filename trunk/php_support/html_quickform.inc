@@ -117,6 +117,8 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			$titleField = call_user_func( "{$customType}::getTypeDescriptor" )->getOption( 'titleField' );
 			if( $titleField === null )
 				throw new Exception( "{$customType} does not define a title field for {$baseType}::{$field}" );
+			//use "identifier" here, not solo identifier, to ensure a correct match is done.
+			//FEATURE: create a better matching routine so that fource loading is not required...
 			return $this->addElement( 'select', $field, $label, array( 'options' => _dbs_form_loadentityselect( $options, 'identifier', $titleField ) ) );
 		} else
 			return $this->addElement( 'select', $field, $label, array( 'options' => $options ) );
@@ -154,7 +156,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				$func = $element[3]['convertIn']; 
 				$raw = $func($raw);
 			} else if( $baseType === 'Entity' )
-				$raw = $raw->identifier;
+				$raw = $raw->identifier;	//see comment in addSelect
 			else {
 				$func = "_dbs_formin_{$baseType}";
 				$raw = $func( $raw );
@@ -164,7 +166,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		}
 				
 		if( $entity !== null )
-			$values['_key_ident'] = $entity->getIdentifier();
+			$values['_key_ident'] = $entity->getAnyIdentifier();
 		
 		foreach( $this->privateValues as $name => $value )
 			$values[$name] = $value;

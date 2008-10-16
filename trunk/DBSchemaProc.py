@@ -32,7 +32,6 @@ class Processor:
 			SL.PROVIDER: [],
 			SL.CUSTOMTYPE: [],
 			SL.LISTING: [],
-			SL.FORM: [],
 			SL.SEARCH: [],
 			}
 			
@@ -48,7 +47,6 @@ class Processor:
 		self.processProviders( )
 		self.processEntities( )
 		self.processMappers( )
-		self.processForms( )
 		self.processListings( )
 		self.processSearches( )
 		
@@ -316,53 +314,6 @@ class Processor:
 		res['name'] = node.getChild(0).text
 		return res
 		
-	def processForms( self ):
-		for formNode in self.rawDecls[SL.FORM]:
-			name = extProp( formNode, SL.NAME )
-			varset = extVarSet( formNode )
-			checkVarSet( formNode, varset, [ 'entity' ], [ 'allowDelete', 'addFields' ] )
-			
-			form = DBSchema.Form( name )
-			self.sc.forms[name] = form
-			form.allowDelete = asBool( formNode, varset.get( 'allowDelete', 'false' ) )
-			
-			addFields = varset.get( 'addFields', 'none' ).lower()
-			if not addFields in [ 'all', 'none' ]:
-				errorOn( formNode, 'addFields must be one of [all,none]' )
-				
-			if not varset['entity'] in self.sc.entities:
-				errorOn( formNode, "refers to non-extant entity: %s" % varset['entity'] )
-			form.entity = self.sc.entities[varset['entity']]
-				
-			# Special fields are handled now, otherwise defaults are taken for all fields
-			coveredFields = {}
-			fieldsNode = extNode( formNode, SL.FIELDS )
-			for i in range( fieldsNode.getChildCount() ):
-				node = fieldsNode.getChild(i)
-				
-				name = extProp( node, SL.NAME )
-				if not name in form.entity.fields:
-					errorOn( node, "field not in entity %s" % name )
-				ff = DBSchema.Form_Field( form.entity.fields[name] )
-				coveredFields[name] = True
-				form.fields.append( ff )
-				
-				# Collect options
-				opts = extOptions( node )
-				for opt in opts:
-					if opt[0] == 'HIDDEN':
-						ff.hidden = True
-					elif opt[0] == 'READ_ONLY':
-						ff.readonly = True
-					else:
-						errorOn( node, "unrecognized option %s" % opt[0] )
-			
-			#fill in all default fields (by default, all entity fields are included)
-			if addFields == 'all':
-				for field in form.entity.fields.itervalues():
-					if not field.name in coveredFields:
-						coveredFields[field.name] = True
-						form.fields.append( DBSchema.Form_Field( field ) )
 			
 	def processListings( self ):
 		for listNode in self.rawDecls[SL.LISTING]:

@@ -184,6 +184,10 @@ class Processor:
 						field.label = opt[1]
 					elif opt[0] == 'DESC':
 						field.desc = opt[1]
+					elif opt[0] == 'IDENTIFIER':
+						if entity.identifierField != None:
+							errorOn( fieldSpce, "entity has duplicate IDENTIFIER, only one supported" )
+						entity.identifierField = field
 					else:
 						errorOn( fieldSpec, "unrecognized option: %s " % opt )
 					
@@ -193,6 +197,11 @@ class Processor:
 				
 				entity.fields[fieldName] = field
 			
+			# Auto Identifier field ---------------------------------------------
+			# This is *NOT* guaranteed, if the user needs a guaranteed Identifier they should use IDENTIFIER!
+			if entity.identifierField == None:
+				entity.identifierField = entity.getSingleKey()	# will be None if none, so okay to assign like this
+				
 			# Aliases -----------------------------------------------------------
 			aliases = extAliases( ent )
 			for alias in aliases:

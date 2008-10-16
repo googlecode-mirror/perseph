@@ -83,6 +83,21 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 879, $l->float );
 	}
 	
+	function testExplicitIdentifier() {
+		$q = DBSIdentEx::createWithName( "Explicit1" );
+		$q->value = 435;
+		$curID = $q->anyIdentifier;	//capture before we have an ID
+		$q->add();
+		
+		$this->assertEquals( "{$q->id}", $q->identifier );
+		
+		$a = DBSIdentEx::withIdentifier( $curID );
+		$this->assertEquals( 435, $a->value );
+		
+		$b = DBSIdentEx::withIdentifier( "{$q->id}" );	//explicit form here
+		$this->assertEquals( 435, $b->value );
+	}
+	
 	function testReload() {
 		$n = DBSTest::createWithName( 'ReloadMe' );
 		$n->float = 123;
@@ -597,6 +612,7 @@ class DBSTest_Basic extends TestCase {
 		$l->find();
 		$this->assertEquals( 123, $l->value );
 	}
+	
 }
 
 ?>

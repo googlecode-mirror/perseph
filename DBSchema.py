@@ -128,6 +128,7 @@ class Entity(Type):
 		self.aliases = {}#AliasString:InternalString
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
 		self.titleField = None	#<Entity_Field> logical title of the entity
+		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
 	
 	def getRootType(self):
 		return Type("Entity")
@@ -159,6 +160,18 @@ class Entity(Type):
 			ret.append( comp )
 			
 		return ret
+	
+	##
+	# returns None or
+	#		the key field if the entity has only a single defining key
+	# NOTE: A return on non-None here also implies that identifierField
+	# is set (not during processing of course, but by the time of output
+	# generation)
+	def getSingleKey( self ):
+		set = self.getRecordKeyFields()
+		if len( set ) != 1:
+			return None
+		return set[0]
 	
 	##
 	# Obtains the field marked as title in this entity

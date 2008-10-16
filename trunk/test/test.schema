@@ -129,6 +129,26 @@ mapper DBSTest {
 	}
 }
 
+/* Used to check that an explicit identifier works*/
+entity DBSIdentEx {
+	fields {
+		ID<Integer> ALT_RECORD_KEY IDENTIFIER;
+		Name<String> ALT_RECORD_KEY;
+		Value<Decimal>;
+	}
+}
+
+mapper DBSIdentEx {
+	provider DBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Name = Name;
+			@Decimal = Value;
+		}
+	}
+}
+
 entity DBSTwoKeys {
 	fields {
 		Num<Integer> RECORD_KEY;

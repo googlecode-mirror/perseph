@@ -516,42 +516,63 @@ static public function createWithNothing() {
 		self.wr("//*** genIdentifier\n" );
 		self.wr("""
 static public function withIdentifier( $ident ) {
-	$data = unserialize( $ident );
-	if( $data === false )
-		throw new Exception( "Invalid identifier" );
 	$entity = self::withNothing();
-			""")
-		for key in en.getRecordKeyFields():
-			self.wr( self._if(
-				"array_key_exists( '%s', $data )" % key.phpName,
-				"$raw = $data['%s']; %s\n" % ( key.phpName, self.identOutFunc( key ) )
-				) )
+""" )
+		
+		if en.getSingleKey() == None:
+			self.wr("""
+	$data = @unserialize( $ident );
+	if( $data === false ) {
+		""");
+			# we may have the identifier at this point
+			if en.identifierField != None:
+				# TODO: wrap type exceptions as some kind of identifier exception
+				self.wr( "$raw = $ident; %s" % self.identOutFunc( en.identifierField ) )
+				self.wr( "return $entity;\n" );
+			# otherwise just an exception
+			self.wr( "throw new Exception( 'Invalid identifier' ); }\n")
+			
+			for key in en.getRecordKeyFields():
+				self.wr( self._if(
+					"array_key_exists( '%s', $data )" % key.phpName,
+					"$raw = $data['%s']; %s\n" % ( key.phpName, self.identOutFunc( key ) )
+					) )
+		else:
+			# With a single key we know we never have serialized data
+			self.wr( "$raw = $ident; %s" % self.identOutFunc( en.identifierField ) )
+			
 		self.wr( "return $entity; }\n" );
 	
 		# The any identifier just uses what fields are available to identify the key
 		# more than one may exist for an entity
 		self.wr( "public function getAnyIdentifier() {" );
-		self.wr( "$entity = $this;\n" );
-		buf = "$data = array();\n"
-		for key in en.getRecordKeyFields():
-			buf += self._if(
-				self._this_has( key ),
-				"$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
-				)
-		self.wr( buf );
-
-		self.wr( "return serialize( $data );\n}\n" );
+		if en.getSingleKey() != None:
+			self.wr( "return $this->getIdentifier();\n}\n" );
+		else:
+			self.wr( "$entity = $this;\n" );
+			buf = "$data = array();\n"
+			for key in en.getRecordKeyFields():
+				buf += self._if(
+					self._this_has( key ),
+					"$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+					)
+			self.wr( buf );
+			self.wr( "return serialize( $data );\n}\n" );
 
 		# There is only one solo identifier for any object, it is the one that best matches
 		# user's expectations so is simply called identifier
 		self.wr( "public function getIdentifier() {" );
 		self.wr( "$entity = $this;\n" );
-		buf = "$data = array();\n"
-		for key in en.getRecordKeyFields():
-			buf += "$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
-		self.wr( buf );
-
-		self.wr( "return serialize( $data );\n}\n" );
+		if en.identifierField != None:
+			self.wr( "return %s;" % self.identInFunc( en.identifierField ) )
+		else:
+			buf = "$data = array();\n"
+			for key in en.getRecordKeyFields():
+				buf += "$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+			self.wr( buf );
+			self.wr( "return serialize( $data );" )
+			
+		self.wr("\n}\n" )
 		
 	##################################################################
 	# 

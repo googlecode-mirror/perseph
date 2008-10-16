@@ -67,7 +67,6 @@ class Root:
 		self.providers = {}
 		self.entities = {}
 		self.mappers = {}
-		self.forms = {}
 		self.listings = {}
 		self.searches = {}
 		
@@ -214,23 +213,6 @@ class Function:
 		self.returnType = None #<Type>
 
 
-class Form:
-	
-	def __init__(self,name):
-		self.name = name #//<String>
-		self.entity = None #	//<DBSchema_Entity>
-		self.allowDelete = False #	//<Bool>
-		self.fields = [] # //list<DBSchema_Form_Field>
-
-
-class Form_Field:
-	
-	def __init__(self, field ):
-		self.name = field.name
-		self.hidden = False
-		self.readonly = False
-		self.label = field.label #<String>
-	
 
 class Listing:
 	

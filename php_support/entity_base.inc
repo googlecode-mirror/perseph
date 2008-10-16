@@ -143,9 +143,12 @@ abstract class DBS_EntityBase {
 	}
 	
 	public function &__getref( $field ) {
-		//TODO: I don't like this here, it is only for convenience with automatic forms
 		if( $field == 'identifier' ) {
 			$id = $this->getIdentifier();
+			return $id;
+		}
+		if( $field == 'anyIdentifier' ) {
+			$id = $this->getAnyIdentifier();
 			return $id;
 		}
 			

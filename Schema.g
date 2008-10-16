@@ -35,7 +35,7 @@ schema
 	:	 declaration*;
 
 declaration 	
-	:	defaultExpr | providerBlock | entityBlock | mapperBlock | formBlock | listingBlock | customtypeBlock | searchBlock;
+	:	defaultExpr | providerBlock | entityBlock | mapperBlock | listingBlock | customtypeBlock | searchBlock;
 
 defaultExpr	//prefer "default" but Java target doesn't correct the name!	
 	:	DEFAULT rawVarSet -> ^(DEFAULT rawVarSet);
@@ -143,22 +143,6 @@ mapperFieldSimpleExpr
 
 // $>
 	
-// $<Form
-
-formBlock 
-	:	FORM id OPENBLOCK formExpr* CLOSEBLOCK -> ^(FORM  ^(NAME id) formExpr*);
-	
-formExpr
-	:	formFields | varSet;
-	
-formFields
-	:	FIELDS OPENBLOCK formField* CLOSEBLOCK -> ^(FIELDS formField*);
-	
-formField
-	:	id option* ENDEXPR -> ^(FIELD ^(NAME id) option*) ;
-
-// $>
-
 // $<Listing
 
 listingBlock 
@@ -236,7 +220,6 @@ id
 	| ENTITY
 	| USING
 	| RAWID
-	| FORM
 	| LISTING
 	| CUSTOMTYPE
 	| FILTER
@@ -262,7 +245,6 @@ ENTITY	:	'entity'	;
 MAPPER	:	'mapper'	;
 ALIASES	:	'aliases';
 USING	:	'using';
-FORM	:	'form';
 LISTING	:	'listing';
 CUSTOMTYPE	:	'type';
 FILTER	:	'filter';

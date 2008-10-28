@@ -649,12 +649,12 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 						) )
 						
 			self.wr( "\tbreak;\n" );
-		self.wr("""
+		self.wrt("""
 		}
 	} //end checkType
 	
 } //end class
-		""")
+		""", { 'class': en.phpClassName } )
 	
 	def getFieldOptions( self, en, field ):
 		options = {}
@@ -669,14 +669,16 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 	def genOpenEntityClass( self, en ):
 		self.wrt("""
 class $class extends DBS_EntityBase {
-	static public $$typeDescriptor;
-	//needed since you can't yet lookup up Statics dynamically (by class name)
+	static private $$_typeDescriptor;
+
 	static public function getTypeDescriptor() {
-		return self::$$typeDescriptor;
+		if( self::$$_typeDescriptor == null )
+			self::$$_typeDescriptor = new ${class}TypeDescriptor();
+		return self::$$_typeDescriptor;
 	}
 	
 	protected function __construct() {
-		$$this->_data_type = self::$$typeDescriptor;
+		$$this->_data_type = self::getTypeDescriptor();
 		parent::__construct();
 	} 
 	
@@ -690,7 +692,6 @@ class $class extends DBS_EntityBase {
 
 	def genCloseEntityClass( self, en ):
 		self.wrt( """} //end of class
-$class::$$typeDescriptor = new ${class}TypeDescriptor();
 
 function _${inst}_privConstruct() {
 	return ${inst}::_privConstruct();

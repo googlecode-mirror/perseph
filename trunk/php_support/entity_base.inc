@@ -130,6 +130,8 @@ abstract class DBS_EntityBase {
 		if( isset( $this->_data_type->aliases[ $field ] ) )
 			return $this->_data_type->aliases[ $field ];
 			
+		var_dump( $this->_data_type );
+		var_dump( $this->getTypeDescriptor() );
 		throw new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );
 	}
 	

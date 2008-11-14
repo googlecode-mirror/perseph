@@ -28,6 +28,16 @@ class DBS_Query {
 	}
 	
 	/**
+	 * Matches a field against any item in a list of values.
+	 */
+	static public function matchIn( $member, $values ) {
+		$ret = new DBS_Where_MatchIn();
+		$ret->member = $member;
+		$ret->values = $values;
+		return $ret;
+	}
+	
+	/**
 	 * Matches a string type column against a pattern string.
 	 *
 	 * @param member
@@ -175,6 +185,10 @@ class DBS_Where_Match extends DBS_Where_Member {
 class DBS_Where_MatchString extends DBS_Where_Member {
 	public $pattern;	//<String>
 	public $positive;	//<Boolean>
+}
+
+class DBS_Where_MatchIn extends DBS_Where_Member {
+	public $values;	//Array<*>
 }
 
 class DBS_Where_Group extends DBS_Where_Item {

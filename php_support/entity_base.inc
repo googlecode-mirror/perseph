@@ -585,6 +585,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 		if( $tuple === null )
 			throw new Exception( "Unknown field: " . $q->member );
 		list( $member, $dbname, $dbtype ) = $tuple;
+		$cnv = dbs_cnvfunc_entity_to_db( $proto, $member, $table[1], $dbname );
 			
 		if( $q instanceof DBS_Where_Match ) {
 			if( $q->value === null ) {
@@ -598,7 +599,6 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				} else
 					throw new Exception( "NULL can only be matched with = or !=" );
 			} else {
-				$cnv = dbs_cnvfunc_entity_to_db( $proto, $member, $table[1], $dbname );
 				$value = $proto->$cnv( $q->value );
 			
 				$op = $q->op;	//TODO: Check for correctness
@@ -615,6 +615,16 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				
 			//TODO: What if the quote escapes the * char?
 			$value = str_replace( '*', '%', $db->quote( $q->pattern, 'String' ) );
+			
+		} else if( $q instanceof DBS_Where_MatchIn ) {
+		
+			$op = 'IN';
+			
+			$valuesOut = array();
+			foreach( $q->values as $v )
+				$valuesOut[] = $db->quote( $proto->$cnv( $v ), $dbtype );
+			$value = '(' . implode( ',', $valuesOut ) . ')';
+			
 		} else {
 			throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 		}

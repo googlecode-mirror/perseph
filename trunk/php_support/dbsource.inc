@@ -585,8 +585,9 @@ class MySQLSource extends DBSourceBase {
 
 	var $curRow;
 	var $curNames;
-
 	var $mapRes;	//maps ids to results
+	var $refCount = 1;
+
 		
 	/* Queries will be scanned syntax %TABLE[tablename] and be translated
 	 * into just tablename.  This allows the translation of table names in
@@ -606,18 +607,18 @@ class MySQLSource extends DBSourceBase {
 		$this->curRow = array();
 		$this->curNames = array();
 		$this->mapRes = array();   
-		array_push( $this->mapRes, "Junk" );	//to ensure id=0 is never used
 
 		parent::__construct( $astr_enc );
 	}
 
 	function int_exec( $q ) {
 		$res = mysql_query( $this->translate_query( $q ), $this->connect );
-		$ref = array_push( $this->mapRes, $res ) - 1;
+		if( !$res )
+			return false;//so a direct comparison works.
+		$ref = $this->refCount++;
+		$this->mapRes[ $ref] = $res;
 		$this->curRow[ $ref ] = null;
 		$this->curNames[ $ref ] = null;
-		if( !$res )
-			return false;	//so a direct comparison works.
 		return $ref;
 	}
 
@@ -719,9 +720,9 @@ class MySQLSource extends DBSourceBase {
 		$res = $this->mapRes[ $ref ];
 		if( !is_bool( $res ) )
 			mysql_free_result( $res );
-		unset( $this->mapRes[ $ref ] );	//Why does this cause failures in using the array later...
-		$this->mapRes[$ref] = null;	//..if I don't do this?
+		unset( $this->mapRes[$ref] );
 		unset( $this->curRow[$ref] );	//clean up row data as well
+		unset( $this->curNames[$ref] );
 	}
 }
 
@@ -733,7 +734,7 @@ class PGSQLSource extends DBSourceBase {
 	var $pass;
 
 	var $curRow;
-	var $curNames;
+	var $curNames;	//TODO: use ref System as in MySql (otherwise memory problem?)
 
 	//The mapRes system is also used in MySQL, perhaps it should be abstracted..
 	var $mapRes;	//maps ids to results
@@ -838,6 +839,8 @@ class PGSQLSource extends DBSourceBase {
 	
 	function endresult( $ref ) {
 		pg_free_result( $this->mapRes[$ref] );
+		unset( $this->curNames[$ref] );
+		unset( $this->curRow[$ref] );
 	}
 }
 
@@ -937,6 +940,8 @@ class OCISQLSource extends DBSourceBase {
 	
 	function endresult( $res ) {
 		oci_free_statement( $res );
+		unset( $this->curNames[$ref] );
+		unset( $this->curRow[$ref] );
 	}
 }
 
@@ -1061,7 +1066,7 @@ class DBResult {
 		return $this->db->decode( $this->result( $name ), $type );
 	}
 	
-	function endresult() {
+	function endResult() {
 		$ret = $this->db->endResult( $this->result );
 		unset( $this->result );
 		return $ret;

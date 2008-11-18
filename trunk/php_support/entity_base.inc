@@ -759,7 +759,7 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 		if( !$this->okay )
 			return;
 			
-		$this->db->endresult( $this->res );
+		$this->db->endResult( $this->res );
 		$this->okay = false;
 	}
 	

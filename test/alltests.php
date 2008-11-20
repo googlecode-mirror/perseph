@@ -40,13 +40,14 @@ class DBSchema_AllTests
 		
 		echo( "Running as MDB2DBSource...\n" );
 		@$mdb =& MDB2::factory( 
-			array(
+			'mysqli://DBSTestUser:password@localhost/dbs_test',
+			/*array(
 				'phptype' => 'mysqli',
 				'username' => 'DBSTestUser',
 				'password' => 'password',
 				'hostspec' => 'localhost',
 				'database' => 'dbs_test' 
-				),
+				),*/
 			array(
 				//setup as utf8 for text columns
 				'datatype_map' => array( 'cstring' => 'cstring' ),

@@ -53,7 +53,7 @@ def retrofit_schema( emitter ):
 	
 	def phpTableRef( prov, table ):
 		return "array( %s'%s', '%s' )" \
-			% ( "" if prov.tablePrefixVar == None else "$GLOBALS['%s']." % prov.tablePrefixVar, table.name, table.name );
+			% ( "" if prov.impl.tablePrefixVar == None else "$GLOBALS['%s']." % prov.impl.tablePrefixVar, table.name, table.name );
 	DBSchema.Provider.phpTableRef = phpTableRef;
 
 #####################################################################
@@ -135,24 +135,24 @@ class PHPEmitter:
 		self.wr("static private function &getDB() {\n" );
 		
 		# Obtain the raw DB object from a var or function
-		if loc.provider.varName != None:
-			cname = loc.provider.varName
+		if loc.provider.impl.varName != None:
+			cname = loc.provider.impl.varName
 			self.wrt("""
 	if( !isset( $$GLOBALS['$var'] ) )
 		throw new ErrorException( "The database variable $var is not defined." );
 	$$db =& $$GLOBALS['$var'];
-""", { 'var': loc.provider.varName } )
+""", { 'var': loc.provider.impl.varName } )
 		else:
-			cname = loc.provider.funcName
+			cname = loc.provider.impl.funcName
 			self.wrt("""
 	if( !function_exists( '$func' ) )
 		throw new ErrorException( "The database function $func is not defined." );
 	$$db =& $func();
-""", {'func': loc.provider.funcName } )
+""", {'func': loc.provider.impl.funcName } )
 		
 		# Convert into DBSource if not (ie. it is MDB2)
 		#NOTE: it is intentional that all entities use the same global cache of the MDB2Source
-		if isinstance( loc.provider, DBSchema.Provider_MDB2 ):
+		if isinstance( loc.provider.impl, DBSchema.Provider_MDB2 ):
 			self.wrt( """
 	if( isset( $$GLOBALS['$mdbcache'] ) ) {
 		$$mdb =& $$GLOBALS['$mdbcache'];
@@ -162,7 +162,7 @@ class PHPEmitter:
 		$$GLOBALS['$mdbcache'] =& $$mdb;
 	}
 """, { 'mdbcache': "__persephone_%s_mdbCache" % cname,
-	'texttype': loc.provider.textType
+	'texttype': loc.provider.impl.textType
 	 } )
 			name = "mdb"
 		else:

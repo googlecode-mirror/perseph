@@ -60,12 +60,11 @@ class DBSchema_AllTests
 			die( "Unable to create MDB2 DB instance\n" );
 		}
 		$GLOBALS['mdb'] =& $mdb;
-		
 		$db_test = new MDB2DBSource( $mdb, 'cstring' );
 		$db_test->setErrorLogging( false );
-		//$db_test->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
-		//check_db_error( $db_test->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
-		//$db_test->loadModule( 'Extended' );	//also not needed by dbsource
+		//$mdb->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
+		//check_db_error( $mdb->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
+		//$mdb->loadModule( 'Extended' );	//also not needed by dbsource
 		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(true));
 		$okay &= $ret->wasSuccessful();
 		
@@ -74,11 +73,11 @@ class DBSchema_AllTests
 	
 	public static function suite( $directMDB2 )
 	{
-		$suite = new PHPUnit_Framework_TestSuite( 'DBSChema tests' );
-		if( $directMDB2 )
-			$suite->addTestSuite( 'DBSTest_DirectMDB2' );
+		$suite = new PHPUnit_Framework_TestSuite( 'DBSchema tests' );
 		$suite->addTestSuite( 'DBSTest_Clean' );
 		$suite->addTestSuite( 'DBSTest_Basic' );
+		if( $directMDB2 )
+			$suite->addTestSuite( 'DBSTest_DirectMDB2' );
 		return $suite;
 	}
 }

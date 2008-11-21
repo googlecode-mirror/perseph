@@ -74,21 +74,21 @@ class Root:
 class Provider:
 	def __init__(self):
 		self.tables = {}#Name:Provider_Table
+		self.impl = None	#Provider_Impl
 
-class Provider_DBSourceLike(Provider):
+class Provider_Impl:
 	def __init__(self):
-		Provider.__init__( self )
 		self.varName = None #variable name in PHP which is this source
 		self.tablePrefixVar = None	#prefix variable for all tables
 		self.funcName = None;	#funcion in PHP which obtains the DBSource
 		
-class Provider_DBSource(Provider_DBSourceLike):
+class Provider_DBSource(Provider_Impl):
 	def __init__(self):
-		Provider_DBSourceLike.__init__( self )
+		Provider_Impl.__init__( self )
 		
-class Provider_MDB2(Provider_DBSourceLike):
+class Provider_MDB2(Provider_Impl):
 	def __init__(self):
-		Provider_DBSourceLike.__init__( self )
+		Provider_Impl.__init__( self )
 		self.textType = 'text'	#which MDB2 type (or custom type) to use for text/string fields
 		
 		

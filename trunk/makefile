@@ -11,7 +11,7 @@ TESTDIR=test
 GENDIR=test/gen
 	
 $(GENDIR):
-	mkdir $(GENDIR)
+	mkdir -p $(GENDIR)
 	
 .PHONY: test phptest webtest
 test: phptest webtest
@@ -25,8 +25,11 @@ webtest: test-build
 test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
-$(GENDIR)/schema.inc: $(TESTDIR)/test.schema . | $(GENDIR)
-	python Persephone.py $(TESTDIR)/test.schema $(GENDIR)/
+$(GENDIR)/schema.inc: $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
+	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema $(GENDIR)/
+	
+$(TESTDIR)/gen.test.schema: . | $(GENDIR)
+	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema
 	
 $(GENDIR)/mdb2_schema.inc: $(TESTDIR)/test_mdb2.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/test_mdb2.schema $(GENDIR)/mdb2_

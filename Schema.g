@@ -29,10 +29,11 @@ tokens
 	OPGREATERTHAN;
 	PLACEHOLDER;
 	OPPATTERNMATCH;
+	ROOT;
 }
 
 schema 	
-	:	 declaration*;
+	:	 declaration* -> ^(ROOT declaration*);	//note, we need to force a root here, otherwise scheams with only one declaration will have that as the root!
 
 declaration 	
 	:	defaultExpr | providerBlock | entityBlock | mapperBlock | listingBlock | customtypeBlock | searchBlock;

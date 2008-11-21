@@ -20,6 +20,9 @@ require_once dirname(__FILE__).'/dbsource.inc';
 function TypeConvert( $value ) { return $value; }
 function TypeConvert_inv( $value ) { return $value; }
 
+/* Bool to Integer conversion is rather essential since some DBs expose Bool type as Integers */
+function convert_Bool_to_Integer( $val ) { return $val ? 1 : 0; }
+function convert_Integer_to_Bool( $val ) { return $val != 0; }
 
 /**
  * Wraps a reference for assignment.

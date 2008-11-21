@@ -37,11 +37,12 @@ class Processor:
 			
 		self.sc = DBSchema.Root()
 	
-	def process( self, root ):
+	def collect( self, root ):
 		for i in range( root.getChildCount() ):
 			ch = root.getChild( i )
 			self.rawDecls[ch.getToken().type].append( ch )
 			
+	def process( self ):
 		self.processDefaults( )
 		self.processTypes( )
 		self.processProviders( )
@@ -68,35 +69,53 @@ class Processor:
 			name = extProp( enNode, SL.NAME )
 			self.sc.types[name] = DBSchema.Entity(name)
 		
+	# Providers support the special combination ability such that part of the provider
+	# can be specified as incomplete, and later completed.
 	def processProviders( self ):
 		for prov in self.rawDecls[SL.PROVIDER]:
 			name = extProp( prov, SL.NAME )
 			varset = extVarSet( prov )
-			type = varset["type"]
 			provider = None
-			if type == "DBSource" or type == 'MDB2':
-				if type == 'MDB2':
-					provider = DBSchema.Provider_MDB2( )
-					checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar","textType"] )
-					if 'textType' in varset:
-						provider.textType = varset['textType']
-				else:
-					provider = DBSchema.Provider_DBSource( )
-					checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar"] )
-				self.sc.providers[name] = provider
-					
-				
-				# May use a variable or a function to lookup/return the DB
-				if 'var' in varset:
-					provider.varName = varset['var']
-				else:
-					provider.funcName = varset['func']
-				
-			else:
-				errorOn( prov, "Unknown type in provider: %s" % name )
 			
-			if "tablePrefixVar" in varset:
-				provider.tablePrefixVar = varset['tablePrefixVar'];
+			defn = varset['definition'] if 'definition' in varset else 'full'
+			if defn == 'full' or defn == 'incomplete':
+				if name in self.sc.providers:
+					errorOn( prov, "A provider definition already exists: %s" % name )
+				provider = DBSchema.Provider()
+				self.sc.providers[name] = provider
+			elif defn == 'extend':
+				if not name in self.sc.providers:
+					errorOn( prov, "Provider extends does not exist: %s" % name )
+				provider = self.sc.providers[name]
+			else:
+				errorOn( prov, "Unknown definition type: %s" % defn )
+							
+			if defn != 'incomplete':
+				type = varset["type"]
+				impl = None
+				if type == "DBSource" or type == 'MDB2':
+					if type == 'MDB2':
+						impl = DBSchema.Provider_MDB2( )
+						checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar","textType","definition"] )
+						if 'textType' in varset:
+							impl.textType = varset['textType']
+					else:
+						impl = DBSchema.Provider_DBSource( )
+						checkVarSet( prov, varset, ["type"], ["var","func","tablePrefixVar","definition"] )
+					provider.impl = impl
+						
+					
+					# May use a variable or a function to lookup/return the DB
+					if 'var' in varset:
+						impl.varName = varset['var']
+					else:
+						impl.funcName = varset['func']
+					
+				else:
+					errorOn( prov, "Unknown type in provider: %s" % name )
+			
+				if "tablePrefixVar" in varset:
+					provider.impl.tablePrefixVar = varset['tablePrefixVar'];
 				
 			tableNodes = extTableNodes( prov )
 			for tableNode in tableNodes:

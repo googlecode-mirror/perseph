@@ -53,10 +53,11 @@ print( "provider $provider {
 
 foreach( $mdb->listTables() as $table ) {
 	print( "\ttable $table {\n" );
-	//TODO: http://pear.php.net/bugs/bug.php?id=15100
-	foreach( $mdb->listTableFields( "`$table`" ) as $field ) {
+	//NOTE: http://pear.php.net/bugs/bug.php?id=15100
+	$mdb->setOption( 'quote_identifier', true );
+	foreach( $mdb->listTableFields( $table ) as $field ) {
 		
-		$decl = $mdb->getTableFieldDefinition( "`$table`", $field );
+		$decl = $mdb->getTableFieldDefinition( $table, $field );
 		$decl = $decl[0];
 		if( !array_key_exists( $decl['nativetype'], $typeMap ) )
 			die( "Unknown nativetype: {$decl['nativetype']}\n" );

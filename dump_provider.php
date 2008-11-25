@@ -21,6 +21,7 @@ function check_error( $res ) {
 		return true;
 		
 	error_log( $res->getMessage() );
+	error_log( $res->userinfo );	//why is this not part of getMessage?! (TODO: move into the DBScheme adapter for MDB2)
 	exit(1);
 }
 
@@ -30,11 +31,13 @@ $typeMap = array(
 	'char' => 'String',
 	'varchar' => 'String',
 	'text' => 'Text',
+	'longtext' => 'Text',
 	'date' => 'Date',
 	'time' => 'Time',
 	'datetime' => 'DateTime',
 	'decimal' => 'Decimal',
 	'float' => 'Float',
+	'double' => 'Float',
 	'boolean' => 'Bool',	//NOTE: MySQL bool is TINYINT, so this won't come up
 	);
 $provider = $argv[1];
@@ -51,13 +54,18 @@ print( "provider $provider {
 	definition incomplete;
 " );
 
-foreach( $mdb->listTables() as $table ) {
+$tables = $mdb->listTables();
+check_error( $tables );
+foreach( $tables as $table ) {
 	print( "\ttable $table {\n" );
 	//NOTE: http://pear.php.net/bugs/bug.php?id=15100
 	$mdb->setOption( 'quote_identifier', true );
-	foreach( $mdb->listTableFields( $table ) as $field ) {
+	$fields = $mdb->listTableFields( $table );
+	check_error( $fields );
+	foreach( $fields as $field ) {
 		
 		$decl = $mdb->getTableFieldDefinition( $table, $field );
+		check_error( $decl );
 		$decl = $decl[0];
 		if( !array_key_exists( $decl['nativetype'], $typeMap ) )
 			die( "Unknown nativetype: {$decl['nativetype']}\n" );

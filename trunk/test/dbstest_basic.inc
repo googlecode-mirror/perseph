@@ -27,7 +27,7 @@ class DBSTest_Basic extends TestCase {
 		$n = DBSTest::createWithNothing();
 		$n->name = 'T❀stNäm€' . time();	//include some unicode, latin-1, and latin-15 overlap characters
 		$n->date = rand( 1000, 10000 ) * 3600*24;	//TODO: hmm, php has no native Date type
-		$n->time = rand( 0, 100000 );
+		$n->time = rand( -100000, 100000 );	//be sure to have negatives tested as well
 		$n->dateTime = time();
 		$n->decimal = rand( 0, 100000 ) / 1000.0;
 		$n->float = rand() / getrandmax();

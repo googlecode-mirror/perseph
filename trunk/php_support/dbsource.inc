@@ -510,15 +510,34 @@ abstract class DBSourceBase implements DBSource {
 }
 
 function _dbs_decode_time( $value ) {
+	if( !strlen( $value ) )
+		return $value;
+	if( $value[0] == '-' ) {
+		$neg = true;
+		$value = substr( $value, 1 );
+	} else
+		$neg = false;
+	
 	$parts = explode( ':', $value );
 	if( count( $parts ) != 3 )	
 		return null;
 		
-	return $parts[0] * 3600 + $parts[1] * 60 + $parts[2];
+	$ret = $parts[0] * 3600 + $parts[1] * 60 + $parts[2];
+	if( $neg )
+		$ret = -$ret;
+	return $ret;
 }
 
 function _dbs_encode_time( $value ) {
-	return sprintf( "%d:%02d:%02d", floor($value/3600), floor($value/60) % 60, $value % 60 );
+	if( $value < 0 ) {
+		$neg = true;
+		$value = -$value;
+	} else
+		$neg = false;
+	$ret = sprintf( "%d:%02d:%02d", floor($value/3600), floor($value/60) % 60, $value % 60 );
+	if( $neg )
+		$ret = '-' . $ret;
+	return $ret;
 }
 
 //NOTE: This is not used anymore is it...?

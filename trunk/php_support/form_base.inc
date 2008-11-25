@@ -101,6 +101,10 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 		$this->isNew = $from === null || $from->isNew();
 	}
 	
+	public function isNewEntity() {
+		return $this->isNew;
+	}
+	
 	/**
 	 * Adds a name=value pair to the form so that on submission the server will
 	 * get it back.

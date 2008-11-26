@@ -24,6 +24,13 @@ function TypeConvert_inv( $value ) { return $value; }
 function convert_Bool_to_Integer( $val ) { return $val ? 1 : 0; }
 function convert_Integer_to_Bool( $val ) { return $val != 0; }
 
+/* Non-conversions */
+function convert_Text_to_String( $val ) { return $val; }
+function convert_String_to_Text( $val ) { return $val; }
+/* Non-conversion for now, maybe a special class is needed in PHP */
+function convert_Float_to_Decimal( $val ) { return $val; }
+function convert_Decimal_to_Float( $val ) { return $val; }
+
 /**
  * Wraps a reference for assignment.
  */

@@ -28,6 +28,7 @@ function check_error( $res ) {
 $typeMap = array( 
 	'int' => 'Integer',
 	'tinyint' => 'Integer',
+	'smallint' => 'Integer',
 	'char' => 'String',
 	'varchar' => 'String',
 	'text' => 'Text',
@@ -35,10 +36,13 @@ $typeMap = array(
 	'date' => 'Date',
 	'time' => 'Time',
 	'datetime' => 'DateTime',
+	'timestamp' => 'DateTime',
 	'decimal' => 'Decimal',
 	'float' => 'Float',
 	'double' => 'Float',
 	'boolean' => 'Bool',	//NOTE: MySQL bool is TINYINT, so this won't come up
+	'blob' => 'Binary',
+	'longblob' => 'Binary',
 	);
 $provider = $argv[1];
 $dsn = $argv[2];
@@ -67,11 +71,16 @@ foreach( $tables as $table ) {
 		$decl = $mdb->getTableFieldDefinition( $table, $field );
 		check_error( $decl );
 		$decl = $decl[0];
-		if( !array_key_exists( $decl['nativetype'], $typeMap ) )
-			die( "Unknown nativetype: {$decl['nativetype']}\n" );
+		if( !array_key_exists( $decl['nativetype'], $typeMap ) ) {
+			print( "Unknown nativetype: {$decl['nativetype']}\n" );
+			exit(1);
+		}
 		$type = $typeMap[$decl['nativetype']];
 		$ext = '';
 		
+		if( $type == 'Binary' )
+			continue;	//TODO: skip for now since not supported
+			
 		if( isset($decl['autoincrement']) && $decl['autoincrement'] )
 			$ext = ' LAST_INSERT_ID';
 		print( "\t\t$field<$type>$ext;\n" );

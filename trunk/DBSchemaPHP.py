@@ -706,11 +706,9 @@ function _${inst}_privConstruct() {
 	# for form.
 	# TODO: Handle nulls in sub field references
 	def serialInFunc( self, ent ):
-		if isinstance( ent.fieldType, DBSchema.Entity ):
-			atypename = 'String'
+		if isinstance( ent.fieldType, DBSchema.Entity ) or	ent.fieldType.getRootType().name == 'Entity':	# Allow type masquerading (TODO: formalize this)
 			sub = '->identifier' #+ self.memberName( link.name )
 		else:
-			atypename = ent.fieldType.getRootType().name
 			sub = ''
 				
 		return "$entity->%s%s"	% ( ent.phpName, sub )
@@ -721,11 +719,12 @@ function _${inst}_privConstruct() {
 	def serialOutFunc( self, ent ):
 		# when referencing objects we'll use the lazy loading "withNothing"
 		if isinstance( ent.fieldType, DBSchema.Entity ):
-			atypename = 'String'
 			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withIdentifier( $raw );\n"
 			assign = '= $ent'
+		elif ent.fieldType.getRootType().name == 'Entity':	# Allow type masquerading (TODO: formalize this)
+			sub = 'unset($ent); $ent = ' + self.className( ent.name ) + "::withIdentifier( $raw );\n"
+			assign = '= $ent'
 		else:
-			atypename = ent.fieldType.getRootType().name
 			assign = '= $raw'
 			sub = ''
 		

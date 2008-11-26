@@ -32,6 +32,7 @@ $typeMap = array(
 	'char' => 'String',
 	'varchar' => 'String',
 	'text' => 'Text',
+	'mediumtext' => 'Text',
 	'longtext' => 'Text',
 	'date' => 'Date',
 	'time' => 'Time',

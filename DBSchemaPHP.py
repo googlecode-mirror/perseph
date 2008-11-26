@@ -527,7 +527,7 @@ static public function withIdentifier( $ident ) {
 			# we may have the identifier at this point
 			if en.identifierField != None:
 				# TODO: wrap type exceptions as some kind of identifier exception
-				self.wr( "$raw = $ident; %s" % self.identOutFunc( en.identifierField ) )
+				self.wr( "$raw = $ident; %s" % self.serialOutFunc( en.identifierField ) )
 				self.wr( "return $entity;\n" );
 			# otherwise just an exception
 			self.wr( "throw new Exception( 'Invalid identifier' ); }\n")
@@ -535,11 +535,11 @@ static public function withIdentifier( $ident ) {
 			for key in en.getRecordKeyFields():
 				self.wr( self._if(
 					"array_key_exists( '%s', $data )" % key.phpName,
-					"$raw = $data['%s']; %s\n" % ( key.phpName, self.identOutFunc( key ) )
+					"$raw = $data['%s']; %s\n" % ( key.phpName, self.serialOutFunc( key ) )
 					) )
 		else:
 			# With a single key we know we never have serialized data
-			self.wr( "$raw = $ident; %s" % self.identOutFunc( en.identifierField ) )
+			self.wr( "$raw = $ident; %s" % self.serialOutFunc( en.identifierField ) )
 			
 		self.wr( "return $entity; }\n" );
 	
@@ -554,7 +554,7 @@ static public function withIdentifier( $ident ) {
 			for key in en.getRecordKeyFields():
 				buf += self._if(
 					self._this_has( key ),
-					"$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+					"$data['%s'] = %s;\n" % ( key.phpName, self.serialInFunc( key ) )
 					)
 			self.wr( buf );
 			self.wr( "return serialize( $data );\n}\n" );
@@ -564,11 +564,11 @@ static public function withIdentifier( $ident ) {
 		self.wr( "public function getIdentifier() {" );
 		self.wr( "$entity = $this;\n" );
 		if en.identifierField != None:
-			self.wr( "return %s;" % self.identInFunc( en.identifierField ) )
+			self.wr( "return %s;" % self.serialInFunc( en.identifierField ) )
 		else:
 			buf = "$data = array();\n"
 			for key in en.getRecordKeyFields():
-				buf += "$data['%s'] = %s;\n" % ( key.phpName, self.identInFunc( key ) )
+				buf += "$data['%s'] = %s;\n" % ( key.phpName, self.serialInFunc( key ) )
 			self.wr( buf );
 			self.wr( "return serialize( $data );" )
 			
@@ -705,7 +705,7 @@ function _${inst}_privConstruct() {
 	# Creates the PHP fragment to take a value from the entity and prepare it for
 	# for form.
 	# TODO: Handle nulls in sub field references
-	def serialInFunc( self, ent, _class ):
+	def serialInFunc( self, ent ):
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			atypename = 'String'
 			sub = '->identifier' #+ self.memberName( link.name )
@@ -713,32 +713,25 @@ function _${inst}_privConstruct() {
 			atypename = ent.fieldType.getRootType().name
 			sub = ''
 				
-		return "_dbs_%s_%s( $entity->%s%s )"	% ( _class, atypename, ent.phpName, sub )
-	
-	def identInFunc( self, ent ):
-		return self.serialInFunc( ent, 'identin' )
+		return "$entity->%s%s"	% ( ent.phpName, sub )
 	
 	##
 	# Creates the PHP fragment to take a value from the form and convert it to
 	# the entity field type.
-	def serialOutFunc( self, ent, _class ):
+	def serialOutFunc( self, ent ):
 		# when referencing objects we'll use the lazy loading "withNothing"
 		if isinstance( ent.fieldType, DBSchema.Entity ):
 			atypename = 'String'
 			sub = 'unset($ent); $ent = ' + ent.fieldType.phpClassName + "::withIdentifier( $raw );\n"
-			assign = '= new DBS_Ref( $ent )'
+			assign = '= $ent'
 		else:
 			atypename = ent.fieldType.getRootType().name
 			assign = '= $raw'
 			sub = ''
 		
-		buf = "$raw = _dbs_%s_%s($raw);\n" % ( _class, atypename )
-		buf += sub
+		buf = sub
 		buf += "$entity->%s %s;\n" % ( ent.phpName, assign )
 		return buf
-	
-	def identOutFunc( self, ent ):
-		return self.serialOutFunc( ent, 'identout' )
 		
 	#/***************************************************************************
 	#* Listing Generation
@@ -928,7 +921,7 @@ function _${inst}_privConstruct() {
 				return True
 			if value == 'False':
 				return False
-			raise Excpetion, "Invalid Bool value for constant %s => %s"  % ( tname, value )
+			raise Exception, "Invalid Bool value for constant %s => %s"  % ( tname, value )
 		else:
 			raise Exception, "Unknown type for constant %s " % tname
 		

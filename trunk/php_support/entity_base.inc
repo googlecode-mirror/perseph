@@ -958,27 +958,4 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 	}
 }
 
-
-//NOTE: these don't need converters since "serialize" is used, though for now I'll leave them here for
-//simplicity in reusing code in Python (the form code)
-function _dbs_identin_Integer( $value ) { return $value; }
-function _dbs_identin_String( $value ) {	return $value; }
-function _dbs_identin_Text( $value ) {	return $value; }
-function _dbs_identin_Decimal( $value ) { return $value; }
-function _dbs_identin_Float( $value ) { return $value; }
-function _dbs_identin_Bool( $value ) { return $value; }
-function _dbs_identin_DateTime( $value ) { return $value; }
-function _dbs_identin_Date( $value ) { return $value; }
-function _dbs_identin_Time( $value ) { return $value; }
-
-function _dbs_identout_Integer( $value ) { return $value; }
-function _dbs_identout_String( $value ) {	return $value; }
-function _dbs_identout_Text( $value ) {	return $value; }
-function _dbs_identout_Decimal( $value ) { return $value; }
-function _dbs_identout_Float( $value ) { return $value; }
-function _dbs_identout_Bool( $value ) { return $value; }
-function _dbs_identout_DateTime( $value ) { return $value; }
-function _dbs_identout_Date( $value ) { return $value; }
-function _dbs_identout_Time( $value ) { return $value; }
-
 ?>

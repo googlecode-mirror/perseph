@@ -60,7 +60,10 @@ print( "provider $provider {
 
 $tables = $mdb->listTables();
 check_error( $tables );
-foreach( $tables as $table ) {
+$views = $mdb->listViews();
+check_error( $views );
+$tablesViews = array_merge( $tables, $views );
+foreach( $tablesViews as $table ) {
 	print( "\ttable $table {\n" );
 	//NOTE: http://pear.php.net/bugs/bug.php?id=15100
 	$mdb->setOption( 'quote_identifier', true );
@@ -68,9 +71,12 @@ foreach( $tables as $table ) {
 	check_error( $fields );
 	foreach( $fields as $field ) {
 		
+		//obtain definition
 		$decl = $mdb->getTableFieldDefinition( $table, $field );
 		check_error( $decl );
 		$decl = $decl[0];
+		
+		//determine native type
 		if( !array_key_exists( $decl['nativetype'], $typeMap ) ) {
 			print( "Unknown nativetype: {$decl['nativetype']}\n" );
 			exit(1);
@@ -78,11 +84,22 @@ foreach( $tables as $table ) {
 		$type = $typeMap[$decl['nativetype']];
 		$ext = '';
 		
+		//TODO: skip for now since not supported
 		if( $type == 'Binary' )
-			continue;	//TODO: skip for now since not supported
+			continue;	
 			
+		//consider Decimals with no fractional part to be Integers
+		if( $type == 'Decimal' && isset( $decl['length'] ) ) {
+			$digits = split( ',', $decl['length'] );
+			if( count( $digits ) < 2 || $digits[1] == 0 )
+				$type = 'Integer';
+		}
+			
+		//consider autincrement fields to be last_insert_id
 		if( isset($decl['autoincrement']) && $decl['autoincrement'] )
 			$ext = ' LAST_INSERT_ID';
+			
+		//write defintion
 		print( "\t\t$field<$type>$ext;\n" );
 	}	
 	print( "\t}\n" );

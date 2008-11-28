@@ -187,7 +187,20 @@ searchSortOrder
 	:	ASC | DESC;
 	
 sfeExpr 
-	:	id sfeOP sfeRef -> ^(sfeOP id sfeRef);
+	:	id sfeOP sfeRef -> ^(sfeOP id sfeRef)
+	/* TODO: This allows different groupOps' to be used, we don't want that, it should only be a set of OR or AND */
+	|	'(' sfeExpr ( sfeGroupOp  sfeExpr )+ ')' -> ^(sfeGroupOp sfeExpr*)
+	;
+	
+sfeGroupOp
+	:	AND
+	|	OR
+	;
+	
+/*sfeGroupExpr
+	:	sfeExpr ( OR sfeExpr )+ -> ^(OR sfeExpr*)
+	|	sfeExpr ( AND sfeExpr )+ -> ^(AND sfeExpr*)
+	;*/
 	
 sfeRef
 	:	id -> ^(FIELD id)
@@ -228,6 +241,8 @@ id
 	| SORT
 	| ASC
 	| DESC
+	| OR
+	| AND
 	;
 
 typeDef	
@@ -253,6 +268,8 @@ SEARCH	:	'search';
 SORT		:	'sort';
 ASC	:	'ASC';
 DESC	:	'DESC';
+OR	:	'OR';
+AND	:	'AND';
 
 // $>
 

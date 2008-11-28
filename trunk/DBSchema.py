@@ -272,6 +272,12 @@ class Search_FilterFieldPattern(Search_FilterField):
 	def __init__(self):
 		Search_FilterField.__init__(self)
 
+class Search_FilterGroupOp(Search_FilterExpr):
+	def __init__(self):
+			Search_FilterExpr.__init__(self)
+			self.exprs = []	#Array<Search_FilterExpr> at least 2 in length
+			self.op = None	#String, OR or AND
+			
 class Search_Sort:
 	def __init__(self):
 		self.dir = None	#<String> one of ASC or DESC

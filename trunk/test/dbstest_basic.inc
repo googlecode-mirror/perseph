@@ -304,6 +304,7 @@ class DBSTest_Basic extends TestCase {
 			$q = DBSTest::createWithName( "Search:$val" );
 			$q->decimal = $val;
 			$q->bool = true;
+			$q->float = 25;
 			$q->add();
 		}
 		
@@ -356,6 +357,10 @@ class DBSTest_Basic extends TestCase {
 			$this->assertEquals( $i, $ordered[2*($i-1)+1]->decimal );
 			$this->assertFalse( $ordered[2*($i-1)+1]->bool );
 		}
+		
+		$many = ManyField::search( true, 25, false, 7 )->loadAll();
+		$this->assertEquals( 11, count( $many ) );
+		
 		
 		//test delete
 		DBSTest::searchAndDelete( DBS_Query::matchStringPattern( 'name', 'Search:*' ) );

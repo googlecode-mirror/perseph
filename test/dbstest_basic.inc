@@ -613,6 +613,24 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 123, $l->value );
 	}
 	
+	function testInclTwoKeys() {
+		$master = DBSTest::createWithName( "Linking Test" );
+		$master->add();
+		
+		for( $i = 0; $i < 5; $i ++ ) {
+			$o = BasicTwoKeys::createWithNothing();
+			$o->master = $master;
+			$o->value = "$i";
+			$o->add();
+		}
+		
+		$i = 0;
+		foreach( InclBasicTwoKeys::search( $master ) as $o ) {
+			$this->assertEquals( "$i", $o->value );
+			$i++;
+		}
+		$this->assertEquals( 5, $i );
+	}
 }
 
 ?>

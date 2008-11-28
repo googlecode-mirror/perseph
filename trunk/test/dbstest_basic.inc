@@ -629,12 +629,21 @@ class DBSTest_Basic extends TestCase {
 			$o->add();
 		}
 		
+		//the outer search should return the same results
 		$i = 0;
 		foreach( InclBasicTwoKeys::search( $master ) as $o ) {
 			$this->assertEquals( "$i", $o->value );
 			$i++;
 		}
 		$this->assertEquals( 5, $i );
+		
+		$i = 0;
+		foreach( $master->twoKeys() as $o ) {
+			$this->assertEquals( "$i", $o->value );
+			$i++;
+		}
+		$this->assertEquals( 5, $i );
+		
 	}
 }
 

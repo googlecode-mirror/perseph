@@ -104,6 +104,8 @@ class PHPEmitter:
 		self.genEmpty( en )
 		if en.name in self.sc.mappers:
 			self.genMapper( en, self.sc.mappers[en.name] )
+		for search in en.searches.itervalues():
+			self.genSearchInEntity( en, search )
 		self.genCloseEntityClass( en )
 		
 	def genMapper( self, en, loc ):
@@ -780,7 +782,16 @@ function _${inst}_privConstruct() {
 	#* Search Generation
 	#***************************************************************************/	
 	def genSearch( self, search ):
-		self.wr( "class %s {\n\tstatic public function search(" % self.className( search.name ) )
+		self.wr( "class %s {\n\tstatic public function search" % self.className( search.name ) )
+		self.genSearchInner( search, None )
+		self.wr( "}\n" )
+	
+	def genSearchInEntity( self, en, search ):
+		self.wr( "public function %s" % self.memberName( search.name ) )
+		self.genSearchInner( search, en )
+	
+	def genSearchInner( self, search, entity ):
+		self.wr( "(" )
 		for i in range( search.placeholderCount ):
 			if i > 0:
 				self.wr( ", " )
@@ -800,8 +811,7 @@ function _${inst}_privConstruct() {
 		self.wr( ",".join( params ) )
 		self.wr( "\t);\n" );
 		
-		self.wr( "}\n}\n" )
-	
+		self.wr( "}\n" )
 	
 	groupMap = {
 		'AND': 'And',
@@ -812,6 +822,13 @@ function _${inst}_privConstruct() {
 			if filter.placeholder != None:
 				#TODO: this will likely cause problems for placeholder ordering
 				expr = "$p%d" % filter.placeholder
+			elif filter.containerRef != None:
+				if isinstance( filter.containerRef, DBSchema.Entity ):
+					if( filter.containerRef.name != search.container.name ):
+						raise Exception, "ContainerRef is expected to be the Container itself: %s != %s" % (filter.containerRef.name, search.container.name )
+					expr = "$this";
+				else:	#Entity_Field
+					expr  = "$this->%s" % filter.containerRef.phpName
 			else:
 				expr = self.constantExpr( filter.field.fieldType, filter.const )
 				
@@ -960,7 +977,7 @@ function _${inst}_privConstruct() {
 		#PYTHON: ^(\p{Lu}+)(\p{Lu}[^\p{Lu}])
 		m = re.search( '^([A-Z]+)([A-Z][^A-Z].*)$', str )
 		if not m:
-			raise Error, "Unconvertable member: %s " % str
+			raise Exception, "Unconvertable member: %s " % str
 		return m.group(1).lower() + m.group(2)
 
 	def dbField( self, field ):

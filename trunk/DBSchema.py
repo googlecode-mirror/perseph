@@ -245,13 +245,13 @@ class Listing_Field:
 
 
 class Search:
-	def __init__(self, containing ):
+	def __init__(self, container ):
 		self.name = None;
 		self.sort = None	# <Search_Sort>
 		self.filter = None	# <Search_FilterExpr>
 		self.limit = None	# <Search_None>
 		self.entity = None	# <Entity> which is produced by the search
-		self.containingEntity = containing # <Entity> may be null (in which this search resides)
+		self.container = container # <Entity> may be null (in which this search resides)
 		
 		self.placeholderCount = 0	# Total count of placeholders
 		
@@ -261,9 +261,11 @@ class Search_FilterExpr:
 	
 class Search_FilterField(Search_FilterExpr):
 	def __init__(self):
-		self.field = None	# <Entity_Field>
+		self.field = None	# <Entity_Field> the field to be matched
+		
 		self.const = None	# If a constant, then the string form of it here
 		self.placeholder = None	# An integer (the paramter position) of a placeholder is used (not a constant)
+		self.containerRef = None # <Entity_Field> of container, or <Entity> for the entity itself
 
 class Search_FilterFieldOp(Search_FilterField):
 	def __init__(self):

@@ -301,3 +301,28 @@ mapper DBSLinkNames {
 		}
 	}
 }
+
+/**
+ * Used to test a traditional 1 to many relationship (a container)
+ */
+entity BasicTwoKeys {
+	fields {
+		Master<DBSTest>;
+		Value<String>;
+	}
+}
+
+mapper BasicTwoKeys {
+	provider DBTest;
+	fields {
+		using twokeys {
+			@KeyNum = Master.ID;
+			@Value = Value;
+		}
+	}
+}
+
+search InclBasicTwoKeys<BasicTwoKeys> {
+	filter Master = ?;
+	sort Value ASC;
+}

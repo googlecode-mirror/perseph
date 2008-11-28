@@ -58,6 +58,16 @@ entity DBSTest {
 			TODO: check search/searchAndDelete case */
 		ANumber = Decimal;
 	}
+	
+	/*search twoKeys<BasicTwoKeys> {
+		filter Master = @SELF;
+		sort Value ASC;
+	}*/
+}
+
+search InclBasicTwoKeys<BasicTwoKeys> {
+	filter Master = ?;
+	sort Value ASC;
 }
 
 search SortSearch<DBSTest> {
@@ -322,7 +332,3 @@ mapper BasicTwoKeys {
 	}
 }
 
-search InclBasicTwoKeys<BasicTwoKeys> {
-	filter Master = ?;
-	sort Value ASC;
-}

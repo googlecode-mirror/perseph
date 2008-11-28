@@ -620,6 +620,7 @@ class DBSTest_Basic extends TestCase {
 	
 	function testInclTwoKeys() {
 		$master = DBSTest::createWithName( "Linking Test" );
+		$master->decimal = 2;
 		$master->add();
 		
 		for( $i = 0; $i < 5; $i ++ ) {
@@ -644,6 +645,15 @@ class DBSTest_Basic extends TestCase {
 		}
 		$this->assertEquals( 5, $i );
 		
+		//to show that placeholders still work
+		$f = $master->twoKeysValue( 3 )->loadAll();
+		$this->assertEquals( 1, count( $f ) );
+		$this->assertEquals( 3, $f[0]->value );
+		
+		//test references to other members (Decimal = 2 match to Value)
+		$f = $master->twoKeysMatching()->loadAll();
+		$this->assertEquals( 1, count( $f ) );
+		$this->assertEquals( 2, $f[0]->value );
 	}
 }
 

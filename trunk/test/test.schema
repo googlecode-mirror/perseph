@@ -63,6 +63,14 @@ entity DBSTest {
 		filter Master = @SELF;
 		sort Value ASC;
 	}
+	
+	search TwoKeysValue<BasicTwoKeys> {
+		filter ( Master = @SELF AND Value = ? );
+	}
+	
+	search TwoKeysMatching<BasicTwoKeys> {
+		filter ( Master = @SELF AND Value = @Decimal );
+	}
 }
 
 search InclBasicTwoKeys<BasicTwoKeys> {

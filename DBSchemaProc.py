@@ -47,6 +47,7 @@ class Processor:
 		self.processTypes( )
 		self.processProviders( )
 		self.processEntities( )
+		self.processEntitiesPass2( )
 		self.processMappers( )
 		self.processListings( )
 		self.processSearches( )
@@ -235,8 +236,22 @@ class Processor:
 				else:
 					entity.aliases[nameA] = nameB
 					
+			# Finalize -----------------------------------------------------------
 			self.sc.entities[name] = entity
 			
+ 	##
+	# We do a second pass since the searches need to refer to other entities, and they won't be
+	# full defined in the first pass
+	def processEntitiesPass2( self ):
+		for ent in self.rawDecls[SL.ENTITY]:
+			entity = self.sc.entities[extProp( ent, SL.NAME )]
+		
+			# Searches --------------------------------------------------------
+			for searchNode in extSearches( ent ):
+				search = DBSchema.Search( entity )
+				self.extractSearch( search, searchNode )
+				entity.searches[search.name] = search
+				
 			
 	def processMappers( self ):
 		for mapperNode in self.rawDecls[SL.MAPPER]:
@@ -394,21 +409,23 @@ class Processor:
 			
 	def processSearches( self ):
 		for searchNode in self.rawDecls[SL.SEARCH]:
-			name = extProp( searchNode, SL.NAME )
-			type = self.getType( searchNode )
+			search = DBSchema.Search( None )
+			self.extractSearch( search, searchNode )
+			self.sc.searches[search.name] = search
 			
-			search = DBSchema.Search( name, type )
-			self.sc.searches[name] = search
-			
-			filterNode = extNodeOpt( searchNode, SL.FILTER )
-			if filterNode != None:
-				search.filter = self.extractSearchFilter( search, filterNode.getChild(0), type )
-				
-			sortNode = extNodeOpt( searchNode, SL.SORT )
-			if sortNode != None:	
-				search.sort = self.extractSearchSort( sortNode, type )
+	def extractSearch( self, search, searchNode ):
+		search.name = extProp( searchNode, SL.NAME )
+		search.entity = self.getType( searchNode )
 		
-	def extractSearchSort( self, node, entity ):
+		filterNode = extNodeOpt( searchNode, SL.FILTER )
+		if filterNode != None:
+			search.filter = self.extractSearchFilter( search, filterNode.getChild(0) )
+			
+		sortNode = extNodeOpt( searchNode, SL.SORT )
+		if sortNode != None:	
+			search.sort = self.extractSearchSort( search, sortNode )
+		
+	def extractSearchSort( self, search, node ):
 		sort = DBSchema.Search_Sort()
 		
 		# extract direction
@@ -423,10 +440,10 @@ class Processor:
 		# extract fields
 		for i in range( 1, node.getChildCount() ):
 			col = node.getChild(i)
-			if not col.text in entity.fields:
+			if not col.text in search.entity.fields:
 				errorOn( col, "No such field in entity, %s" % col.text )
 				
-			sort.fields.append( entity.fields[col.text] )
+			sort.fields.append( search.entity.fields[col.text] )
 		
 		return sort
 		
@@ -437,7 +454,7 @@ class Processor:
 		SL.AND: 'AND',
 		SL.OR: 'OR',
 		};
-	def extractSearchFilter( self, search, node, entity ):
+	def extractSearchFilter( self, search, node ):
 		
 		if node.type in ( SL.OR, SL.AND ):
 			expr = DBSchema.Search_FilterGroupOp()
@@ -446,7 +463,7 @@ class Processor:
 			# NOTE: the left-right ordering must be maintained (in grammar also) to ensure correct
 			# placehold counting
 			for i in range( 0, node.getChildCount() ):
-				sub = self.extractSearchFilter( search, node.getChild(i), entity )
+				sub = self.extractSearchFilter( search, node.getChild(i) )
 				expr.exprs.append( sub )
 			return expr
 		
@@ -459,9 +476,9 @@ class Processor:
 			
 		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN, SL.OPPATTERNMATCH ):
 			left = node.getChild(0)
-			if not left.text in entity.fields:
+			if not left.text in search.entity.fields:
 				errorOn( left, "No such field in entity, %s" % left.text )
-			expr.field = entity.fields[left.text]
+			expr.field = search.entity.fields[left.text]
 				
 			right = node.getChild(1)
 			if right.type == SL.PLACEHOLDER:
@@ -543,6 +560,15 @@ def extFields( node ):
 			
 	errorOn( node, "Missing fields in entity" )
 	
+def extSearches( node ):
+	all = []
+	for i in range( node.getChildCount() ):
+		ch = node.getChild( i )
+		if ch.type == SL.SEARCH:
+			all.append( ch )
+	return all
+
+
 def extAllField( node ):
 	all = []
 	for j in range( node.getChildCount() ):

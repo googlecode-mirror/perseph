@@ -89,7 +89,7 @@ entityBlock
 	:	ENTITY id OPENBLOCK entityExpr* CLOSEBLOCK -> ^(ENTITY ^(NAME id) entityExpr*);
 	
 entityExpr
-	:	entityFields|entityAliases|varSet;
+	:	entityFields|entityAliases|varSet|searchBlock;
 	
 entityFields
 	:	FIELDS OPENBLOCK entityFieldExpr* CLOSEBLOCK -> ^(FIELDS entityFieldExpr*);
@@ -204,6 +204,7 @@ sfeGroupOp
 	
 sfeRef
 	:	id -> ^(FIELD id)
+	|	'@' id -> ^(REF id)
 	|	'?' -> PLACEHOLDER
 	|	STRING
 	|	NUMBER

@@ -484,6 +484,17 @@ class Processor:
 			if right.type == SL.PLACEHOLDER:
 				expr.placeholder = search.placeholderCount
 				search.placeholderCount += 1
+			elif right.type == SL.REF:
+				fname = right.getChild(0).text
+				if search.container == None:
+					errorOn( right, "Cannot refer to container field when not in a container (Entity)" )
+					
+				if fname == 'SELF':
+					expr.containerRef = search.container
+				else:
+					if not fname in search.container.fields:
+						errorOn( right, "No such field in container entity, %s" % fname )
+					expr.containerRef = search.container.fields[fname]
 			else:
 				expr.const = right.text
 			return expr

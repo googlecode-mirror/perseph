@@ -59,7 +59,7 @@ entity DBSTest {
 		ANumber = Decimal;
 	}
 	
-	search twoKeys<BasicTwoKeys> {
+	search TwoKeys<BasicTwoKeys> {
 		filter Master = @SELF;
 		sort Value ASC;
 	}

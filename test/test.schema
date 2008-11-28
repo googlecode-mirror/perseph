@@ -70,6 +70,10 @@ search InclBasicTwoKeys<BasicTwoKeys> {
 	sort Value ASC;
 }
 
+search ManyField<DBSTest> {
+	filter ( ( Bool = ? AND Float = ? ) OR ( Bool = ? AND Decimal = ? ) );
+}
+
 search SortSearch<DBSTest> {
 	filter Name ~= "Search:*";
 	sort Decimal ASC;

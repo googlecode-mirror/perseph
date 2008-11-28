@@ -434,8 +434,21 @@ class Processor:
 		SL.OPEQUALS: '=',
 		SL.OPLESSTHAN: '<',
 		SL.OPGREATERTHAN: '>',
+		SL.AND: 'AND',
+		SL.OR: 'OR',
 		};
 	def extractSearchFilter( self, search, node, entity ):
+		
+		if node.type in ( SL.OR, SL.AND ):
+			expr = DBSchema.Search_FilterGroupOp()
+			expr.op = self.opMap[node.type]
+				
+			# NOTE: the left-right ordering must be maintained (in grammar also) to ensure correct
+			# placehold counting
+			for i in range( 0, node.getChildCount() ):
+				sub = self.extractSearchFilter( search, node.getChild(i), entity )
+				expr.exprs.append( sub )
+			return expr
 		
 		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN ):
 			expr = DBSchema.Search_FilterFieldOp()
@@ -450,7 +463,6 @@ class Processor:
 				errorOn( left, "No such field in entity, %s" % left.text )
 			expr.field = entity.fields[left.text]
 				
-			# NOTE: When adding additional groups (OR/AND) the placeholder must retain a left-right ordering)
 			right = node.getChild(1)
 			if right.type == SL.PLACEHOLDER:
 				expr.placeholder = search.placeholderCount

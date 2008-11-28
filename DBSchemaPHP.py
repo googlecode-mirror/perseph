@@ -803,6 +803,10 @@ function _${inst}_privConstruct() {
 		self.wr( "}\n}\n" )
 	
 	
+	groupMap = {
+		'AND': 'And',
+		'OR': 'Or',
+		}
 	def genSearchFilter( self, search, filter ):
 		if isinstance( filter, DBSchema.Search_FilterFieldOp ) or isinstance( filter, DBSchema.Search_FilterFieldPattern):
 			if filter.placeholder != None:
@@ -817,6 +821,13 @@ function _${inst}_privConstruct() {
 			else:
 				return "DBS_Query::match( '%s', %s, '%s' )" \
 					% ( filter.field.phpName, expr, filter.op )
+					
+		if isinstance( filter, DBSchema.Search_FilterGroupOp ):
+			op = self.groupMap[filter.op]
+			expr = "DBS_Query::match%sGroup(" % op
+			expr += ",".join( [ self.genSearchFilter( search, sub ) for sub in filter.exprs ] )
+			expr += ")"
+			return expr
 		
 	def genSearchSort( self, search, sort ):
 		cols = [ "'%s'" % field.phpName for field in sort.fields]

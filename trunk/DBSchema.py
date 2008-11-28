@@ -126,6 +126,7 @@ class Entity(Type):
 		Type.__init__(self,name)
 		self.fields = {}	#String: Entity_Field
 		self.aliases = {}#AliasString:InternalString
+		self.searches = {} #Name: Search
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
 		self.titleField = None	#<Entity_Field> logical title of the entity
 		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
@@ -244,12 +245,13 @@ class Listing_Field:
 
 
 class Search:
-	def __init__(self, name, entity ):
-		self.name = name;
+	def __init__(self, containing ):
+		self.name = None;
 		self.sort = None	# <Search_Sort>
 		self.filter = None	# <Search_FilterExpr>
 		self.limit = None	# <Search_None>
-		self.entity = entity	# <Entity>
+		self.entity = None	# <Entity> which is produced by the search
+		self.containingEntity = containing # <Entity> may be null (in which this search resides)
 		
 		self.placeholderCount = 0	# Total count of placeholders
 		

@@ -59,10 +59,10 @@ entity DBSTest {
 		ANumber = Decimal;
 	}
 	
-	/*search twoKeys<BasicTwoKeys> {
+	search twoKeys<BasicTwoKeys> {
 		filter Master = @SELF;
 		sort Value ASC;
-	}*/
+	}
 }
 
 search InclBasicTwoKeys<BasicTwoKeys> {

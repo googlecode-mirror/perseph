@@ -402,7 +402,7 @@ class Processor:
 			
 			filterNode = extNodeOpt( searchNode, SL.FILTER )
 			if filterNode != None:
-				search.filter = self.extractSearchFilter( filterNode.getChild(0), type )
+				search.filter = self.extractSearchFilter( search, filterNode.getChild(0), type )
 				
 			sortNode = extNodeOpt( searchNode, SL.SORT )
 			if sortNode != None:	
@@ -435,7 +435,7 @@ class Processor:
 		SL.OPLESSTHAN: '<',
 		SL.OPGREATERTHAN: '>',
 		};
-	def extractSearchFilter( self, node, entity ):
+	def extractSearchFilter( self, search, node, entity ):
 		
 		if node.type in ( SL.OPEQUALS, SL.OPLESSTHAN, SL.OPGREATERTHAN ):
 			expr = DBSchema.Search_FilterFieldOp()
@@ -450,9 +450,11 @@ class Processor:
 				errorOn( left, "No such field in entity, %s" % left.text )
 			expr.field = entity.fields[left.text]
 				
+			# NOTE: When adding additional groups (OR/AND) the placeholder must retain a left-right ordering)
 			right = node.getChild(1)
 			if right.type == SL.PLACEHOLDER:
-				expr.placeholder = True
+				expr.placeholder = search.placeholderCount
+				search.placeholderCount += 1
 			else:
 				expr.const = right.text
 			return expr

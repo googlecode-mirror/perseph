@@ -780,9 +780,8 @@ function _${inst}_privConstruct() {
 	#* Search Generation
 	#***************************************************************************/	
 	def genSearch( self, search ):
-		numPlaceholders = 0 if search.filter == None else search.filter.countPlaceholders()
 		self.wr( "class %s {\n\tstatic public function search(" % self.className( search.name ) )
-		for i in range( numPlaceholders ):
+		for i in range( search.placeholderCount ):
 			if i > 0:
 				self.wr( ", " )
 			self.wr( "$p%d" % i )
@@ -791,7 +790,6 @@ function _${inst}_privConstruct() {
 		
 		params = []
 		if search.filter != None:
-			search.placeHolderAt = 0
 			params.append( self.genSearchFilter( search, search.filter ) )
 		else:	# without a filter assume full matching
 			params.append( "DBS_Query::matchAll()" );
@@ -807,10 +805,9 @@ function _${inst}_privConstruct() {
 	
 	def genSearchFilter( self, search, filter ):
 		if isinstance( filter, DBSchema.Search_FilterFieldOp ) or isinstance( filter, DBSchema.Search_FilterFieldPattern):
-			if filter.placeholder:
+			if filter.placeholder != None:
 				#TODO: this will likely cause problems for placeholder ordering
-				expr = "$p%d" % search.placeHolderAt
-				search.placeHolderAt += 1
+				expr = "$p%d" % filter.placeholder
 			else:
 				expr = self.constantExpr( filter.field.fieldType, filter.const )
 				

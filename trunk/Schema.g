@@ -89,7 +89,7 @@ entityBlock
 	:	ENTITY id OPENBLOCK entityExpr* CLOSEBLOCK -> ^(ENTITY ^(NAME id) entityExpr*);
 	
 entityExpr
-	:	entityFields|entityAliases|varSet|searchBlock;
+	:	entityFields|entityAliases|varSet|searchBlock|entityMerge|entityLink;
 	
 entityFields
 	:	FIELDS OPENBLOCK entityFieldExpr* CLOSEBLOCK -> ^(FIELDS entityFieldExpr*);
@@ -103,12 +103,24 @@ entityAliases
 entityAliasExpr
 	:	id '=' id ENDEXPR -> ^(ALIAS id id );
 
+entityMerge
+	:	MERGE OPENBLOCK entityMergeExpr* CLOSEBLOCK -> ^(MERGE entityMergeExpr*);
+	
+entityMergeExpr
+	:	id option* ENDEXPR -> ^(FIELD ^(NAME id) option*);
+	
+entityLink
+	:	LINK OPENBLOCK entityLinkExpr* CLOSEBLOCK -> ^(LINK entityLinkExpr*);
+	
+
+mapperBlock
+	:	MAPPER id OPENBLOCK mapperExpr* CLOSEBLOCK -> ^(MAPPER  ^(NAME id) mapperExpr*);
+entityLinkExpr
+	: 	id '.' id MAPTORIGHTOP id '.' id ENDEXPR -> ^(MAPTORIGHTOP ^(ENTSUBFIELD id id) ^(ENTSUBFIELD id id));
 // $>
 	
 // $<Mapper
 
-mapperBlock
-	:	MAPPER id OPENBLOCK mapperExpr* CLOSEBLOCK -> ^(MAPPER  ^(NAME id) mapperExpr*);
 	
 mapperExpr
 	:	mapperFields|varSet;
@@ -220,6 +232,8 @@ id
 	| DESC
 	| OR
 	| AND
+	| LINK
+	| MERGE
 	;
 
 typeDef	
@@ -247,6 +261,8 @@ ASC	:	'ASC';
 DESC	:	'DESC';
 OR	:	'OR';
 AND	:	'AND';
+LINK	:	'link';
+MERGE	:	'merge';
 
 // $>
 

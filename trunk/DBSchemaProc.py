@@ -127,7 +127,7 @@ class Processor:
 				table = DBSchema.Provider_Table( tableName )
 				provider.tables[tableName] = table
 				
-				for fieldSpec in extAllField( tableNode ):
+				for fieldSpec in extNodes( tableNode, SL.FIELD ):
 					fieldType = self.getType( fieldSpec )
 					fieldName = extProp( fieldSpec, SL.NAME )
 					
@@ -179,6 +179,9 @@ class Processor:
 			# Fields -------------------------------------------------------------
 			fields = extFields( ent )
 			for fieldSpec in fields:
+				if isinstance( entity, DBSchema.Entity_Merge ):
+					errorOn( fieldSpec, "merge entity cannot contain fields" )
+					
 				fieldType = self.getType( fieldSpec )
 				fieldName = extProp( fieldSpec, SL.NAME )
 				opts = extOptions( fieldSpec )
@@ -222,12 +225,15 @@ class Processor:
 			
 			# Auto Identifier field ---------------------------------------------
 			# This is *NOT* guaranteed, if the user needs a guaranteed Identifier they should use IDENTIFIER!
-			if entity.identifierField == None:
+			if isinstance( entity, DBSchema.Entity_Normal ) and entity.identifierField == None:
 				entity.identifierField = entity.getSingleKey()	# will be None if none, so okay to assign like this
 				
 			# Aliases -----------------------------------------------------------
 			aliases = extAliases( ent )
 			for alias in aliases:
+				if isinstance( entity, DBSchema.Entity_Merge ):
+					errorOn( ent, "merge entity cannot contain aliases" )
+					
 				nameA, nameB = alias
 				fieldA = nameA in entity.fields
 				fieldB = nameB in entity.fields
@@ -251,10 +257,62 @@ class Processor:
 		
 			# Searches --------------------------------------------------------
 			for searchNode in extSearches( ent ):
+				if isinstance( entity, DBSchema.Entity_Merge ):
+					errorOn( searchNode, "merge entity cannot contain searches" )
+					
 				search = DBSchema.Search( entity )
 				self.extractSearch( search, searchNode )
 				entity.searches[search.name] = search
 				
+			# Merge ------------------------------------------------------------
+			merges = extMerges( ent )
+			for merge in merges:
+				if isinstance( entity, DBSchema.Entity_Normal ):
+					errorOn( merge, "normal entity cannot contain merges" )
+					
+				toMergeName = extProp( merge, SL.NAME )
+				opts = extOptions( merge )
+				
+				if not toMergeName in self.sc.entities:
+					errorOn( merge, "merge entity %s not defined" % toMergeName )
+				toMerge = self.sc.entities[toMergeName]
+				if not isinstance( toMerge, DBSchema.Entity_Normal ):
+					errorOn( merge, "merge entity %s must be a normal entity" % toMergeName )
+					
+			# Link ---------------------------------------------------------------
+			links = extLinks( ent )
+			for link in links:
+				if isinstance( entity, DBSchema.Entity_Normal ):
+					errorOn( merge, "normal entity cannot contain merges" )
+					
+				op = link.getChild(0)
+				if op.type != SL.MAPTORIGHTOP:
+					errorOn( op, "unexpect op type" )
+					
+				fieldFrom = op.getChild(0)
+				fieldTo = op.getChild(1)
+				
+				eml = DBSchema.Entity_Merge_Link()
+				eml.fromEnt = self.getEntity( fieldFrom, fieldFrom.getChild(0).text )
+				eml.fromField = self.getEntityField( fieldFrom, eml.fromEnt, fieldFrom.getChild(1).text )
+				
+				eml.toEnt = self.getEntity( fieldTo, fieldTo.getChild(0).text )
+				eml.toField = self.getEntityField( fieldTo, eml.toEnt, fieldTo.getChild(1).text )
+				
+				# TODO: sort and do root->lead ordering here!
+				
+				entity.links.append( eml )
+				
+				
+	def getEntity( self, refNode, name ):
+		if not name in self.sc.entities:
+			errorOn( refNode, "reference to undefined entity %s" % name )
+		return self.sc.entities[name]
+		
+	def getEntityField( self, refNode, entity, field ):
+		if not field in entity.fields:
+			errorOn( refNode, "reference to undefined field %s::%s" % (entity.name, field ) )
+		return entity.fields[field]
 			
 	def processMappers( self ):
 		for mapperNode in self.rawDecls[SL.MAPPER]:
@@ -264,11 +322,9 @@ class Processor:
 			
 			if not varset['provider'] in self.sc.providers:
 				errorOn( mapperNode, "invalid provider %s" % varset['provider'] )
-			if not name in self.sc.entities:
-				errorOn( mapperNode, "does not match an entity %s" % name )
 				
 			mapper = DBSchema.Mapper( self.sc.providers[varset['provider']] )
-			mapper.entity = self.sc.entities[name]
+			mapper.entity = self.getEntity( mapperNode, name )
 			self.sc.mappers[name] = mapper
 			
 			fieldsNode = extNode( mapperNode, SL.FIELDS )
@@ -560,6 +616,8 @@ def extPropOpt( node, token ):
 
 def extNodes( node, token ):
 	ret = []
+	if node == None:
+		return ret
 	for i in range( node.getChildCount() ):
 		if node.getChild(i).type == token:
 			ret.append( node.getChild( i ) )
@@ -569,14 +627,17 @@ def extTableNodes( node ):
 	return extNodes( node, SL.TABLE )
 	
 def extFields( node ):
-	return extAllField( extNode( node, SL.FIELDS ) )
+	return extNodes( extNodeOpt( node, SL.FIELDS ), SL.FIELD )
+
+def extMerges( node ):
+	return extNodes( extNodeOpt( node, SL.MERGE ), SL.FIELD )
 	
 def extSearches( node ):
 	return extNodes( node, SL.SEARCH )
 
-def extAllField( node ):
-	return extNodes( node, SL.FIELD )
-	
+def extLinks( node ):
+	return extNodes( node, SL.LINK )
+
 def extAliases( node ):
 	aliases = extNodeOpt( node, SL.ALIASES )
 	all = []

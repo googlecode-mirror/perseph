@@ -84,7 +84,10 @@ class PHPEmitter:
 		self.wr( "<?php\n" );
 		self.genBaseRequires()
 		for entity in self.sc.entities.itervalues():
-			self.genEntity( entity )
+			if isinstance( entity, DBSchema.Entity_Normal ):
+				self.genEntityNormal( entity )
+			else:
+				self.genEntityMerge( entity )
 		for search in self.sc.searches.itervalues():
 			self.genSearch( search )
 		self.wr( "\n?>" );
@@ -93,7 +96,7 @@ class PHPEmitter:
 		self.wr( "require_once 'persephone/entity_base.inc';\n" );
 		self.wr( "require_once 'persephone/query.inc';\n" );
 		
-	def genEntity( self, en ):
+	def genEntityNormal( self, en ):
 		self.genEntityTypeDescriptor( en )
 		self.genOpenEntityClass( en )
 		self.genIdentifier( en )
@@ -104,6 +107,9 @@ class PHPEmitter:
 			self.genSearchInEntity( en, search )
 		self.genCloseEntityClass( en )
 		
+	def genEntityMerge( self, en ):
+		pass
+	
 	def genMapper( self, en, loc ):
 		self.genConverters( en, loc )
 		self.genMaybeLoad( en, loc )

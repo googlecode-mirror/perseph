@@ -184,7 +184,21 @@ class Entity_Normal(Entity):
 	def getTitle( self ):
 		return self.titleField
 	
+class Entity_Merge(Entity):
+	def __init__(self,name):
+		Entity.__init__(self,name)
+		self.merges = {}	# Name: Entity_Normal
+		self.links = []	# <Entity_Merge_Link> in root -> leaf ordering
 	
+	
+class Entity_Merge_Link:
+	def __init__(self):
+		self.fromEnt = None	# <Entity>
+		self.fromField = None	# <Entity_Field>
+		
+		self.toEnt = None
+		self.toField = None
+		
 class Mapper:
 	def __init__( self, provider ):
 		self.provider = provider

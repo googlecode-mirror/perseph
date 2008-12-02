@@ -157,6 +157,16 @@ mapper DBSTwoKeys {
 	}
 }
 
+entity SimpleMerge {
+	merge {
+		DBSTest REQUIRED;
+		DBSTwoKeys OPTIONAL_CREATE;
+	}
+	link {
+		DBSTest.ID => DBSTwoKeys.Num;
+	}
+}
+
 entity DBSStrings {
 	class DerivedStrings;
 	

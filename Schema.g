@@ -36,7 +36,7 @@ schema
 	:	 declaration* -> ^(ROOT declaration*);	//note, we need to force a root here, otherwise scheams with only one declaration will have that as the root!
 
 declaration 	
-	:	defaultExpr | providerBlock | entityBlock | mapperBlock | listingBlock | customtypeBlock | searchBlock;
+	:	defaultExpr | providerBlock | entityBlock | mapperBlock | customtypeBlock | searchBlock;
 
 defaultExpr	//prefer "default" but Java target doesn't correct the name!	
 	:	DEFAULT rawVarSet -> ^(DEFAULT rawVarSet);
@@ -144,30 +144,6 @@ mapperFieldSimpleExpr
 
 // $>
 	
-// $<Listing
-
-listingBlock 
-	:	LISTING id OPENBLOCK listingExpr* CLOSEBLOCK -> ^(LISTING  ^(NAME id) listingExpr*);
-	
-listingExpr
-	:	listingFields | varSet;
-	
-listingFields
-	:	FIELDS OPENBLOCK listingField* CLOSEBLOCK -> ^(FIELDS listingField*);
-	
-listingField
-	:	listingFunc string ENDEXPR -> ^(FIELD listingFunc ^(LABEL string)) 
-	|	listingFunc ENDEXPR -> ^(FIELD listingFunc) ;
-
-listingFunc
-	:	id '(' idOrRef ')' -> ^(FUNCTION id idOrRef)
-	|	id -> ^(NAME id);
-	
-idOrRef 
-	:	id -> ^(NAME id)
-	|	'@' id -> ^(REF id);
-// $>
-
 //$<Search
 
 searchBlock

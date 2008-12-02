@@ -34,7 +34,6 @@ def retrofit_schema( emitter ):
 	def phpClassName( en ):
 		return emitter.className( en.name )
 	DBSchema.Entity.phpClassName = property( phpClassName )
-	DBSchema.Listing.phpClassName = property( phpClassName )
 	
 	def phpMemberName( self ):
 		return emitter.memberName( self.name )
@@ -70,9 +69,6 @@ class PHPEmitter:
 	def emit( self, base ):
 		self.base = base
 		self.emitFile( "schema", self.genSchema )
-		
-		for listing in self.sc.listings.itervalues():
-			self.emitFile( listing.name + ".listing", lambda: self.genListing( listing ) )
 	
 	def emitFile( self, name, genFunc ):
 		fullname = "%s%s.inc" % (self.base, name )
@@ -733,50 +729,6 @@ function _${inst}_privConstruct() {
 		buf = sub
 		buf += "$entity->%s %s;\n" % ( ent.phpName, assign )
 		return buf
-		
-	#/***************************************************************************
-	#* Listing Generation
-	#***************************************************************************/	
-	def genListing( self, listing ):
-		self.wrt("""<?php
-		
-	require_once dirname(__FILE__).'/schema.inc';
-	require_once 'persephone/listing_base.inc';
-					
-	class Listing${class} extends DBS_ListingBase {
-	
-		protected $$entity = '${entity}';
-	
-		protected function __construct( $$searchArgs ) {
-			parent::__construct( $$searchArgs );
-		}
-		
-		static public function search( ) {
-			$args
-			return new Listing${class}( $$args );
-		}""", { 'class': listing.phpClassName,
-				'entity': listing.entity.phpClassName,
-				'args': self.args_or_array()
-			})
-	
-		self.wr( "protected $fields = array(\n" )
-		for field in listing.fields:
-			if  field.entField == None:
-				membername = '@SELF'
-			else:
-				membername = self.memberName( field.entField.name )
-			
-			if field.convertFunc != None:
-				converter = field.convertFunc
-			else:
-				#//TODO: support fallback through base type chain for custom types
-				converter = "format_listing_%s" % field.entField.fieldType.name
-			
-			self.wr( "\tarray( '%s', '%s', '%s'),\n" % ( membername, self.addslashes(field.label), converter ) )
-				
-		self.wr( ");\n" )
-		self.wr( "}\n" )
-		
 		
 	#/***************************************************************************
 	#* Search Generation

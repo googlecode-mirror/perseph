@@ -230,21 +230,6 @@ mapper DBSLink {
 	}
 }
 
-listing SampleList {
-	entity DBSTest;
-	
-	fields {
-		/* Custom formatters can be specified for any column */
-		_fmt_id( ID ) "Some ID";
-		Name; /*Use default label*/
-		Decimal "Decimal Value";	
-		/*NameRef "Links To"; TODO: support without need for converter */
-				
-		/* Here the entity itself is provided to the formatter */
-		_fmt_ruleaction( @SELF ) "Action";
-	}
-}
-
 entity BrokenKey {
 	fields {
 		ID<Integer> RECORD_KEY;

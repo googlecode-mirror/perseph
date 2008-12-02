@@ -44,15 +44,24 @@ abstract class DBS_Listing {
 		if( !isset( $opts['label'] ) )
 			$opts['label'] = $this->typeDesc->getDefaultLabel( $field );
 			
-		$this->cols[$field] = $opts;
+		$this->cols[] = array( $field, $opts );
 	}
 	
 	/**
 	 * Convenience function to add multiple columns at once.
+	 *
+	 * @param cols [in] an array of name=> opts entries, as would
+	 *		be passed to addColumn.  Optionally just a name can be
+	 * 	specified as a value (with automatic numeric index) and the
+	 *		default options will be used)
 	 */
 	public function addColumns( $cols ) {
-		foreach( $cols as $field => $opts ) 
-			$this->addColumn( $field, $opts );
+		foreach( $cols as $field => $opts ) {
+			if( is_int( $field ) && is_string( $opts ) )
+				$this->addColumn( $opts );
+			else
+				$this->addColumn( $field, $opts );
+		}
 	}
 	
 	/**
@@ -73,27 +82,37 @@ abstract class DBS_Listing {
 		return $buf;
 	}
 	
+	public function renderSearch( ) {
+		$args = func_get_args();
+		if( count( $args ) === 1 && is_array( $args[0] ) )
+			$args = $args[0];			
+		
+		$search = call_user_func( "{$this->ENTITY}::search", $args );
+		return $this->render( $search );
+	}
+	
 	protected function renderHeader() {
 		$buf = $this->renderOpenRow( true );
-		foreach( $this->cols as $col => $spec )
-			$buf .= $this->renderHeaderCell( $spec['label'], false /*TODO*/ );
+		foreach( $this->cols as $col )
+			$buf .= $this->renderHeaderCell( $col[1]['label'], false /*TODO*/ );
 		$buf .= $this->renderCloseRow();
 		return $buf;
 	}
 	
 	protected function renderRow( $row ) {
 		$buf = $this->renderOpenRow( false );
-		foreach( $this->cols as $col => $spec ) {
-			if( $col === '@SELF' )
+		foreach( $this->cols as $col ) {
+			$field = $col[0];
+			if( $field === '@SELF' )
 				$raw = $row;
 			else {
-				$raw = $row->$col;
-				$sub = array_get_default( 'sub', $spec, null );
+				$raw = $row->$field;
+				$sub = array_get_default( 'sub', $col[1], null );
 				if( $sub !== null )
 					$raw = $raw->$sub;
 			}
 			
-			$buf .= $this->renderCell( $raw, $spec['formatType'], $spec['format'], false /*TODO*/ );
+			$buf .= $this->renderCell( $raw, $col[1]['formatType'], $col[1]['format'], false /*TODO*/ );
 		}
 		$buf .= $this->renderCloseRow();
 		return $buf;

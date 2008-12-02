@@ -68,7 +68,10 @@ class Processor:
 		#we also need to treat entities as types (they're incomplete definitions now)
 		for enNode in self.rawDecls[SL.ENTITY]:
 			name = extProp( enNode, SL.NAME )
-			self.sc.types[name] = DBSchema.Entity(name)
+			if extPropOpt( enNode, SL.MERGE ) == None:
+				self.sc.types[name] = DBSchema.Entity_Normal(name)
+			else:
+				self.sc.types[name] = DBSchema.Entity_Merge(name)
 		
 	# Providers support the special combination ability such that part of the provider
 	# can be specified as incomplete, and later completed.
@@ -164,11 +167,11 @@ class Processor:
 	def processEntities( self ):
 		for ent in self.rawDecls[SL.ENTITY]:
 			name = extProp( ent, SL.NAME )
-			varset = extVarSet( ent )
-			checkVarSet( ent, varset, [], ['class']	)
-			
 			# previously created in processTypes
 			entity = self.sc.types[ name ]
+			
+			varset = extVarSet( ent )
+			checkVarSet( ent, varset, [], ['class']	)
 			
 			if 'class' in varset:
 				entity.className = varset['class']
@@ -241,7 +244,7 @@ class Processor:
 			
  	##
 	# We do a second pass since the searches need to refer to other entities, and they won't be
-	# full defined in the first pass
+	# fully defined in the first pass
 	def processEntitiesPass2( self ):
 		for ent in self.rawDecls[SL.ENTITY]:
 			entity = self.sc.entities[extProp( ent, SL.NAME )]
@@ -555,53 +558,32 @@ def extPropOpt( node, token ):
 		return ret
 	return ret.getChild(0).text
 
-def extTableNodes( node ):
+def extNodes( node, token ):
 	ret = []
 	for i in range( node.getChildCount() ):
-		if node.getChild(i).type == SL.TABLE:
+		if node.getChild(i).type == token:
 			ret.append( node.getChild( i ) )
 	return ret
-			
+	
+def extTableNodes( node ):
+	return extNodes( node, SL.TABLE )
 	
 def extFields( node ):
-	for i in range( node.getChildCount() ):
-		ch = node.getChild( i )
-		if ch.type == SL.FIELDS:
-			return extAllField( ch )
-			
-	errorOn( node, "Missing fields in entity" )
+	return extAllField( extNode( node, SL.FIELDS ) )
 	
 def extSearches( node ):
-	all = []
-	for i in range( node.getChildCount() ):
-		ch = node.getChild( i )
-		if ch.type == SL.SEARCH:
-			all.append( ch )
-	return all
-
+	return extNodes( node, SL.SEARCH )
 
 def extAllField( node ):
-	all = []
-	for j in range( node.getChildCount() ):
-		field = node.getChild(j)
-		if field.type != SL.FIELD:
-			continue
-		all.append( field )
-		
-	return all
+	return extNodes( node, SL.FIELD )
 	
 def extAliases( node ):
 	aliases = extNodeOpt( node, SL.ALIASES )
+	all = []
 	if( aliases != None ):
-		all = []
-		for j in range( aliases.getChildCount() ):
-			alias = aliases.getChild(j)
-			if alias.type != SL.ALIAS:
-				errorOn( alias, "Expecting ALIAS" )
+		for alias in extNodes( aliases, SL.ALIAS ):
 			all.append( [alias.getChild(0).text,alias.getChild(1).text] )
-				
-			return all
-	return []
+	return all
 			
 def extOptions( node ):
 	ret = []

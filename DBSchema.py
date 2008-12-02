@@ -124,18 +124,22 @@ class Entity_Field:
 class Entity(Type):
 	def __init__(self,name):
 		Type.__init__(self,name)
-		self.fields = {}	#String: Entity_Field
-		self.aliases = {}#AliasString:InternalString
-		self.searches = {} #Name: Search
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
-		self.titleField = None	#<Entity_Field> logical title of the entity
-		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
-	
+			
 	def getRootType(self):
 		return Type("Entity")
 	
 	def baseType(self):
 		return False
+	
+class Entity_Normal(Entity):
+	def __init__(self,name):
+		Entity.__init__(self,name)
+		self.fields = {}	#String: Entity_Field
+		self.aliases = {}#AliasString:InternalString
+		self.searches = {} #Name: Search
+		self.titleField = None	#<Entity_Field> logical title of the entity
+		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
 	
 	##
 	# Obtains the sets of keys which can identify this record for loading/saving

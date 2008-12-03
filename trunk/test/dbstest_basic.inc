@@ -674,6 +674,11 @@ class DBSTest_Basic extends TestCase {
 		//and then a save
 		$s->decimal = 57;
 		$s->save();
+		
+		//now try to load it
+	/*	$l = SimpleMerge::findWithNameID( $s->nameID );
+		$this->assertEquals( 57, $l->decimal );
+		$this->assertEquals( "meme", $l->name );*/
 	}
 }
 

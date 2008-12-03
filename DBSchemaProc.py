@@ -282,6 +282,16 @@ class Processor:
 				if toMergeName in entity.merges:
 					errorOn( merge, "entity %s cannot be merged more than once" % toMergeName )
 					
+				for opt in opts:
+					if opt[0] == 'REQUIRED':
+						pass
+					elif opt[0] == 'OPTIONAL_CREATE':
+						pass
+					elif opt[0] == 'KEY_MERGE':
+						entity.keyMerges[toMergeName] = toMerge
+					else:
+						errorOn( merge, "Unrecognized option %s" % opt[0] )
+						
 				entity.merges[toMerge.name] = toMerge
 					
 			# Link ---------------------------------------------------------------

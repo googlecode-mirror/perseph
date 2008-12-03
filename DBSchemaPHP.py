@@ -105,6 +105,7 @@ class PHPEmitter:
 		self.genOpenEntityClass( en, 'Normal' )
 		self.genIdentifier( en )
 		self.genEmpty( en )
+		self.genKeyCtors( en )
 		if en.name in self.sc.mappers:
 			self.genMapper( en, self.sc.mappers[en.name] )
 		for search in en.searches.itervalues():
@@ -117,6 +118,8 @@ class PHPEmitter:
 		self.genEmptyMerge( en )
 		self.genMergeAccessors( en )
 		self.genMergeSave( en )
+		for merge in en.keyMerges.itervalues():
+			self.genKeyMerge( en, merge )
 		self.genIdentifier( en )
 		self.genCloseEntityClass( en );
 	
@@ -130,6 +133,7 @@ class PHPEmitter:
 		self.wr( "//*** genMapper\n" )
 		self.genGetDB( loc )
 
+	def genKeyCtors( self, en ):
 		# Produce a convenient form of the key names for functions names and parameter lists
 		keyset = en.getKeySet()
 		for keys in keyset:
@@ -143,7 +147,7 @@ class PHPEmitter:
 				keyName += keys[i].name;
 				keyParamStr += "$key%d" % i
 			
-			self.genKeyPart( en, loc, keys, keyName, keyParamStr )
+			self.genKeyPart( en, keys, keyName, keyParamStr )
 			
 	def genGetDB( self, loc ):
 		self.wr("static private function &getDB() {\n" );
@@ -188,7 +192,7 @@ class PHPEmitter:
 		
 	##########################################################
 	# All the parts working on the keys of the entity -- in a mapper
-	def genKeyPart( self, en, loc, keys, keyName, keyParamStr ):
+	def genKeyPart( self, en, keys, keyName, keyParamStr ):
 		self.wr( "//*** genKeyPart\n" )
 		#Emit the finder to load from the DB (TODO: ensure only one record exists!)
 		self.wrt("""
@@ -210,19 +214,18 @@ static public function findOrCreateWith${keyName}( $keyParamStr ) {
 
 static public function createWith${keyName}($keyParamStr) {
 	$$ret = self::with${keyName}($keyParamStr);
-	$$ret->_status = DBS_EntityBase::STATUS_NEW;
+	$$ret->create();
 	return $$ret;
 }
 
 //create an object with the specified key (no other fields will be loaded until needed)
 static public function with${keyName}($keyParamStr) {
-	$$ret = new $instClassName();
+	$$ret = self::withNothing();
 	$keyAssignBlock
 	return $$ret;
 }
 
 """, { 'keyName': keyName, 'keyParamStr': keyParamStr,
-	'instClassName': en.phpInstClassName,
 	'keyAssignBlock': self.getKeyAssignBlock( keys ) } )
 
 	def getKeyAssignBlock( self, keys ):
@@ -525,6 +528,9 @@ function _save( $adding ) {
 }
 """)
 
+	def genKeyMerge( self, entity, merge ):
+		self.genKeyCtors( merge )
+		
 	##################################################################
 	# The Nothing constructors 
 	def genEmpty( self, en ):
@@ -537,7 +543,7 @@ static public function withNothing() {
 
 static public function createWithNothing() {
 	$$ret = new $class();
-	$$ret->_status = DBS_EntityBase::STATUS_NEW;
+	$$ret->create();
 	return $$ret;
 }
 		""", { 'class': en.phpInstClassName } )

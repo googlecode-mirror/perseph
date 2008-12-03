@@ -371,7 +371,7 @@ mapper SimpleBasic {
 
 entity SimpleMerge {
 	merge {
-		SimpleName REQUIRED;
+		SimpleName REQUIRED KEY_MERGE;
 		SimpleBasic OPTIONAL_CREATE;
 	}
 	link {

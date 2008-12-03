@@ -192,7 +192,7 @@ class Entity_Merge(Entity):
 		Entity.__init__(self,name)
 		self.merges = {}	# Name: Entity_Normal
 		self.links = []	# <Entity_Merge_Link> in root -> leaf ordering
-	
+		self.keyMerges = {} # <Name: Entity_Normal> werges which serve as entry points
 	
 class Entity_Merge_Link:
 	def __init__(self):

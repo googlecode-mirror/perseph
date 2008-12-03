@@ -161,6 +161,16 @@ abstract class DBS_EntityBase {
 	}
 	
 	/**
+	 * This is to fulfill the behaviour defined by createWith.  It does nothing
+	 * more than mark the entity as being new.
+	 */
+	public function create() {
+		if( $this->_status != self::STATUS_UNKNOWN )
+			throw new DBS_LogicException( DBS_LogicException::CREATE_NON_UNKNOWN );
+		$this->_status = DBS_EntityBase::STATUS_NEW;
+	}
+	
+	/**
 	 * Finds the entity in the backing store or creates it if not found -- note that
 	 * creating it does not automatically save it in the backing store.
 	 */
@@ -420,6 +430,7 @@ class DBS_LogicException extends DBS_Exception {
 	const NO_SAVE_DEFINED = 5;
 	const FIND_NOT_UNKNOWN = 6;
 	const RELOAD_NOT_EXTANT = 7;
+	const CREATE_NON_UNKNOWN = 8;
 	
 	static private $codeToMsg = array(
 		self::SAVE_INCOMPLETE_LOAD => 'Attempting to save entity resulting from an incomplete load/search',
@@ -429,6 +440,7 @@ class DBS_LogicException extends DBS_Exception {
 		self::NO_SAVE_DEFINED => "No saving mechanism has been defined for this entity.",
 		self::FIND_NOT_UNKNOWN => "Find called on non-unknown status",
 		self::RELOAD_NOT_EXTANT => "Attempting to reload an entity that is in the backing store",
+		self::CREATE_NON_UNKNOWN => "Attempting to mark for creation an object with a known status",
 		);
 	public function __construct( $code ) {
 		parent::__construct( self::$codeToMsg[$code], $code );

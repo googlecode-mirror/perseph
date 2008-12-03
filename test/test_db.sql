@@ -70,3 +70,26 @@ CREATE TABLE `link2` (
 	`NameB` INT(11) NOT NULL,
 	`Value` INT
 );
+
+DROP TABLE IF EXISTS `idname`;
+
+CREATE TABLE `dbs_test`.`idname` (
+`Name` VARCHAR( 50 ) NOT NULL ,
+`ID` INT( 2 ) NOT NULL AUTO_INCREMENT,
+PRIMARY KEY ( `ID` ) ,
+INDEX ( `Name` )
+);
+
+DROP TABLE IF EXISTS `mergebasic`;
+
+ CREATE TABLE `mergebasic` (
+`ID` INT( 11 ) NOT NULL,
+`Name` VARCHAR( 50 ) UNIQUE,
+`Date` DATE NOT NULL ,
+`Time` TIME NOT NULL ,
+`DateTime` DATETIME,
+`Bool` BOOL NOT NULL ,
+`Decimal` DECIMAL( 10, 5 ) NOT NULL ,
+`Float` FLOAT NOT NULL ,
+PRIMARY KEY ( `ID` )
+);

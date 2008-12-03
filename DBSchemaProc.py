@@ -322,6 +322,8 @@ class Processor:
 					cur = entity.fields[field.name]
 					if cur.fieldType.name != field.fieldType.name:
 						errorOn( refNode, "Merged field %s must have same type in all merged entities" % field.name )
+					if field.keyType == DBSchema.KEY_TYPE_NONE or cur.keyType == DBSchema.KEY_TYPE_NONE:
+						errorOn( refNode, "Only key fields may be duplicated, not field %s" % field.name )
 					# TODO: more safety measures here
 					
 				entity.fields[field.name] = field

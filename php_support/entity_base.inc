@@ -358,6 +358,19 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
 	}
 	
+	/**
+	 * Used as a helper function for merges, though it may have a use publically as well.
+	 * 
+	 * @return [out] true if __isDirty for any field returns true, false otherwise
+	 */
+	public function __isAnythingDirty() {
+		//easiest way for now is to call isDirty on all items
+		foreach( $this->_data_type->names as $name => $ignore )
+			if( $this->__isDirty( $name ) )
+				return true;
+		return false;
+	}
+	
 	public function __getTypeData( $field ) {
 		$field = $this->_fieldName( $field );
 		return $this->_data_type->names[$field];

@@ -7,6 +7,8 @@ class DBSTest_Clean extends TestCase {
 		DBSTwoKeys::searchAndDelete( DBS_Query::matchAll() );
 		DBSName::searchAndDelete( DBS_Query::matchAll() );
 		DBSLinkNames::searchAndDelete( DBS_Query::matchAll() );
+		SimpleBasic::searchAndDelete( DBS_Query::matchAll() );
+		SimpleName::searchAndDelete( DBS_Query::matchAll() );
 		
 		# Setup names table
 		$names = array( 
@@ -657,11 +659,21 @@ class DBSTest_Basic extends TestCase {
 	}
 	
 	function testMerge() {
+		//simple in memory ops
 		$s = SimpleMerge::withNothing();
 		$s->decimal = 10;
 		$this->assertEquals( 10, $s->decimal );
 		$s->name = "hello";
 		$this->assertEquals( "hello", $s->name );
+		
+		//simple add
+		$s = SimpleMerge::createWithNothing();
+		$s->name = "meme";
+		$s->add();
+		
+		//and then a save
+		$s->decimal = 57;
+		$s->save();
 	}
 }
 

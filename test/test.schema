@@ -342,7 +342,7 @@ entity SimpleName {
 mapper SimpleName {
 	provider DBTest;
 	fields {
-		using pre_names {
+		using idname {
 			@ID => NameID;
 			@Name = Name;
 		}
@@ -361,8 +361,8 @@ mapper SimpleBasic {
 	provider DBTest;
 	
 	fields {
-		using basic {
-			@ID => BasicID;
+		using mergebasic {
+			@ID = BasicID;
 			@Decimal = Decimal;
 			@Float = Float;
 		}

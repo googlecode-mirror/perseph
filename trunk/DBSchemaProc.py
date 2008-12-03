@@ -279,6 +279,11 @@ class Processor:
 				if not isinstance( toMerge, DBSchema.Entity_Normal ):
 					errorOn( merge, "merge entity %s must be a normal entity" % toMergeName )
 					
+				if toMergeName in entity.merges:
+					errorOn( merge, "entity %s cannot be merged more than once" % toMergeName )
+					
+				entity.merges[toMerge.name] = toMerge
+					
 			# Link ---------------------------------------------------------------
 			links = extLinks( ent )
 			for link in links:
@@ -299,9 +304,45 @@ class Processor:
 				eml.toEnt = self.getEntity( fieldTo, fieldTo.getChild(0).text )
 				eml.toField = self.getEntityField( fieldTo, eml.toEnt, fieldTo.getChild(1).text )
 				
-				# TODO: sort and do root->lead ordering here!
+				# TODO: sort and do root->lead ordering here somehwere!
 				
 				entity.links.append( eml )
+				
+			# Finalize Merge ----------------------------------------------------
+			if isinstance( entity, DBSchema.Entity_Merge ):
+				self.completeMergeEntity( ent, entity )
+			
+	def completeMergeEntity( self, refNode, entity ):
+		# TODO: identify/use a single identifier
+		# TODO: omit linked fields from identifier
+		for merge in entity.merges.itervalues():
+			# Merge fields ------------------------------------------------------
+			for field in merge.fields.itervalues():
+				if field.name in entity.fields:
+					cur = entity.fields[field.name]
+					if cur.fieldType.name != field.fieldType.name:
+						errorOn( refNode, "Merged field %s must have same type in all merged entities" % field.name )
+					# TODO: more safety measures here
+					
+				entity.fields[field.name] = field
+			
+			# Merge base --------------------------------------------------------
+			if merge.titleField != None:
+				if entity.titleField != None:
+					warnOn( refNode, "Multiple titles defined, first one taken: %s, %s" % (entity.titleField.name, merge.titleField.name) )
+				else:
+					entity.titleField = merge.titleField
+				
+		# After fields are complete
+		for merge in entity.merges.itervalues():
+			# Merge aliases -----------------------------------------------------
+			for alias in merge.aliases.iteritems():
+				if alias[0] in entity.fields:
+					errorOn( refNode, "Alias %s is actually a defined field in %s" % (alias[0], merge.name) )
+				if alias[0] in entity.aliases:
+					errorOn( refNode, "Alias %s is already defined" % alias[0] )
+					
+				entity.aliases[alias[0]] = alias[1]
 				
 				
 	def getEntity( self, refNode, name ):
@@ -564,8 +605,12 @@ class Processor:
 # Extractor utilities
 def errorOn( node, msg ):
 	loc = "%d:%d:" %  (node.getLine(), node.getCharPositionInLine())
-	raise Exception, loc + msg
+	raise Exception, "ERROR: " + loc + msg
 
+def warnOn( node, msg ):
+	loc = "%d:%d:" %  (node.getLine(), node.getCharPositionInLine())
+	print "WARNING: " + loc + msg
+	
 ##
 # Checks for the correctness of the variables in a variable set
 # @param node [in] reference for errors

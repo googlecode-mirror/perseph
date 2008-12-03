@@ -108,6 +108,7 @@ KEY_TYPE_NONE = 0
 KEY_TYPE_RECORD = 1
 KEY_TYPE_ALT = 2		
 
+# The Entity_Field instance may be used more than use if merges are being used
 class Entity_Field:
 	
 	def __init__(self, name, fieldType ):
@@ -125,21 +126,16 @@ class Entity(Type):
 	def __init__(self,name):
 		Type.__init__(self,name)
 		self.className = None #Null<String> if not null specifies the instance classname to use instead of "name"
+		self.titleField = None	#<Entity_Field> logical title of the entity
+		self.aliases = {}#AliasString:InternalString
+		self.fields = {}	#String: Entity_Field
+		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
 			
 	def getRootType(self):
 		return Type("Entity")
 	
 	def baseType(self):
 		return False
-	
-class Entity_Normal(Entity):
-	def __init__(self,name):
-		Entity.__init__(self,name)
-		self.fields = {}	#String: Entity_Field
-		self.aliases = {}#AliasString:InternalString
-		self.searches = {} #Name: Search
-		self.titleField = None	#<Entity_Field> logical title of the entity
-		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
 	
 	##
 	# Obtains the sets of keys which can identify this record for loading/saving
@@ -183,6 +179,13 @@ class Entity_Normal(Entity):
 	# @return [out] title field, or None
 	def getTitle( self ):
 		return self.titleField
+
+
+class Entity_Normal(Entity):
+	def __init__(self,name):
+		Entity.__init__(self,name)
+		self.searches = {} #Name: Search
+	
 	
 class Entity_Merge(Entity):
 	def __init__(self,name):

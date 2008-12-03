@@ -655,6 +655,14 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 1, count( $f ) );
 		$this->assertEquals( 2, $f[0]->value );
 	}
+	
+	function testMerge() {
+		$s = SimpleMerge::withNothing();
+		$s->decimal = 10;
+		$this->assertEquals( 10, $s->decimal );
+		$s->name = "hello";
+		$this->assertEquals( "hello", $s->name );
+	}
 }
 
 ?>

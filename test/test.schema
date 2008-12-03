@@ -157,16 +157,6 @@ mapper DBSTwoKeys {
 	}
 }
 
-entity SimpleMerge {
-	merge {
-		DBSTest REQUIRED;
-		DBSTwoKeys OPTIONAL_CREATE;
-	}
-	link {
-		DBSTest.ID => DBSTwoKeys.Num;
-	}
-}
-
 entity DBSStrings {
 	class DerivedStrings;
 	
@@ -339,3 +329,52 @@ mapper BasicTwoKeys {
 	}
 }
 
+/********************************************************************
+ * For Merge Testing
+ *******************************************************************/
+entity SimpleName {
+	fields {
+		NameID<Integer> RECORD_KEY;
+		Name<String> TITLE;
+	}
+}
+
+mapper SimpleName {
+	provider DBTest;
+	fields {
+		using pre_names {
+			@ID => NameID;
+			@Name = Name;
+		}
+	}
+}
+
+entity SimpleBasic {
+	fields {
+		BasicID<CustomID> RECORD_KEY;
+		Decimal<Decimal>;
+		Float<Float> DEFAULT(123.5);
+	}
+}
+
+mapper SimpleBasic {
+	provider DBTest;
+	
+	fields {
+		using basic {
+			@ID => BasicID;
+			@Decimal = Decimal;
+			@Float = Float;
+		}
+	}
+}
+
+entity SimpleMerge {
+	merge {
+		SimpleName REQUIRED;
+		SimpleBasic OPTIONAL_CREATE;
+	}
+	link {
+		SimpleName.NameID => SimpleBasic.BasicID;
+	}
+}

@@ -98,7 +98,6 @@ abstract class DBS_TypeDescriptor {
 }
 
 abstract class DBS_EntityBase {
-	
 	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
 	
 	public function getType() {
@@ -111,16 +110,6 @@ abstract class DBS_EntityBase {
 	const STATUS_DELETED = 3;	//should prevent all operations
 	protected $_status = self::STATUS_UNKNOWN;
 	
-	/* a special LOADING case is needed so that __getref doesn't incorrectly
-		attempt to load data while already loading. */
-	protected $_isLoading = false;
-	
-	protected $_data = array();	//array<name=>Value> to hold the actual field data
-	protected $_data_has = array();	//array<name=>Bool> fields which are actually set (to distinguish null as a real value)
-	protected $_data_dirty = array();	//array<name=>Bool> has the field be modified or changed in some way
-	
-	protected $_load_keys = null;	//which keys were used to load this instance
-	
 	//public only for helpers
 	public $_logic_block_save = null;	//a reason (code from DBS_LogicException) why save can't be performed
 		
@@ -132,128 +121,6 @@ abstract class DBS_EntityBase {
 	 */
 	public function __declExtant() {
 		$this->_status = self::STATUS_EXTANT;
-	}
-	
-	private function _fieldName( $field ) {
-		if( isset( $this->_data_type->names[ $field ] ) )
-			return $field;
-		if( isset( $this->_data_type->aliases[ $field ] ) )
-			return $this->_data_type->aliases[ $field ];
-			
-		var_dump( $this->_data_type );
-		var_dump( $this->getTypeDescriptor() );
-		throw new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );
-	}
-	
-	/**
-	 * Indicates whether the field is define on this entity, whether or not
-	 * it is actually set (contrast to __has)
-	 */
-	public function __defined( $field ) {
-		return isset( $this->_data_type->names[$field] )
-			|| isset( $this->_data_type->aliases[$field] );
-	}
-	
-	public function &__getref( $field ) {
-		if( $field == 'identifier' ) {
-			$id = $this->getIdentifier();
-			return $id;
-		}
-		if( $field == 'anyIdentifier' ) {
-			$id = $this->getAnyIdentifier();
-			return $id;
-		}
-			
-		$field = $this->_fieldName( $field );
-			
-		if( array_get_default( $field, $this->_data_has, false ) )
-			return $this->_data[$field];
-			
-		//attempt to load if we may already exist
-		if( $this->_status === self::STATUS_UNKNOWN && !$this->_isLoading && $this->maybeLoad( false ) ) {
-			if( array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
-				return $this->_data[$field];
-		}
-			
-		//defaults must come after attempting to load, since real data overrides a default
-		if( array_key_exists( $field, $this->_data_type->defaults ) )
-			return $this->_data_type->defaults[$field];
-			
-		throw new DBS_FieldException( $field, DBS_FieldException::UNAVAILABLE );
-	}
-	
-	public function __get( $field ) {
-		return $this->__getref( $field );
-	}
-	
-	/**
-	 * Objects in PHP 5 are like C pointers in that the actual object will never actually by
-	 * copied in normal semantics, only via a clone operator.  In the persephone sense
-	 * this doesn't have a clear meaning and is thus blocked.
-	 */
-	public function __clone() {
-		throw new Exception( "Entity instances cannot be cloned." );
-	}
-	
-	/**
-	 * NOTE: *ALL* sets must come through here to actually set the value!
-	 */
-	public function __set( $field, $value ) {
-		$field = $this->_fieldName( $field );
-			
-		if( $value instanceof DBS_Ref ) {
-			$this->_data_type->checkType( $field, $value->ref );
-			$this->_data[$field] =& $value->ref;
-		} else {
-			$this->_data_type->checkType( $field, $value );
-			$this->_data[$field] = $value;
-		}
-		$this->_data_has[$field] = true;
-		$this->_data_dirty[$field] = true;
-	}
-	
-	public function __markDirty( $field ) {
-		$field = $this->_fieldName( $field );
-		$this->_data_dirty[$field] = true;
-	}
-	
-	public function __markClean( $field ) {
-		$field = $this->_fieldName( $field );
-		$this->_data_dirty[$field] = false;
-	}
-	
-	public function __has( $field ) {
-		$field = $this->_fieldName( $field );
-			
-		return array_get_default( $field, $this->_data_has, false )
-			|| array_key_exists( $field, $this->_data_type->defaults );
-	}
-	
-	public function __isset( $field ) {
-		throw new Exception( "Not supported: ambiguous wrt __defined and __has" );
-	}
-	public function __unset( $field ) {
-		throw new Exception( "Not supported: ambigious wrt __defined and __has" );
-	}
-	
-	/**
-	 * Checks if a field is *effectively* dirty. This means that the field has been modified, or is
-	 * otherwise different than what the persisted form might be.
-	 *
-	 * Note that if the entity is new then default fields are considered dirty, since they may not
-	 * have the same default value in the backing store.
-	 */
-	public function __isDirty( $field ) {
-		if( $this->_status == self::STATUS_UNKNOWN )
-			throw new Exception( "isDirty is ambiguous when status is unknown" );
-		$field = $this->_fieldName( $field );
-		return array_get_default( $field, $this->_data_dirty, false )
-			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
-	}
-	
-	public function __getTypeData( $field ) {
-		$field = $this->_fieldName( $field );
-		return $this->_data_type->names[$field];
 	}
 	
 	/**
@@ -294,7 +161,7 @@ abstract class DBS_EntityBase {
 	}
 	
 	/**
-	 * Finds the entity in the backing store or creates it if not found -- not that
+	 * Finds the entity in the backing store or creates it if not found -- note that
 	 * creating it does not automatically save it in the backing store.
 	 */
 	public function findOrCreate() {
@@ -350,6 +217,152 @@ abstract class DBS_EntityBase {
 			$this->save();
 	}
 	
+	/**
+	 * Objects in PHP 5 are like C pointers in that the actual object will never actually by
+	 * copied in normal semantics, only via a clone operator.  In the persephone sense
+	 * this doesn't have a clear meaning and is thus blocked.
+	 */
+	public function __clone() {
+		throw new Exception( "Entity instances cannot be cloned." );
+	}
+	
+	public function __isset( $field ) {
+		throw new Exception( "Not supported: ambiguous wrt __defined and __has" );
+	}
+	public function __unset( $field ) {
+		throw new Exception( "Not supported: ambigious wrt __defined and __has" );
+	}
+	
+	
+	abstract protected function _maybeLoad( $reload );
+	
+	abstract protected function _save( $adding );
+	
+	abstract public function getIdentifier();
+}
+
+abstract class DBS_NormalEntityBase extends DBS_EntityBase {
+	
+	/* a special LOADING case is needed so that __getref doesn't incorrectly
+		attempt to load data while already loading. */
+	protected $_isLoading = false;
+	
+	protected $_data = array();	//array<name=>Value> to hold the actual field data
+	protected $_data_has = array();	//array<name=>Bool> fields which are actually set (to distinguish null as a real value)
+	protected $_data_dirty = array();	//array<name=>Bool> has the field be modified or changed in some way
+	
+	protected $_load_keys = null;	//which keys were used to load this instance
+	
+	protected function __construct() {
+		parent::__construct();
+	}
+	
+	private function _fieldName( $field ) {
+		if( isset( $this->_data_type->names[ $field ] ) )
+			return $field;
+		if( isset( $this->_data_type->aliases[ $field ] ) )
+			return $this->_data_type->aliases[ $field ];
+			
+		var_dump( $this->_data_type );
+		var_dump( $this->getTypeDescriptor() );
+		throw new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );
+	}
+	
+	/**
+	 * Indicates whether the field is define on this entity, whether or not
+	 * it is actually set (contrast to __has)
+	 */
+	public function __defined( $field ) {
+		return isset( $this->_data_type->names[$field] )
+			|| isset( $this->_data_type->aliases[$field] );
+	}
+	
+	public function &__getref( $field ) {
+		if( $field == 'identifier' ) {
+			$id = $this->getIdentifier();
+			return $id;
+		}
+		if( $field == 'anyIdentifier' ) {
+			$id = $this->getAnyIdentifier();
+			return $id;
+		}
+			
+		$field = $this->_fieldName( $field );
+			
+		if( array_get_default( $field, $this->_data_has, false ) )
+			return $this->_data[$field];
+			
+		//attempt to load if we may already exist
+		if( $this->_status === self::STATUS_UNKNOWN && !$this->_isLoading && $this->maybeLoad( false ) ) {
+			if( array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
+				return $this->_data[$field];
+		}
+			
+		//defaults must come after attempting to load, since real data overrides a default
+		if( array_key_exists( $field, $this->_data_type->defaults ) )
+			return $this->_data_type->defaults[$field];
+			
+		throw new DBS_FieldException( $field, DBS_FieldException::UNAVAILABLE );
+	}
+	
+	public function __get( $field ) {
+		return $this->__getref( $field );
+	}
+	
+	/**
+	 * NOTE: *ALL* sets must come through here to actually set the value!
+	 */
+	public function __set( $field, $value ) {
+		$field = $this->_fieldName( $field );
+			
+		if( $value instanceof DBS_Ref ) {
+			$this->_data_type->checkType( $field, $value->ref );
+			$this->_data[$field] =& $value->ref;
+		} else {
+			$this->_data_type->checkType( $field, $value );
+			$this->_data[$field] = $value;
+		}
+		$this->_data_has[$field] = true;
+		$this->_data_dirty[$field] = true;
+	}
+	
+	public function __markDirty( $field ) {
+		$field = $this->_fieldName( $field );
+		$this->_data_dirty[$field] = true;
+	}
+	
+	public function __markClean( $field ) {
+		$field = $this->_fieldName( $field );
+		$this->_data_dirty[$field] = false;
+	}
+	
+	public function __has( $field ) {
+		$field = $this->_fieldName( $field );
+			
+		return array_get_default( $field, $this->_data_has, false )
+			|| array_key_exists( $field, $this->_data_type->defaults );
+	}
+	
+	/**
+	 * Checks if a field is *effectively* dirty. This means that the field has been modified, or is
+	 * otherwise different than what the persisted form might be.
+	 *
+	 * Note that if the entity is new then default fields are considered dirty, since they may not
+	 * have the same default value in the backing store.
+	 */
+	public function __isDirty( $field ) {
+		if( $this->_status == self::STATUS_UNKNOWN )
+			throw new Exception( "isDirty is ambiguous when status is unknown" );
+		$field = $this->_fieldName( $field );
+		return array_get_default( $field, $this->_data_dirty, false )
+			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
+	}
+	
+	public function __getTypeData( $field ) {
+		$field = $this->_fieldName( $field );
+		return $this->_data_type->names[$field];
+	}
+	
 	protected function _maybeLoad( $reload ) {
 		//allow this not to exist in case the enity has no associated mapper -- strict in memory or temporary entities
 		throw new DBS_LogicException( DBS_LogicException::NO_LOAD_DEFINED );
@@ -358,8 +371,17 @@ abstract class DBS_EntityBase {
 	protected function _save( $adding ) {
 		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
 	}
+}
+
+abstract class DBS_MergeEntityBase extends DBS_EntityBase {
+	//TODO: temporary until implemented
+	protected function _maybeLoad( $reload ) {
+		throw new DBS_LogicException( DBS_LogicException::NO_LOAD_DEFINED );
+	}
 	
-	abstract public function getIdentifier();
+	protected function _save( $adding ) {
+		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
+	}
 }
 
 /**

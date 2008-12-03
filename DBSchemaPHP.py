@@ -30,6 +30,10 @@ def retrofit_schema( emitter ):
 	def phpName( field ):
 		return emitter.memberName( field.name )
 	DBSchema.Entity_Field.phpName = property( phpName )
+	
+	def phpMergeName( field ):
+		return "_" + emitter.memberName( field.name )
+	DBSchema.Entity.phpMergeName = property( phpMergeName )
 		
 	def phpClassName( en ):
 		return emitter.className( en.name )
@@ -98,7 +102,7 @@ class PHPEmitter:
 		
 	def genEntityNormal( self, en ):
 		self.genEntityTypeDescriptor( en )
-		self.genOpenEntityClass( en )
+		self.genOpenEntityClass( en, 'Normal' )
 		self.genIdentifier( en )
 		self.genEmpty( en )
 		if en.name in self.sc.mappers:
@@ -108,7 +112,12 @@ class PHPEmitter:
 		self.genCloseEntityClass( en )
 		
 	def genEntityMerge( self, en ):
-		pass
+		self.genEntityTypeDescriptor( en )
+		self.genOpenEntityClass( en, 'Merge' )
+		self.genEmptyMerge( en )
+		self.genMergeAccessors( en )
+		self.genIdentifier( en )
+		self.genCloseEntityClass( en );
 	
 	def genMapper( self, en, loc ):
 		self.genConverters( en, loc )
@@ -512,6 +521,34 @@ static public function createWithNothing() {
 }
 		""", { 'class': en.phpInstClassName } )
 		
+	def genEmptyMerge( self, en ):
+		self.wr( "//*** genEmpty\n" )
+		self.wrt("""
+static public function withNothing() {
+	$$ret = new $class();
+	$mergeWith
+	return $$ret;
+}
+
+static public function createWithNothing() {
+	$$ret = new $class();
+	$mergeCreate
+	$$ret->_status = DBS_EntityBase::STATUS_NEW;
+	return $$ret;
+}
+		""", { 
+		'class': en.phpInstClassName,
+		'mergeWith': 
+			"\n".join([ 
+				"$ret->%s = %s::withNothing();" % (merge.phpMergeName, merge.phpClassName) 
+				for merge in en.merges.itervalues() 
+				]),
+		'mergeCreate': 
+			"\n".join([ 
+				"$ret->%s = %s::createWithNothing();" % (merge.phpMergeName, merge.phpClassName) 
+				for merge in en.merges.itervalues() 
+				]),
+		 } )
 	##################################################################
 	#  The identifier get and ctro
 	# FEATURE: if there is only one key, or a simpler form, then use that -- having
@@ -669,10 +706,29 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		return self.getPHPMapArrayStr( options )
 		
 	##################################################################
-	# 
-	def genOpenEntityClass( self, en ):
+	# Merge Accessors
+	def genMergeAccessors( self, en ):
+		# TODO: getRef?
+		# TODO: identifier get
+		# get -----------------------------------------------------
+		self.wr( "public function __get( $field ) {\n" )
+		for merge in en.merges.itervalues():
+			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
+				"return $this->%s->__get( $field );" % merge.phpMergeName ) );
+		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
+
+		# set -----------------------------------------------------
+		self.wr( "public function __set( $field, $value ) {\n" )
+		for merge in en.merges.itervalues():
+			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
+				"return $this->%s->__set( $field, $value );" % merge.phpMergeName ) );
+		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
+		
+	##################################################################
+	# Open Class
+	def genOpenEntityClass( self, en, type ):
 		self.wrt("""
-class $class extends DBS_EntityBase {
+class $class extends DBS_${type}EntityBase {
 	static private $$_typeDescriptor;
 
 	static public function getTypeDescriptor() {
@@ -691,8 +747,13 @@ class $class extends DBS_EntityBase {
 		return $$item;
 	}
 """	, {'class': en.phpClassName,
-		'inst': en.phpInstClassName
+		'inst': en.phpInstClassName,
+		'type': type
 		} )
+	
+		if type == 'Merge':
+			for merge in en.merges.itervalues():
+				self.wr("\tprotected $%s; //<%s>\n" % ( merge.phpMergeName, merge.phpClassName ) )
 
 	def genCloseEntityClass( self, en ):
 		self.wrt( """} //end of class

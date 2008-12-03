@@ -116,6 +116,7 @@ class PHPEmitter:
 		self.genOpenEntityClass( en, 'Merge' )
 		self.genEmptyMerge( en )
 		self.genMergeAccessors( en )
+		self.genMergeSave( en )
 		self.genIdentifier( en )
 		self.genCloseEntityClass( en );
 	
@@ -504,6 +505,26 @@ public function delete() {
 		} )
 		
 	
+	def genMergeSave( self, en ):
+		self.wr( """//*** genMergeSave
+function _save( $adding ) {
+""")
+		# TODO: Define an handle what happens on partial saves
+		# TODO: variable propogation
+		for merge in en.merges.itervalues():
+			self.wr( 
+				self._if( 
+					"$this->%s->__isAnythingDirty()" % merge.phpMergeName,
+					"$this->%s->_save( $adding );\n$this->forwardFields%s();\n" 
+						% ( merge.phpMergeName, merge.phpClassName )
+					)
+				)
+			
+		self.wr( """
+	$this->_status = DBS_EntityBase::STATUS_EXTANT;
+}
+""")
+
 	##################################################################
 	# The Nothing constructors 
 	def genEmpty( self, en ):
@@ -723,6 +744,18 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
 				"return $this->%s->__set( $field, $value );" % merge.phpMergeName ) );
 		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
+		
+		# forwarding fields --------------------------------------
+		for merge in en.merges.itervalues():
+			self.wr( "protected function forwardFields%s(){\n" % merge.phpClassName );
+			for link in en.links:
+				if link.fromEnt != merge:
+					continue
+				self.wr( "$this->%s->%s = $this->%s->%s;\n" % ( 
+					link.toEnt.phpMergeName, link.toField.phpName,
+					link.fromEnt.phpMergeName, link.fromField.phpName 
+					) )
+			self.wr( "}\n" );
 		
 	##################################################################
 	# Open Class

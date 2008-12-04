@@ -397,14 +397,6 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 }
 
 abstract class DBS_MergeEntityBase extends DBS_EntityBase {
-	//TODO: temporary until implemented
-	protected function _maybeLoad( $reload ) {
-		throw new DBS_LogicException( DBS_LogicException::NO_LOAD_DEFINED );
-	}
-	
-	protected function _save( $adding ) {
-		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
-	}
 }
 
 /**

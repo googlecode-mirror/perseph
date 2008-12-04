@@ -334,8 +334,8 @@ mapper BasicTwoKeys {
  *******************************************************************/
 entity SimpleName {
 	fields {
-		NameID<Integer> RECORD_KEY;
-		Name<String> TITLE;
+		NameID<Integer> ALT_RECORD_KEY;
+		Name<String> TITLE ALT_RECORD_KEY;
 	}
 }
 

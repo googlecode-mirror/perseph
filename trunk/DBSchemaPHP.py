@@ -118,6 +118,7 @@ class PHPEmitter:
 		self.genEmptyMerge( en )
 		self.genMergeAccessors( en )
 		self.genMergeSave( en )
+		self.genMergeMaybeLoad( en )
 		for merge in en.keyMerges.itervalues():
 			self.genKeyMerge( en, merge )
 		self.genIdentifier( en )
@@ -531,6 +532,18 @@ function _save( $adding ) {
 	def genKeyMerge( self, entity, merge ):
 		self.genKeyCtors( merge )
 		
+	def genMergeMaybeLoad( self, en ):
+		self.wr( """//*** getMergeMaybeLoad
+function _maybeLoad( $reload ) {
+			$ret = true;
+""")
+		#TODO: handle mismatch in return values
+		for merge in en.merges.itervalues():
+			self.wr( "$ret &= $this->%s->maybeLoad( $reload );\n" % merge.phpMergeName );
+			self.wr( "$this->forwardFields%s();\n" % merge.phpClassName );
+			
+		self.wr( "return $ret;\n}\n" );
+		
 	##################################################################
 	# The Nothing constructors 
 	def genEmpty( self, en ):
@@ -748,7 +761,8 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		self.wr( "public function __set( $field, $value ) {\n" )
 		for merge in en.merges.itervalues():
 			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
-				"return $this->%s->__set( $field, $value );" % merge.phpMergeName ) );
+				"$this->%s->__set( $field, $value );\n$this->forwardFields%s();\nreturn;\n" 
+					% ( merge.phpMergeName, merge.phpClassName ) ) )	#TODO: only call if a forwardable field!
 		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
 		
 		# forwarding fields --------------------------------------
@@ -757,10 +771,14 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 			for link in en.links:
 				if link.fromEnt != merge:
 					continue
-				self.wr( "$this->%s->%s = $this->%s->%s;\n" % ( 
-					link.toEnt.phpMergeName, link.toField.phpName,
-					link.fromEnt.phpMergeName, link.fromField.phpName 
-					) )
+				# only forward available fields to work in lazy "with" modes
+				self.wr( 
+					self._if( "$this->%s->__has('%s')" % ( link.fromEnt.phpMergeName, link.fromField.phpName ),
+						"$this->%s->%s = $this->%s->%s;\n" % ( 
+						link.toEnt.phpMergeName, link.toField.phpName,
+						link.fromEnt.phpMergeName, link.fromField.phpName 
+						) ) 
+					)
 			self.wr( "}\n" );
 		
 	##################################################################

@@ -676,9 +676,18 @@ class DBSTest_Basic extends TestCase {
 		$s->save();
 		
 		//now try to load it
-	/*	$l = SimpleMerge::findWithNameID( $s->nameID );
+		$l = SimpleMerge::findWithNameID( $s->nameID );
 		$this->assertEquals( 57, $l->decimal );
-		$this->assertEquals( "meme", $l->name );*/
+		$this->assertEquals( "meme", $l->name );
+		
+		//load by name...
+		$l = SimpleMerge::findWithName( "meme" );
+		$this->assertEquals( 57, $l->decimal );
+		
+		//lazy load by id
+		$l = SimpleMerge::withNameID( $s->nameID );
+		$this->assertEquals( "meme", $l->name );
+		$this->assertEquals( 57, $l->decimal );
 	}
 }
 

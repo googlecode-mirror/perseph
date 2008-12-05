@@ -688,6 +688,10 @@ class DBSTest_Basic extends TestCase {
 		$l = SimpleMerge::withNameID( $s->nameID );
 		$this->assertEquals( "meme", $l->name );
 		$this->assertEquals( 57, $l->decimal );
+		
+		//lazy load by name (this will test the backloading)
+		$l = SimpleMerge::withName( "meme" );
+		$this->assertEquals( 57, $l->decimal );	//very importnat to test this before looking up the NameID!
 	}
 }
 

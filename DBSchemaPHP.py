@@ -300,25 +300,42 @@ static public function with${keyName}($keyParamStr) {
 		self.wr( "//*** genMaybeLoad\n" )
 		keys = en.getRecordKeyFields()
 		self.wrt("""
+protected function _get_load_keys( ) {
+	$$load_keys = array();
+	$loadkeys;
+	
+	//we need some keys to load
+	if( count( $$load_keys ) == 0 )
+		throw new Exception( "Requires at least one alternate key to load" );
+		
+	return $$load_keys;
+}
+
 //public only for helpers (so search can indicate item was loaded)
 public function  _set_load_keys( $$reload ) {
 	if( !$$reload && $$this->_load_keys !== null )	
 		throw new Exception( "Not expecting a duplicate load / not supported" );
 		
-	$$this->_load_keys = array();
-	$loadkeys
-	
-	//return true if keys are complete, false otherwise
-	return count( $$this->_load_keys ) > 0;
+	$$this->_load_keys = $$this->_get_load_keys();
+}
+
+public function _has_required_load_keys() {
+	try {
+		//TODO: avoid using exceptions here, may catch invalid exception!
+		$$this->_get_load_keys( );
+		return true;
+	} catch( Exception $$ex ) {
+		return false;
+	}
 }
 
 protected function _maybeLoad( $$reload ) {
 	$$this->_isLoading = true;
+	try {
 	$$this->_set_load_keys( $$reload );
-		
-	if( count( $$this->_load_keys ) == 0 ) {
+	} catch( Exception $$ex ) {
 		$$this->_isLoading = false;
-		throw new Exception( "No keys specified/set for loading" );
+		throw $$ex;
 	}
 		
 	$$ret = dbs_dbsource_load( 
@@ -337,7 +354,7 @@ protected function _maybeLoad( $$reload ) {
 }
 """, { 
 			'loadkeys': self.getKeyBlock( loc.fields, False, lambda key:
-				"$this->_load_keys[] = %s;" % key.phpLoadDescriptor(loc) ),
+				"$load_keys[] = %s;" % key.phpLoadDescriptor(loc) ),
 			'table': loc.provider.phpTableRef( loc.table ),
 			'members': self.getFields( self.FOR_LOAD, loc.fields )
 			} )
@@ -519,7 +536,7 @@ function _save( $adding ) {
 			self.wr( 
 				self._if( 
 					"$this->%s->__isAnythingDirty()" % merge.phpMergeName,
-					"$this->%s->_save( $adding );\n$this->forwardFields%s();\n" 
+					"$this->%s->_save( $adding );\n$this->forwardFields%s( false );\n" 
 						% ( merge.phpMergeName, merge.phpClassName )
 					)
 				)
@@ -540,7 +557,7 @@ function _maybeLoad( $reload ) {
 		#TODO: handle mismatch in return values
 		for merge in en.merges.itervalues():
 			self.wr( "$ret &= $this->%s->maybeLoad( $reload );\n" % merge.phpMergeName );
-			self.wr( "$this->forwardFields%s();\n" % merge.phpClassName );
+			self.wr( "$this->forwardFields%s( false );\n" % merge.phpClassName );
 			
 		self.wr( "return $ret;\n}\n" );
 		
@@ -580,7 +597,8 @@ static public function createWithNothing() {
 		'class': en.phpInstClassName,
 		'mergeWith': 
 			"\n".join([ 
-				"$ret->%s = %s::withNothing();" % (merge.phpMergeName, merge.phpClassName) 
+				"$ret->%s = %s::withNothing();\n$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );" 
+					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName ) 
 				for merge in en.merges.itervalues() 
 				]),
 		'mergeCreate': 
@@ -755,31 +773,51 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		for merge in en.merges.itervalues():
 			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
 				"return $this->%s->__get( $field );" % merge.phpMergeName ) );
-		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
+		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" )
 
 		# set -----------------------------------------------------
 		self.wr( "public function __set( $field, $value ) {\n" )
 		for merge in en.merges.itervalues():
 			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
-				"$this->%s->__set( $field, $value );\n$this->forwardFields%s();\nreturn;\n" 
+				"$this->%s->__set( $field, $value );\n$this->forwardFields%s( false );\nreturn;\n" 
 					% ( merge.phpMergeName, merge.phpClassName ) ) )	#TODO: only call if a forwardable field!
-		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" );
+		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" )
 		
 		# forwarding fields --------------------------------------
 		for merge in en.merges.itervalues():
-			self.wr( "protected function forwardFields%s(){\n" % merge.phpClassName );
+			self.wr( "protected function forwardFields%s( $forceLoad ){\n" % merge.phpClassName )
 			for link in en.links:
 				if link.fromEnt != merge:
 					continue
-				# only forward available fields to work in lazy "with" modes
+				# only forward available fields to work in lazy "with" modes, or if forceLoad set (since field is required)
 				self.wr( 
-					self._if( "$this->%s->__has('%s')" % ( link.fromEnt.phpMergeName, link.fromField.phpName ),
+					self._if( "$forceLoad || $this->%s->__has('%s')" % ( link.fromEnt.phpMergeName, link.fromField.phpName ),
 						"$this->%s->%s = $this->%s->%s;\n" % ( 
 						link.toEnt.phpMergeName, link.toField.phpName,
 						link.fromEnt.phpMergeName, link.fromField.phpName 
 						) ) 
 					)
 			self.wr( "}\n" );
+			
+			# Back-loading and maybeLoad hook
+			# TODO: this whole logic needs to be determined by a graph in the processor!!!!! This is FRAGILE now.
+			self.wr( "protected function backLoad%s() {\n" % merge.phpClassName )
+			for link in en.links:
+				if link.toEnt != merge:
+					continue
+				self.wr( "$this->forwardFields%s( true );\n" % link.fromEnt.phpClassName )
+			self.wr( "}\n" );
+			self.wrt( """
+protected function maybeLoad$class() {
+	//if enough is available to load, then we don't need to intercept
+	if( $$this->$merge->_has_required_load_keys() )
+		return;
+	
+	$$this->backLoad$class();
+}
+""", { 'class': merge.phpClassName,
+		'merge': merge.phpMergeName
+		 } )
 		
 	##################################################################
 	# Open Class

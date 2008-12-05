@@ -147,11 +147,16 @@ abstract class DBS_EntityBase {
 			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
 	}
 	
+	//NOTE: not intended for public use at the moment, only for private use in Persephone!
+	public $maybeLoadCallback;	//callback type
+	
 	/**
 	 * Use this to ensure teh status is correctly set all the time, since _maybeLoad
 	 * will have to change the status to LOADING.
 	 */
 	protected function maybeLoad( $reload ) {
+		if( $this->maybeLoadCallback !== null )
+			call_user_func( $this->maybeLoadCallback );
 		$ret = $this->_maybeLoad( $reload );
 		if( $ret )
 			$this->_status = DBS_EntityBase::STATUS_EXTANT;
@@ -847,8 +852,10 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 		$into->__declExtant();
 		
 		_dbs_dbsource_result_acquire( $this->db, $this->res, $into, $this->table, $this->fields, $this->fieldLimit );
-		if( !$into->_set_load_keys( false ) )
+		if( !$into->_has_required_load_keys() )
 			$into->_logic_block_save = DBS_LogicException::SAVE_INCOMPLETE_LOAD;
+		else	
+			$into->_set_load_keys( false );	//is this really needed?
 		return $into;
 	}
 	

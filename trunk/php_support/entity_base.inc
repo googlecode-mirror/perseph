@@ -212,6 +212,10 @@ abstract class DBS_EntityBase {
 		return $this->_status === DBS_EntityBase::STATUS_EXTANT;
 	}
 	
+	public function isUnknown() {
+		return $this->_status === DBS_EntityBase::STATUS_UNKNOWN;
+	}
+	
 	public function exists() {
 		if( $this->_status == DBS_EntityBase::STATUS_EXTANT )
 			return true;

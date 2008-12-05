@@ -191,16 +191,22 @@ class Entity_Merge(Entity):
 	def __init__(self,name):
 		Entity.__init__(self,name)
 		self.merges = {}	# Name: Entity_Normal
-		self.links = []	# <Entity_Merge_Link> in root -> leaf ordering
+		self.links = []	# Array<Entity_Merge_Link> list of grouped items
 		self.keyMerges = {} # <Name: Entity_Normal> werges which serve as entry points
+		
+	def linksWithEntity( self, entity ):
+		ret = []
+		for linkSet in self.links:
+			for link in linkSet:
+				if link.entity == entity:
+					ret.append( ( linkSet, link ) ) # return set and the matching link
+					break
+		return ret
 	
 class Entity_Merge_Link:
 	def __init__(self):
-		self.fromEnt = None	# <Entity>
-		self.fromField = None	# <Entity_Field>
-		
-		self.toEnt = None
-		self.toField = None
+		self.entity = None	# <Entity>
+		self.field = None	# <Entity_Field>
 		
 class Mapper:
 	def __init__( self, provider ):

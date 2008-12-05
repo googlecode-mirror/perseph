@@ -299,24 +299,17 @@ class Processor:
 			for link in links:
 				if isinstance( entity, DBSchema.Entity_Normal ):
 					errorOn( merge, "normal entity cannot contain merges" )
+				linkSet = []
 					
-				op = link.getChild(0)
-				if op.type != SL.MAPTORIGHTOP:
-					errorOn( op, "unexpect op type" )
-					
-				fieldFrom = op.getChild(0)
-				fieldTo = op.getChild(1)
+				for i in range( 0, link.getChildCount() ):
+					linkPart = link.getChild( i )
 				
-				eml = DBSchema.Entity_Merge_Link()
-				eml.fromEnt = self.getEntity( fieldFrom, fieldFrom.getChild(0).text )
-				eml.fromField = self.getEntityField( fieldFrom, eml.fromEnt, fieldFrom.getChild(1).text )
+					eml = DBSchema.Entity_Merge_Link()
+					eml.entity = self.getEntity( linkPart, linkPart.getChild(0).text )
+					eml.field = self.getEntityField( linkPart, eml.entity, linkPart.getChild(1).text )
+					linkSet.append( eml )
 				
-				eml.toEnt = self.getEntity( fieldTo, fieldTo.getChild(0).text )
-				eml.toField = self.getEntityField( fieldTo, eml.toEnt, fieldTo.getChild(1).text )
-				
-				# TODO: sort and do root->lead ordering here somehwere!
-				
-				entity.links.append( eml )
+				entity.links.append( linkSet )
 				
 			# Finalize Merge ----------------------------------------------------
 			if isinstance( entity, DBSchema.Entity_Merge ):

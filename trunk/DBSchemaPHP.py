@@ -536,8 +536,7 @@ function _save( $adding ) {
 			self.wr( 
 				self._if( 
 					"$this->%s->__isAnythingDirty()" % merge.phpMergeName,
-					"$this->%s->_save( $adding );\n$this->forwardFields%s( false );\n" 
-						% ( merge.phpMergeName, merge.phpClassName )
+					"$this->%s->_save( $adding );\n" 	% merge.phpMergeName
 					)
 				)
 			
@@ -557,7 +556,6 @@ function _maybeLoad( $reload ) {
 		#TODO: handle mismatch in return values
 		for merge in en.merges.itervalues():
 			self.wr( "$ret &= $this->%s->maybeLoad( $reload );\n" % merge.phpMergeName );
-			self.wr( "$this->forwardFields%s( false );\n" % merge.phpClassName );
 			
 		self.wr( "return $ret;\n}\n" );
 		
@@ -597,14 +595,14 @@ static public function createWithNothing() {
 		'class': en.phpInstClassName,
 		'mergeWith': 
 			"\n".join([ 
-				"$ret->%s = %s::withNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified' );"
-					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName ) 
+				"$ret->%s = %s::withNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified%s' );"
+					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName ) 
 				for merge in en.merges.itervalues() 
 				]),
 		'mergeCreate': 
 			"\n".join([ 
-				"$ret->%s = %s::createWithNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified' );"
-					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName ) 
+				"$ret->%s = %s::createWithNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified%s' );"
+					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName ) 
 				for merge in en.merges.itervalues() 
 				]),
 		 } )
@@ -780,33 +778,23 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		self.wr( "public function __set( $field, $value ) {\n" )
 		for merge in en.merges.itervalues():
 			self.wr( self._if( "$this->%s->__defined( $field )" % merge.phpMergeName, 
-				"$this->%s->__set( $field, $value );\n$this->forwardFields%s( false );\nreturn;\n" 
-					% ( merge.phpMergeName, merge.phpClassName ) ) )	#TODO: only call if a forwardable field!
+				"$this->%s->__set( $field, $value );\nreturn;\n" 
+					% merge.phpMergeName ) )
 		self.wr( "\tthrow new DBS_FieldException( $field, DBS_FieldException::UNDEFINED );\n\t}\n" )
 		
 		# forwarding fields --------------------------------------
 		for merge in en.merges.itervalues():
-			self.wr( "private function forwardFields%s( $forceLoad ){\n" % merge.phpClassName )
-			for link in en.links:
-				if link.fromEnt != merge:
-					continue
-				# only forward available fields to work in lazy "with" modes, or if forceLoad set (since field is required)
-				self.wr( 
-					self._if( "$forceLoad || $this->%s->__has('%s')" % ( link.fromEnt.phpMergeName, link.fromField.phpName ),
-						"$this->%s->%s = $this->%s->%s;\n" % ( 
-						link.toEnt.phpMergeName, link.toField.phpName,
-						link.fromEnt.phpMergeName, link.fromField.phpName 
-						) ) 
-					)
-			self.wr( "}\n" );
 			
 			# Back-loading and maybeLoad hook
-			# TODO: this whole logic needs to be determined by a graph in the processor!!!!! This is FRAGILE now.
+			# TODO: only goes back one step, could in theory require two steps
 			self.wr( "private function backLoad%s() {\n" % merge.phpClassName )
-			for link in en.links:
-				if link.toEnt != merge:
-					continue
-				self.wr( "$this->forwardFields%s( true );\n" % link.fromEnt.phpClassName )
+			for lsPair in en.linksWithEntity( merge ):
+				for link in lsPair[0]:
+					if link.entity == merge:
+						continue
+					self.wr( "if( $this->%s->isUnknown() && $this->%s->_has_required_load_keys() )\n" 
+						% ( link.entity.phpMergeName, link.entity.phpMergeName ) )
+					self.wr( "\t$this->%s->find();\n" % link.entity.phpMergeName );
 			self.wr( "}\n" );
 			self.wrt( """
 protected function maybeLoad$class() {
@@ -820,9 +808,17 @@ protected function maybeLoad$class() {
 		'merge': merge.phpMergeName
 		 } )
 		
-		# merge back modified -------------------------------------- (why does this need to be protected and not private?)
-		self.wr( "protected function mergeBackModified( $fields ) {\n" );
-		self.wr( "}\n" );
+			# merge back modified (why does this need to be protected and not private?)
+			self.wr( "protected function mergeBackModified%s( $fields ) {\n" % merge.phpClassName )
+			for lsPair in en.linksWithEntity( merge ):
+				self.wr( "if( array_search( '%s', $fields ) !== false ) {\n" % lsPair[1].field.phpName )
+				self.wr( "\t$value = $this->%s->%s;\n" % (merge.phpMergeName, lsPair[1].field.phpName ) )
+				for link in lsPair[0]:
+					if link.entity == merge:
+						continue
+					self.wr( "\t$this->%s->%s = $value;\n" % ( link.entity.phpMergeName, link.field.phpName ) )
+				self.wr( "}\n" )
+			self.wr( "}\n" )
 			
 	##################################################################
 	# Open Class

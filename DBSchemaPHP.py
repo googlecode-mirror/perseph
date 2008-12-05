@@ -597,13 +597,14 @@ static public function createWithNothing() {
 		'class': en.phpInstClassName,
 		'mergeWith': 
 			"\n".join([ 
-				"$ret->%s = %s::withNothing();\n$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );" 
-					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName ) 
+				"$ret->%s = %s::withNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified' );"
+					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName ) 
 				for merge in en.merges.itervalues() 
 				]),
 		'mergeCreate': 
 			"\n".join([ 
-				"$ret->%s = %s::createWithNothing();" % (merge.phpMergeName, merge.phpClassName) 
+				"$ret->%s = %s::createWithNothing();	$ret->%s->maybeLoadCallback = array( $ret, 'maybeLoad%s' );	$ret->%s->backModifiedCallback = array( $ret, 'mergeBackModified' );"
+					% (merge.phpMergeName, merge.phpClassName, merge.phpMergeName, merge.phpClassName, merge.phpMergeName ) 
 				for merge in en.merges.itervalues() 
 				]),
 		 } )
@@ -785,7 +786,7 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		
 		# forwarding fields --------------------------------------
 		for merge in en.merges.itervalues():
-			self.wr( "protected function forwardFields%s( $forceLoad ){\n" % merge.phpClassName )
+			self.wr( "private function forwardFields%s( $forceLoad ){\n" % merge.phpClassName )
 			for link in en.links:
 				if link.fromEnt != merge:
 					continue
@@ -801,7 +802,7 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 			
 			# Back-loading and maybeLoad hook
 			# TODO: this whole logic needs to be determined by a graph in the processor!!!!! This is FRAGILE now.
-			self.wr( "protected function backLoad%s() {\n" % merge.phpClassName )
+			self.wr( "private function backLoad%s() {\n" % merge.phpClassName )
 			for link in en.links:
 				if link.toEnt != merge:
 					continue
@@ -819,6 +820,10 @@ protected function maybeLoad$class() {
 		'merge': merge.phpMergeName
 		 } )
 		
+		# merge back modified -------------------------------------- (why does this need to be protected and not private?)
+		self.wr( "protected function mergeBackModified( $fields ) {\n" );
+		self.wr( "}\n" );
+			
 	##################################################################
 	# Open Class
 	def genOpenEntityClass( self, en, type ):

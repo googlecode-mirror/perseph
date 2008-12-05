@@ -116,7 +116,7 @@ entityLink
 mapperBlock
 	:	MAPPER id OPENBLOCK mapperExpr* CLOSEBLOCK -> ^(MAPPER  ^(NAME id) mapperExpr*);
 entityLinkExpr
-	: 	id '.' id MAPTORIGHTOP id '.' id ENDEXPR -> ^(MAPTORIGHTOP ^(ENTSUBFIELD id id) ^(ENTSUBFIELD id id));
+	: 	id '.' id ( '=' id '.' id ENDEXPR )+ -> ^(ENTSUBFIELD id id)*;
 // $>
 	
 // $<Mapper

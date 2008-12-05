@@ -248,6 +248,17 @@ abstract class DBS_EntityBase {
 		throw new Exception( "Not supported: ambigious wrt __defined and __has" );
 	}
 	
+	/**
+	 * Public only for helper functions, not to be used directly!
+	 *
+	 * Indicates that these fields have been modified by some backend operation, a load,
+	 * search, or auto field of some kind.
+	 */
+	public function __backModified( $fields ) {
+		if( $this->backModifiedCallback !== null )
+			call_user_func( $this->backModifiedCallback, $fields );
+	}
+	public $backModifiedCallback = null;
 	
 	abstract protected function _maybeLoad( $reload );
 	
@@ -580,6 +591,7 @@ function dbs_cnvfunc_entity_to_db( $entity, $member, $table, $dbname ) {
 }
 
 function _dbs_dbsource_result_acquire( &$db, $result, $into, $table, $fields, $fieldLimit = null ) {
+	$modified = array();
 	foreach( $fields as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
 		if( _dbs_skipfield( $member, $fieldLimit ) )
@@ -592,7 +604,10 @@ function _dbs_dbsource_result_acquire( &$db, $result, $into, $table, $fields, $f
 		$value = $into->$cnv( $db->decode( $db->getResult( $result, $dbname ), $dbtype ) );
 		$into->__set( $member, $value );
 		$into->__markClean( $member );
+		$modified[] = $member;
 	}
+	
+	$into->__backModified( $modified );
 }
 
 function dbs_dbsource_load( &$db, $table, DBS_EntityBase $into, $keys, $fields ) {
@@ -1001,6 +1016,7 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 		$value = $into->$cnv( $id );
 		$into->__set( $member, $value );
 		$into->__markClean( $member );
+		$into->__backModified( array( $member ) );
 	}
 }
 

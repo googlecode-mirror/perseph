@@ -116,6 +116,10 @@ class DBS_Query {
 	static public function limit( $limit ) {
 		return  new DBS_Limit( $limit, 0 );
 	}
+	
+	static public function offsetLimit( $offset, $limit ) {
+		return new DBS_Limit( $limit, $offset );
+	}
 		
 	/**
 	 * Sorts the results. If no such qualifier is used the results are in

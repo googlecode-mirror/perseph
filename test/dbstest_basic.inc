@@ -692,6 +692,10 @@ class DBSTest_Basic extends TestCase {
 		//lazy load by name (this will test the backloading)
 		$l = SimpleMerge::withName( "meme" );
 		$this->assertEquals( 57, $l->decimal );	//very importnat to test this before looking up the NameID!
+		
+		
+		# TODO: multi-level loading A requires B which requires C
+		# TODO: multi-named values
 	}
 }
 

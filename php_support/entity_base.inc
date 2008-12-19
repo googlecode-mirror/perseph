@@ -724,6 +724,7 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, $proto ) {
 	$qWhere = null;
 	$qSort = null;
 	$qLimit = null;
+	$qOffset = null;
 	$fieldLimit = null;
 	
 	//Extract options
@@ -740,6 +741,8 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, $proto ) {
 			$qSort = $opt;
 		} else if( $opt instanceof DBS_Limit ) {
 			$qLimit = $opt;
+		} else if( $opt instanceof DBS_Offset ) {
+			$qOffset = $opt;
 		} else if( $opt instanceof DBS_FieldLimiter ) {
 			$fieldLimit = $opt->fields;
 		} else {
@@ -778,13 +781,12 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, $proto ) {
 		$sort = '';
 	}
 	
-	if( $qLimit !== null ) {
-		$limit = " LIMIT {$qLimit->limit}";
-		if( $qLimit->offset != 0 )
-			$limit .= " OFFSET {$qLimit->offset}";
-	} else {
-		$limit = '';
-	}
+	$limit = '';
+	if( $qLimit !== null )
+		$limit .= " LIMIT {$qLimit->limit}";
+	if( $qOffset !== null )
+		$limit .= " OFFSET {$qOffset->offset}";
+		
 	return array( $where, $sort, $limit, $fieldLimit );
 }
 

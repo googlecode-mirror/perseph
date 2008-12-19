@@ -114,11 +114,11 @@ class DBS_Query {
 	 * generally only specified if a "sort" qualifier is used.
 	 */
 	static public function limit( $limit ) {
-		return  new DBS_Limit( $limit, 0 );
+		return  new DBS_Limit( $limit );
 	}
 	
-	static public function offsetLimit( $offset, $limit ) {
-		return new DBS_Limit( $limit, $offset );
+	static public function offset( $offset ) {
+		return new DBS_Offset( $offset );
 	}
 		
 	/**
@@ -155,6 +155,30 @@ class DBS_Query {
 			$args = $args[0];
 			
 		return new DBS_FieldLimiter( $args );
+	}
+	
+	/**
+	 * Obtains the offset set in this query, or default if not set
+	 */
+	static public function getOffset( $query, $def = 0 ) {
+		$off = self::getItem( $query, 'DBS_Offset' );
+		if( $off !== null )
+			return $off->offset;
+		return $def;
+	}
+	
+	static public function getLimit( $query, $def = false ) {
+		$limit = self::getItem( $query, 'DBS_Limit' );
+		if( $limit !== null )
+			return $limit->limit;
+		return $def;
+	}
+	
+	static private function getItem( $query, $class ) {
+		foreach( $query as $q )
+			if( $q instanceof $class )
+				return $q;
+		return null;
 	}
 }
 
@@ -204,12 +228,23 @@ class DBS_Where_Group extends DBS_Where_Item {
 	}
 }
 
+/**
+ * Limit and Offset are two distinct query items since they are actually
+ * different, but also since they allow an easier page control mechanism:
+ * a better way to alter a query with paged sets (such as listings).
+ */
 class DBS_Limit {
 	public $limit;	//count of limit
+	
+	public function __construct( $limit ) {
+		$this->limit = $limit;
+	}
+}
+
+class DBS_Offset {
 	public $offset; //offset
 	
-	public function __construct( $limit, $offset ) {
-		$this->limit = $limit;
+	public function __construct( $offset ) {
 		$this->offset = $offset;
 	}
 }

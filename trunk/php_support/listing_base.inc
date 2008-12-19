@@ -21,6 +21,8 @@ abstract class DBS_Listing {
 		$this->typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
 	}
 	
+	public $numRows = 0;	//the number of rows which were rendered from the resultSet
+	
 	/**
 	 * Options:
 	 *			format => an explicit formatting function (name) (Default: that of formatType)
@@ -100,6 +102,7 @@ abstract class DBS_Listing {
 	}
 	
 	protected function renderRow( $row ) {
+		$this->numRows++;
 		$buf = $this->renderOpenRow( false );
 		foreach( $this->cols as $col ) {
 			$field = $col[0];
@@ -181,6 +184,8 @@ class DBS_HTMLTable_Listing extends DBS_Listing {
 	public $separator = ',';
 	protected $rowCount = 0;
 		
+	protected $pageSize = null;
+	
 	function renderOpen() { 
 		return "<table class='overview'>";
 	}

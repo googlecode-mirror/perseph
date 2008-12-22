@@ -173,11 +173,11 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	public function hasAction() {
 		//don't use exportValue since it requires the actions to have already been added
 		//in the form, and stick this directly in the template
-		return array_get_default( self::T_ACTIONMARKER, $_REQUEST, '0' ) == '1';
+		return _pers_array_get_default( self::T_ACTIONMARKER, $_REQUEST, '0' ) == '1';
 	}
 	
 	public function isRequestNew() {
-		return array_get_default( self::T_MARKNEW, $_REQUEST, '0' ) == '1';
+		return _pers_array_get_default( self::T_MARKNEW, $_REQUEST, '0' ) == '1';
 	}
 	
 	public function execute() {
@@ -263,7 +263,7 @@ function _dbs_form_loadentityselect( $results, $key, $text ) {
  */
 function dbs_standard_form( $form, $entitykey ) {
 	if( !$form->hasAction() ) {
-		$key = array_get_default( $entitykey, $_REQUEST, null );	//TODO: unlike the get_request_def this doesn't handle encoding correctly!!!
+		$key = _pers_array_get_default( $entitykey, $_REQUEST, null );	//TODO: unlike the get_request_def this doesn't handle encoding correctly!!!
 		$entityname = $form->ENTITY;
 		//for PHP 5.3 (and can also replace call_user_func)
 		//$entityname = $formclass::ENTITY

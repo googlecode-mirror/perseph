@@ -110,7 +110,7 @@ abstract class DBS_Listing {
 				$raw = $row;
 			else {
 				$raw = $row->$field;
-				$sub = array_get_default( 'sub', $col[1], null );
+				$sub = _pers_array_get_default( 'sub', $col[1], null );
 				if( $sub !== null )
 					$raw = $raw->$sub;
 			}

@@ -317,12 +317,12 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			
 		$field = $this->_fieldName( $field );
 			
-		if( array_get_default( $field, $this->_data_has, false ) )
+		if( _pers_array_get_default( $field, $this->_data_has, false ) )
 			return $this->_data[$field];
 			
 		//attempt to load if we may already exist
 		if( $this->_status === self::STATUS_UNKNOWN && !$this->_isLoading && $this->maybeLoad( false ) ) {
-			if( array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
+			if( _pers_array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
 				return $this->_data[$field];
 		}
 			
@@ -367,7 +367,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	public function __has( $field ) {
 		$field = $this->_fieldName( $field );
 			
-		return array_get_default( $field, $this->_data_has, false )
+		return _pers_array_get_default( $field, $this->_data_has, false )
 			|| array_key_exists( $field, $this->_data_type->defaults );
 	}
 	
@@ -382,7 +382,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		if( $this->_status == self::STATUS_UNKNOWN )
 			throw new Exception( "isDirty is ambiguous when status is unknown" );
 		$field = $this->_fieldName( $field );
-		return array_get_default( $field, $this->_data_dirty, false )
+		return _pers_array_get_default( $field, $this->_data_dirty, false )
 			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
 	}
 	

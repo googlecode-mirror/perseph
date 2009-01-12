@@ -32,6 +32,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	}
 	
 	protected $elements = array();
+	private $nameMap = array();	//field => form name
 	
 	/**
 	 * A parallel to the QuickForm addElement this will add an appropriate field for
@@ -79,6 +80,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				$this->form->addRule( $fieldName, "{$label} must be numeric.", 'numeric', true, 'client' );
 		}
 		
+		$this->nameMap[$field] = $fieldName;
 		return $fieldName;
 	}
 	
@@ -235,7 +237,48 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			$this->addActions();
 			$this->actionsAdded =true;
 		}
-		
+	
+		$render = $this->getRenderer();
+		$this->form->accept( $render );
+		return $render->toHtml();
+	}
+	
+	private $renderElementTemplates = array();
+	/**
+	 * allows adjusting just the input part of the element control.  Useful to add a JS button
+	 * or control.
+	 *
+	 * @param field [in] for which field to set the template
+	 * @param tpl [in] the template to use, the {element} section of the normal template will
+	 *		be replaced with this segment -- therefore be sure to use {element} in the text
+	 */
+	protected function renderSetElementInputTemplate( $field, $tpl ) {
+		$full = str_replace( "{element}", $tpl, self::_renderElementTpl );
+		$this->renderSetElementTemplate( $field, $full );
+	}
+	
+	protected function renderSetElementTemplate( $field, $tpl ) {
+		$this->renderElementTemplates[$field] = $tpl;
+	}
+	
+	const _renderElementTpl = "
+		<tr>
+			<td class='name'>
+				<!-- BEGIN required --><span style=\"color: #ff0000\">*</span><!-- END required -->
+				{label}
+			</td>
+			<td class='value'>
+				{element}
+				<!-- BEGIN error --><br/><span style=\"color: #ff0000\">{error}</span><!-- END error -->
+			</td>
+		</tr>
+			";
+			
+	/**
+	 * This function may be overriden to either extend the renderer or provide
+	 * an entirely new one.
+	 */
+	protected function getRenderer() {
 		//////////////////////////////////////////////////////////////////////////////////////
 		//The other template engines, being used with QuickForm suffer from a significant
 		//lack of documentation, and several bugs, this one is also too limited, but it'll be
@@ -250,18 +293,9 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				</table></fieldset></tr></td></table>
 			</form>
 			");
-		$render->setElementTemplate( "
-		<tr>
-			<td class='name'>
-				<!-- BEGIN required --><span style=\"color: #ff0000\">*</span><!-- END required -->
-				{label}
-			</td>
-			<td class='value'>
-				{element}
-				<!-- BEGIN error --><br/><span style=\"color: #ff0000\">{error}</span><!-- END error -->
-			</td>
-		</tr>
-			");
+		$render->setElementTemplate( self::_renderElementTpl );
+		foreach( $this->renderElementTemplates as $field => $tpl )
+			$render->setElementTemplate( $tpl, $this->nameMap[$field] );
 		$render->setHeaderTemplate( "
 			<tr class='header'>
 				<td colspan='2'>{header}</td>
@@ -275,9 +309,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			</tr>
 			", "submitrow"
 			);
-	
-		$this->form->accept( $render );
-		return $render->toHtml();
+		return $render;
 	}
 }
 

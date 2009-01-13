@@ -521,11 +521,13 @@ class DBS_SetFieldException extends DBS_FieldException {
 	const TYPE_NUMERIC = 0x1000;
 	const TYPE_LEN = 0x2000;
 	const TYPE_NULL = 0x3000;
+	const TYPE_DATE = 0x4000;
 	
 	static private $codeToMsg = array(
 		self::TYPE_NUMERIC => 'Attempt to set non-numeric value on numeric field',
 		self::TYPE_LEN => 'Length exceeds maximum for field',
 		self::TYPE_NULL => 'Attempt to set null on non-nullable field',
+		self::TYPE_DATE => 'Attempt to set non-Date on Date or DateTime field',
 		);
 		
 	public function getType() {

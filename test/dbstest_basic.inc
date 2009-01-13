@@ -28,9 +28,9 @@ class DBSTest_Basic extends TestCase {
 	function testAddFind() 	{
 		$n = DBSTest::createWithNothing();
 		$n->name = 'T❀stNäm€' . time();	//include some unicode, latin-1, and latin-15 overlap characters
-		$n->date = rand( 1000, 10000 ) * 3600*24;	//TODO: hmm, php has no native Date type
+		$n->date = new Date( rand( -1000, 10000 ) * 3600*24, DATE_FORMAT_UNIXTIME );
 		$n->time = rand( -100000, 100000 );	//be sure to have negatives tested as well
-		$n->dateTime = time();
+		$n->dateTime = new Date();
 		$n->decimal = rand( 0, 100000 ) / 1000.0;
 		$n->float = rand() / getrandmax();
 		$n->memoryOnly = 1234;	//value will just be lost on reload (nothing really to test, perhaps when caching is introduced)

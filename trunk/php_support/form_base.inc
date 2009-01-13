@@ -231,8 +231,8 @@ function _dbs_formin_Text( $value ) {	return $value === null ? '' : $value; }
 function _dbs_formin_Decimal( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_Float( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_Bool( $value ) {	return $value === null ? '' : $value ? '1' : '0'; }
-function _dbs_formin_DateTime( $value ) {	return $value === null ? '' : date( 'Y-m-d H:i:s', $value ); }
-function _dbs_formin_Date( $value ) {	return $value === null ? '' : date( 'Y-m-d', $value ); }
+function _dbs_formin_DateTime( $value ) {	return $value === null ? '' : $value->getDate( DATE_FORMAT_ISO ); }
+function _dbs_formin_Date( $value ) { return $value === null ? '' : $value->format( '%Y-%m-%d' ); }
 function _dbs_formin_Time( $value ) {	return $value === null ? '' : _dbs_encode_time($value ); }
 
 function _dbs_formout_Integer( $value ) { return $value === '' ? null : intval( $value ); }
@@ -241,8 +241,20 @@ function _dbs_formout_Text( $value ) {	return $value; }
 function _dbs_formout_Decimal( $value ) { return $value === '' ? null : floatval( $value ); }
 function _dbs_formout_Float( $value ) { return $value === '' ? null : floatval( $value ); }
 function _dbs_formout_Bool( $value ) {	return $value === '' ? null : '1' === $value; }
-function _dbs_formout_DateTime( $value ) { return $value === '' ? null : strtotime( $value ); }
-function _dbs_formout_Date( $value ) { return $value === '' ? null : strtotime( $value ); }
+function _dbs_formout_DateTime( $value ) { 
+	if( $value === '' )
+		return null;
+	$ret = new Date();
+	$ret->setDate( $value ); //default accepts a lot of formats
+	return $ret;
+}
+function _dbs_formout_Date( $value ) { 
+	$ret = _dbs_formout_DateTime( $value ); 
+	//TODO: requires Date >= 1.5 (still alpha release)
+	//if( $ret !== null )
+	//	$ret->trunc( DATE_PRECISION_DAY );
+	return $ret;
+}
 function _dbs_formout_Time( $value ) { return $value === '' ? null : _dbs_decode_time( $value ); }
 
 function _dbs_form_loadentityselect( $results, $key, $text ) {

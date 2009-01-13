@@ -183,7 +183,7 @@ class MDB2DBSource implements DBSource {
 				
 			case 'date':
 			case 'datetime':
-				@$out = MDB2_Date::mdbstamp2Unix( $value );
+				@$out = self::mdb2_DateToDate( $value );
 				break;
 				
 			case 'time':
@@ -208,7 +208,7 @@ class MDB2DBSource implements DBSource {
 			switch( strtolower( $type ) ) {
 				case 'date':
 				case 'datetime':
-					@$halfraw = MDB2_Date::unix2mdbstamp( $value );
+					@$halfraw = self::dateToMDB2_Date( $value );
 					break;
 					
 				case 'time':
@@ -244,6 +244,16 @@ class MDB2DBSource implements DBSource {
 	
 	public function getNewID() {
 		return $this->mdb->lastInsertID();
+	}
+	
+	static public function dateToMDB2_Date( $date ) {
+		return $date->getDate( DATE_FORMAT_ISO );	//though the default, be explicit, this is what MDB2 timestamps are
+	}
+	
+	static public function mdb2_DateToDate( $mdate ) {
+		$date = new Date();
+		$date->setDate( $mdate, DATE_FORMAT_ISO );
+		return $date;	
 	}
 }
 
@@ -460,9 +470,9 @@ abstract class DBSourceBase implements DBSource {
 			case 'float':
 				return floatval( $value );
 			case 'datetime':
-				return '\'' . date( "Y-m-d H:i:s", $value ) . '\'';
+				return '\'' . $value->getDate( DATE_FORMAT_ISO ) . '\'';
 			case 'date':
-				return '\'' . date( "Y-m-d", $value ) . '\'';
+				return '\'' . $value->format( "%Y-%m-%d" ) . '\'';
 			case 'time':
 				return '\'' . _dbs_encode_time( $value ) . '\'';
 			case 'bool':
@@ -492,7 +502,9 @@ abstract class DBSourceBase implements DBSource {
 				if( $dot !== false )
 					$value = substr( $value, 0, $dot );
 			
-				return strtotime( $value );
+				$ret = new Date();
+				$ret->setDate( $value, DATE_FORMAT_ISO );
+				return $ret;
 				
 			case 'time':
 				return _dbs_decode_time( $value );

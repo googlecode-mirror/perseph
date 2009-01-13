@@ -99,6 +99,7 @@ class PHPEmitter:
 	def genBaseRequires( self ):
 		self.wr( "require_once 'persephone/entity_base.inc';\n" );
 		self.wr( "require_once 'persephone/query.inc';\n" );
+		self.wr( "require_once 'Date.php';\n" );
 		
 	def genEntityNormal( self, en ):
 		self.genEntityTypeDescriptor( en )
@@ -745,6 +746,11 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 						"strlen( $value ) > %d" % field.maxLen,
 						self._throwSetFieldException( field, 'TYPE_LEN' )
 						) )
+			elif tname == 'Date' or tname == 'DateTime':
+				self.wr( self._if(
+					"!($value instanceof Date)",
+					self._throwSetFieldException( field, 'TYPE_DATE' )
+					) )
 						
 			self.wr( "\tbreak;\n" );
 		self.wrt("""

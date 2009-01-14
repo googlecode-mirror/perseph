@@ -28,6 +28,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	protected $form;	//<HTML_QuickForm>
 	
 	public function validate() {
+		$this->checkExtract( null );
 		return $this->form->validate();
 	}
 	
@@ -184,24 +185,38 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		return $this->form->exportValue( '_key_ident' );
 	}
 	
-	public function extract( $entity ) {
+	/**
+	 * Check extract is an internal function which either extracts the value or checks it
+	 * for correctness (used in validate).
+	 */
+	function checkExtract( $entity ) {
 		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
 		foreach( $this->elements as $element ) {
 			if( !$element[1] )
 				continue;
 				
-			$baseType = $typeDesc->getBaseType( $element[0] );
-			$raw = $this->form->exportValue( $element[2] );
-			if( $baseType === 'Entity' ) {
-				$raw = call_user_func( "{$typeDesc->getCustomType($element[0])}::withIdentifier", $raw );
-			} else {
-				$func = "_dbs_formout_{$baseType}";
-				$raw = $func( $raw );
-			}
+			try {
+				$baseType = $typeDesc->getBaseType( $element[0] );
+				$raw = $this->form->exportValue( $element[2] );
+				if( $baseType === 'Entity' ) {
+					$raw = call_user_func( "{$typeDesc->getCustomType($element[0])}::withIdentifier", $raw );
+				} else {
+					$func = "_dbs_formout_{$baseType}";
+					$raw = $func( $raw );
+				}
 			
-			$entity->__set( $element[0], $raw );
+				if( $entity !== null )
+					$entity->__set( $element[0], $raw );
+					
+			} catch( Exception $ex ) {
+				$this->form->setElementError( $element[2], $ex->getMessage() );
+			}
 		}
-		
+	}
+	
+	public function extract( $entity ) {
+		$this->checkExtract( $entity );
+				
 		//additionally if the entity is new and we have not extracted the value from the form
 		//we can get it from the defaultsForNew
 		if( $this->isNew ) {

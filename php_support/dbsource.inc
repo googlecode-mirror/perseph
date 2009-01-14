@@ -13,6 +13,7 @@
 					  
 @require_once 'MDB2.php';
 @require_once 'MDB2/Date.php';
+@require_once 'Date.php';
 
 interface DBSource {
 	/**

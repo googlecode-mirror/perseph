@@ -184,7 +184,7 @@ class MDB2DBSource implements DBSource {
 				
 			case 'date':
 			case 'datetime':
-				@$out = self::mdb2_DateToDate( $value );
+				$out = self::mdb2_DateToDate( $value );
 				break;
 				
 			case 'time':
@@ -209,7 +209,7 @@ class MDB2DBSource implements DBSource {
 			switch( strtolower( $type ) ) {
 				case 'date':
 				case 'datetime':
-					@$halfraw = self::dateToMDB2_Date( $value );
+					$halfraw = self::dateToMDB2_Date( $value );
 					break;
 					
 				case 'time':

@@ -246,12 +246,60 @@ function _dbs_formin_DateTime( $value ) {	return $value === null ? '' : $value->
 function _dbs_formin_Date( $value ) { return $value === null ? '' : $value->format( '%Y-%m-%d' ); }
 function _dbs_formin_Time( $value ) {	return $value === null ? '' : _dbs_encode_time($value ); }
 
-function _dbs_formout_Integer( $value ) { return $value === '' ? null : intval( $value ); }
-function _dbs_formout_String( $value ) {	return $value; }
-function _dbs_formout_Text( $value ) {	return $value; }
-function _dbs_formout_Decimal( $value ) { return $value === '' ? null : floatval( $value ); }
-function _dbs_formout_Float( $value ) { return $value === '' ? null : floatval( $value ); }
-function _dbs_formout_Bool( $value ) {	return $value === '' ? null : '1' === $value; }
+function _dbs_formout_Integer( $value ) { 
+	if( $value === null || $value === "" )
+		return null;
+		
+	if( !is_numeric( $value ) )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+		
+	//ensure no extra nonsense is used... (truly an integer)
+	if( intval( $value ) != floatval( $value ) )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+		
+	return intval( $value ); 
+}
+
+function _dbs_formout_String( $value ) {	
+	return $value; 
+}
+
+function _dbs_formout_Text( $value ) {	
+	return $value; 
+}
+
+function _dbs_formout_Decimal( $value ) { 
+	if( $value === null || $value === "" )
+		return null;
+		
+	if( !is_numeric( $value ) )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+		
+	return floatval( $value ); 
+}
+
+function _dbs_formout_Float( $value ) { 
+	if( $value === null || $value === "" )
+		return null;
+		
+	if( !is_numeric( $value ) )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+	
+	return floatval( $value ); 
+}
+
+function _dbs_formout_Bool( $value ) {	
+	if( $value === null || $value === "" )
+		return null;
+		
+	if( $value === '1' )
+		return true;
+	else if( $value === '0' )
+		return false;
+	else
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+}
+
 function _dbs_formout_DateTime( $value ) { 
 	if( $value === '' )
 		return null;

@@ -28,8 +28,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	protected $form;	//<HTML_QuickForm>
 	
 	public function validate() {
-		$this->checkExtract( null );
-		return $this->form->validate();
+		return $this->form->validate() && $this->checkExtract( null );
 	}
 	
 	protected $elements = array();
@@ -190,6 +189,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	 * for correctness (used in validate).
 	 */
 	function checkExtract( $entity ) {
+		$okay = true;
 		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
 		foreach( $this->elements as $element ) {
 			if( !$element[1] )
@@ -207,11 +207,15 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			
 				if( $entity !== null )
 					$entity->__set( $element[0], $raw );
+				else
+					$typeDesc->checkType( $element[0], $raw );
 					
 			} catch( Exception $ex ) {
 				$this->form->setElementError( $element[2], $ex->getMessage() );
+				$okay = false;
 			}
 		}
+		return $okay;
 	}
 	
 	public function extract( $entity ) {

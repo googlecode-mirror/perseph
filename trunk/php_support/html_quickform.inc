@@ -157,14 +157,25 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			if( isset( $element[3]['convertIn'] ) ) {	
 				$func = $element[3]['convertIn']; 
 				$raw = $func($raw);
-			} else if( $baseType === 'Entity' )
-				$raw = $raw->identifier;	//see comment in addSelect
-			else {
+			} else if( $baseType === 'Entity' ) {
+				if( $raw !== null )
+					$raw = $raw->identifier;	//see comment in addSelect
+				else
+					$raw = '';
+			} else {
 				$func = "_dbs_formin_{$baseType}";
 				$raw = $func( $raw );
 			}
 				
 			$values[$element[2]] = $raw;
+			
+			//Refer to {LPDefect:317143} somehow this needs to also work if validate fails, it only works
+			//now when inject is called...
+			$el = $this->form->getElement($element[2]);
+			if( ($el instanceof HTML_QuickForm_select) && !array_key_exists( $raw, $element[3]['options'] ) ) {
+				$text = $raw === '' ? '' : "Unknown: $raw"; //TODO: can we get a better label somehow?
+				$el->addOption( $text, $raw );
+			}
 		}
 				
 		if( $entity !== null )

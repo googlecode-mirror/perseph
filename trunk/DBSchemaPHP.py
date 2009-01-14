@@ -99,7 +99,6 @@ class PHPEmitter:
 	def genBaseRequires( self ):
 		self.wr( "require_once 'persephone/entity_base.inc';\n" );
 		self.wr( "require_once 'persephone/query.inc';\n" );
-		self.wr( "require_once 'Date.php';\n" );
 		
 	def genEntityNormal( self, en ):
 		self.genEntityTypeDescriptor( en )

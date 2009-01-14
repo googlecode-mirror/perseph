@@ -13,6 +13,7 @@
 
 require_once dirname(__FILE__).'/dbsource.inc';
 require_once dirname(__FILE__).'/base.inc';
+require_once dirname(__FILE__).'/entity_base.inc';
 
 abstract class DBS_FormBase {
 
@@ -224,6 +225,16 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	
 }
 
+class DBS_FormConvertException extends DBS_Exception {
+	const INVALID_INPUT_STRING = 1;
+	
+	static private $codeToMsg = array(
+		self::INVALID_INPUT_STRING => 'The input format is invalid.',
+		);
+	public function __construct( $code ) {
+		parent::__construct( self::$codeToMsg[$code], $code );
+	}
+}
 
 function _dbs_formin_Integer( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_String( $value ) {	return $value === null ? '' : $value; }
@@ -244,6 +255,10 @@ function _dbs_formout_Bool( $value ) {	return $value === '' ? null : '1' === $va
 function _dbs_formout_DateTime( $value ) { 
 	if( $value === '' )
 		return null;
+	//http://pear.php.net/bugs/bug.php?id=15631 (check format first, setDate doesn't indicate failure)
+	if( !preg_match('/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(\.\d+)?(Z|[\+\-]\d{2}:?\d{2})?)?$/i', $value ) )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+	
 	$ret = new Date();
 	$ret->setDate( $value ); //default accepts a lot of formats
 	return $ret;

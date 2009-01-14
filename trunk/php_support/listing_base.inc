@@ -249,14 +249,14 @@ function format_html_DateTime( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return date( 'Y-m-d H:i:s', $value );
+	return $value->getDate( DATE_FORMAT_ISO );
 }
 
 function format_html_Date( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return date( 'Y-m-d', $value );
+	return $value->format('%Y-%m-%d' );
 }
 
 function format_html_Time( $value ) {

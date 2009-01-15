@@ -325,14 +325,14 @@ function format_csv_DateTime( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return date( 'Y-m-d H:i:s', $value );
+	return $value->getDate(DATE_FORMAT_ISO);
 }
 
 function format_csv_Date( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return date( 'Y-m-d', $value );
+	return $value->getDate('%Y-%m-%d' );
 }
 
 function format_csv_Boolean( $value ) {

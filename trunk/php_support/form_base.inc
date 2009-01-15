@@ -78,6 +78,7 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	protected $allowAddSave = true;	//can the item be added/saved (Override in derived class)
 	protected $allowDelete = true;	//can the item be deleted (Override in derived class)
 	
+	
 	/** 
 	 * Initializes the form from the request parameters. This is called
 	 * when a form is submitted.
@@ -187,31 +188,33 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 		}
 			
 		$showForm = true;
-		if( $this->validate() ) {
+		//in Delete we don't need to validate
+		if( $this->getAction() == DBS_FormBase::ACTION_DELETE || $this->validate() ) {
+			//obtain the entity we are working with
 			if( $this->isNew ) {
-				$rule = call_user_func( "{$this->ENTITY}::createWithNothing" );
+				$entity = call_user_func( "{$this->ENTITY}::createWithNothing" );
 			} else {
-				$rule = call_user_func( "{$this->ENTITY}::withIdentifier", $this->getIdentifier() );
-				//$this->extractKeys( $rule );
-				$rule->find();
+				$entity = call_user_func( "{$this->ENTITY}::withIdentifier", $this->getIdentifier() );
+				$entity->find();
 			}
 			
 			try {
-				$this->extract( $rule );
 				if( $this->getAction() == DBS_FormBase::ACTION_SAVE ) {
-					$rule->save();
-					$this->inject( $rule, true );	//capture any logic/new values from entity
-					print( "<p class='success'>Saved.</p>" );
+					$this->extract( $entity );
+					$entity->save();
+					$this->inject( $entity, true );	//capture any logic/new values from entity
 				} else if( $this->getAction() == DBS_FormBase::ACTION_ADD ) {
-					$rule->add();
+					$this->extract( $entity );
+					$entity->add();
 					$this->isNew = false;
-					$this->inject( $rule, true );	//capture any logic/new values from entity
-					print( "<p class='success'>Added.</p>" );
+					$this->inject( $entity, true );	//capture any logic/new values from entity
 				} else if( $this->getAction() == DBS_FormBase::ACTION_DELETE ) {
-					$rule->delete();
-					$showForm = false;
-					print( "<p class='success'>Deleted.</p>" );
+					//don't extract in this case
+					$entity->delete();
 				}
+				
+				$showForm = $this->actionSuccess( $this->getAction(), $entity );
+				
 			} catch( DBS_SetFieldException $ex ) {
 				//just do something quick and dirty for now, TODO: combine with HTMLQuickForm to report validation errors
 				print( "<p class='error'>{$ex->getMessage()}</p>" );
@@ -223,6 +226,34 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 			echo $this->toHTML();
 	}
 	
+	/**
+	 * Called when an action is successfully performed with the form.  This can be overridden
+	 * to provide different output, or control form display.
+	 *
+	 * @param action [in] which action DBS_FormBase::ACTION_
+	 * @param entity [in] the entity which was operated on
+	 * @return [out] true if the form should be display again, false if to not display the form
+	 *
+	 * NOTE: Delete should normally return "false", otherwise the resulting form may
+	 *	be unusuable on the deleted entity.
+	 */
+	/*virtual*/ public function actionSuccess( $action, $entity ) {
+		if( $action == DBS_FormBase::ACTION_SAVE ) {
+			print( "<p class='success'>Saved.</p>" );
+			return true;
+			
+		} else if( $action == DBS_FormBase::ACTION_ADD ) {
+			print( "<p class='success'>Added.</p>" );
+			return true;
+			
+		} else if( $action == DBS_FormBase::ACTION_DELETE ) {
+			print( "<p class='success'>Deleted.</p>" );
+			return false;
+			
+		} else {
+			assert( "Invalid action to actionSuccess" );
+		}
+	}
 }
 
 class DBS_FormConvertException extends DBS_Exception {

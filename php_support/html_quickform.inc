@@ -31,7 +31,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		return $this->form->validate() && $this->checkExtract( null );
 	}
 	
-	protected $elements = array();
+	protected $elements = array();	// DBS_FB_Element
 	private $nameMap = array();	//field => form name
 	
 	/**
@@ -60,12 +60,12 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			$fieldName = "_hro__dbs_{$field}";
 			$this->form->addElement( 'hidden', $fieldName );
 			
-			$this->elements[] = array( $field, false, "_ro__dbs_{$field}", $options );
-			$this->elements[] = array( $field, false, $fieldName, $options );
+			$this->elements[] = new DBS_FB_Element( $field, false, "_ro__dbs_{$field}", $options );
+			$this->elements[] = new DBS_FB_Element( $field, false, $fieldName, $options );
 		} else if( $type == 'select' ) {
 			$selOpts = $options['options'];
 			$this->form->addElement( 'select', $fieldName, $label, $selOpts );
-			$this->elements[] = array( $field, true, $fieldName, $options );
+			$this->elements[] = new DBS_FB_Element( $field, true, $fieldName, $options );
 		} else {
 			//add max length if there
 			$maxLen = $typeDesc->getFieldOption( $field, 'maxLength' );
@@ -73,7 +73,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				$options['maxlength'] = $maxLen;
 				
 			$this->form->addElement( $type, $fieldName, $label, $options );
-			$this->elements[] = array( $field, true, $fieldName, $options );
+			$this->elements[] = new DBS_FB_Element( $field, true, $fieldName, $options );
 			
 			//check numeric types
 			if( array_search( $typeDesc->getBaseType( $field ), array( 'Integer', 'Decimal', 'Float' ) ) !== false )
@@ -146,16 +146,16 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		
 		foreach( $this->elements as $element ) {
 			//either use the existing value or a defaultForNew if applicable
-			if( $entity !== null && $entity->__has( $element[0] ) )
-				$raw = $entity->__get( $element[0] );
-			else if( $this->isNew && isset( $this->defaultsForNew[ $element[0] ] ) )
-				$raw = $this->defaultsForNew[ $element[0] ];
+			if( $entity !== null && $entity->__has( $element->entityField ) )
+				$raw = $entity->__get( $element->entityField );
+			else if( $this->isNew && isset( $this->defaultsForNew[ $element->entityField ] ) )
+				$raw = $this->defaultsForNew[ $element->entityField ];
 			else
 				continue;
 				
-			$baseType = $typeDesc->getBaseType( $element[0] );
-			if( isset( $element[3]['convertIn'] ) ) {	
-				$func = $element[3]['convertIn']; 
+			$baseType = $typeDesc->getBaseType( $element->entityField );
+			if( isset( $element->options['convertIn'] ) ) {	
+				$func = $element->options['convertIn']; 
 				$raw = $func($raw);
 			} else if( $baseType === 'Entity' ) {
 				if( $raw !== null )
@@ -171,8 +171,8 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			
 			//Refer to {LPDefect:317143} somehow this needs to also work if validate fails, it only works
 			//now when inject is called...
-			$el = $this->form->getElement($element[2]);
-			if( ($el instanceof HTML_QuickForm_select) && !array_key_exists( $raw, $element[3]['options'] ) ) {
+			$el = $this->form->getElement($element->formField);
+			if( ($el instanceof HTML_QuickForm_select) && !array_key_exists( $raw, $element->options['options'] ) ) {
 				$text = $raw === '' ? '' : "Unknown: $raw"; //TODO: can we get a better label somehow?
 				$el->addOption( $text, $raw );
 			}
@@ -203,26 +203,26 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		$okay = true;
 		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
 		foreach( $this->elements as $element ) {
-			if( !$element[1] )
+			if( !$element->extract )
 				continue;
 				
 			try {
-				$baseType = $typeDesc->getBaseType( $element[0] );
-				$raw = $this->form->exportValue( $element[2] );
+				$baseType = $typeDesc->getBaseType( $element->entityField );
+				$raw = $this->form->exportValue( $element->formField );
 				if( $baseType === 'Entity' ) {
-					$raw = call_user_func( "{$typeDesc->getCustomType($element[0])}::withIdentifier", $raw );
+					$raw = call_user_func( "{$typeDesc->getCustomType($element->entityField)}::withIdentifier", $raw );
 				} else {
 					$func = "_dbs_formout_{$baseType}";
 					$raw = $func( $raw );
 				}
 			
 				if( $entity !== null )
-					$entity->__set( $element[0], $raw );
+					$entity->__set( $element->entityField, $raw );
 				else
-					$typeDesc->checkType( $element[0], $raw );
+					$typeDesc->checkType( $element->entityField, $raw );
 					
 			} catch( Exception $ex ) {
-				$this->form->setElementError( $element[2], $ex->getMessage() );
+				$this->form->setElementError( $element->formField, $ex->getMessage() );
 				$okay = false;
 			}
 		}
@@ -343,4 +343,18 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	}
 }
 
+class DBS_FB_Element {
+
+	public $entityField;
+	public $extract;
+	public $formField;
+	public $options;
+
+	public function __construct( $field, $extract, $form, $options ) {
+		$this->entityField = $field;
+		$this->extract = $extract;
+		$this->formField = $form;
+		$this->options = $options;
+	}
+}
 ?>

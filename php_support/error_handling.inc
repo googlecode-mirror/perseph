@@ -16,9 +16,12 @@ function strict_clean_error_handler( $no, $msg, $file, $line ) {
 	if( error_reporting() === 0 )
 		return true;
 		
+	//try to skip items in the pear folders, which aren't PHP 5 strict compliant
 	if ( $no == E_STRICT && (
 		strpos($file, '/pear/') ||
-		strpos($file,'/php/')
+		strpos($file,'/php/') ||
+		strpos($file, '\\pear\\') ||
+		strpos($file,'\\php\\') 
 		) ) {
 		/* Don't execute PHP internal error handler */
 		return true;

@@ -277,7 +277,7 @@ ENDEXPR	:	';';
 OPENBLOCK	:		'{';
 CLOSEBLOCK	:	'}';
 STRING	:	
-	'"'! ~'"'+ '"'! { self.setText(self.getText()[1:-1]);} 	//PYTHON:
+	'"'! ~'"'* '"'! { self.setText(self.getText()[1:-1]);} 	//PYTHON:
 	;
 	
 //put last so it has no precedence (will not interfere with strings then)

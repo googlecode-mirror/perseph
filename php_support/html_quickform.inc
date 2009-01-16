@@ -167,7 +167,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				$raw = $func( $raw );
 			}
 				
-			$values[$element[2]] = $raw;
+			$values[$element->formField] = $raw;
 			
 			//Refer to {LPDefect:317143} somehow this needs to also work if validate fails, it only works
 			//now when inject is called...

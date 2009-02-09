@@ -907,6 +907,8 @@ function _${inst}_privConstruct() {
 		self.wr( "}\n" )
 	
 	def genSearchInEntity( self, en, search ):
+		if search.static:
+			self.wr( "static " )
 		self.wr( "public function %s" % self.memberName( search.name ) )
 		self.genSearchInner( search, en )
 	

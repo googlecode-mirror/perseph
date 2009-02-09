@@ -16,12 +16,13 @@ function strict_clean_error_handler( $no, $msg, $file, $line ) {
 	if( error_reporting() === 0 )
 		return true;
 		
+	$lfile = strtolower( $file );	//compare as lower-case to help with windows installs (which often use upper-case)
 	//try to skip items in the pear folders, which aren't PHP 5 strict compliant
 	if ( $no == E_STRICT && (
-		strpos($file, '/pear/') ||
-		strpos($file,'/php/') ||
-		strpos($file, '\\pear\\') ||
-		strpos($file,'\\php\\') 
+		strpos($lfile, '/pear/') ||
+		strpos($lfile,'/php/') ||
+		strpos($lfile, '\\pear\\') ||
+		strpos($lfile,'\\php\\') 
 		) ) {
 		/* Don't execute PHP internal error handler */
 		return true;

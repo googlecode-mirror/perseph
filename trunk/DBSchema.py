@@ -279,6 +279,7 @@ class Search:
 		self.limit = None	# <Search_None>
 		self.entity = None	# <Entity> which is produced by the search
 		self.container = container # <Entity> may be null (in which this search resides)
+		self.static = True # <Bool> Has no references to enclosing container entity
 		
 		self.placeholderCount = 0	# Total count of placeholders
 		

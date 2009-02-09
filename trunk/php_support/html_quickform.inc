@@ -27,7 +27,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	
 	protected $form;	//<HTML_QuickForm>
 	
-	public function validate() {
+	/*virtual*/ public function validate() {
 		return $this->form->validate() && $this->checkExtract( null );
 	}
 	
@@ -89,6 +89,10 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	 */
 	protected function addStaticElement( $field, $label = null ) {
 		return $this->addElement( 'static', $field, $label );
+	}
+	
+	protected function addHiddenElement( $field ) {
+		return $this->addElement( 'hidden', $field );
 	}
 	
 	/**

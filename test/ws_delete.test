@@ -5,4 +5,4 @@ Click xpath://input[@value='Delete']
 
 # make sure it is gone
 GotoURLAbs http://localhost/persephone/listing.php
-checknot //td[1][contains(string(),'%Item:ID%')]
+CheckNot //td[1][contains(string(),'%Item:ID%')]

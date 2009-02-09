@@ -590,6 +590,7 @@ class Processor:
 				expr.placeholder = search.placeholderCount
 				search.placeholderCount += 1
 			elif right.type == SL.REF:
+				search.static = False # Has a reference to a non-static field in the member
 				fname = right.getChild(0).text
 				if search.container == None:
 					errorOn( right, "Cannot refer to container field when not in a container (Entity)" )

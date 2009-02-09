@@ -250,8 +250,11 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 			print( "<p class='success'>Deleted.</p>" );
 			return false;
 			
+		} else if( $action == DBS_FormBase::ACTION_NONE ) {
+			return true;
+			
 		} else {
-			assert( "Invalid action to actionSuccess" );
+			assert( "Invalid action to actionSuccess: $action" );
 		}
 	}
 }
@@ -349,7 +352,15 @@ function _dbs_formout_Date( $value ) {
 	//	$ret->trunc( DATE_PRECISION_DAY );
 	return $ret;
 }
-function _dbs_formout_Time( $value ) { return $value === '' ? null : _dbs_decode_time( $value ); }
+function _dbs_formout_Time( $value ) { 
+	if( $value === '' )
+		return null;
+		
+	$ret = _dbs_decode_time( $value ); 
+	if( $ret === null )
+		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
+	return $ret;
+}
 
 function _dbs_form_loadentityselect( $results, $key, $text ) {
 	$ret = array();

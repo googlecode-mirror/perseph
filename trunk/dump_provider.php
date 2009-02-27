@@ -29,6 +29,7 @@ $typeMap = array(
 	'int' => 'Integer',
 	'tinyint' => 'Integer',
 	'smallint' => 'Integer',
+	'bigint' => 'Integer',
 	'char' => 'String',
 	'varchar' => 'String',
 	'text' => 'Text',

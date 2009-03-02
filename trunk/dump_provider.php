@@ -28,6 +28,7 @@ function check_error( $res ) {
 $typeMap = array( 
 	'int' => 'Integer',
 	'int2' => 'Integer',
+	'int4' => 'Integer',
 	'tinyint' => 'Integer',
 	'smallint' => 'Integer',
 	'bigint' => 'Integer',

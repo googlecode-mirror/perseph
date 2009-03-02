@@ -985,16 +985,35 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 	if( $newRecord !== $into->isNew() )
 		throw new DBS_DBException( $newRecord ?  DBS_DBException::SAVE_NOT_IN_DB : DBS_DBException::ADD_ALREADY_IN_DB );
 	
+	//use the SET syntax or the other SQL syntax, how to determine from the driver?!?!
+	$useSet = !$newRecord;	//UPDATE seems to only use the SET syntax
+	
 	if( $newRecord )
-		$sql = "INSERT {$db->escapeTable($table[0])}  SET ";
+		$sql = "INSERT INTO {$db->escapeTable($table[0])}";
 	else
-		$sql = "UPDATE {$db->escapeTable($table[0])} SET ";
-	for( $i = 0; $i < count($cols); $i++ ) {
-		if( $i )
-			$sql .= ', ';
-		$sql .= $db->escapeColumn( $cols[$i] );
-		$sql .= '=' . $vals[$i];	//already escaped
+		$sql = "UPDATE {$db->escapeTable($table[0])}";
+		
+	if( $useSet )
+	{
+		$sql .= ' SET ';
+		for( $i = 0; $i < count($cols); $i++ ) {
+			if( $i )
+				$sql .= ', ';
+			$sql .= $db->escapeColumn( $cols[$i] );
+			$sql .= '=' . $vals[$i];	//already escaped
+		}
 	}
+	else
+	{
+		$sql .= ' (';
+		for( $i = 0; $i < count($cols); $i++ ) {
+			if( $i )
+				$sql .= ', ';
+			$sql .= $db->escapeColumn( $cols[$i] );
+		}
+		$sql .= ') VALUES (' . join(',',$vals) . ')';
+	}
+	
 	 
 	if( !$newRecord ) {
 		$sql .= " WHERE $keywhere";

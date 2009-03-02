@@ -38,9 +38,9 @@ $(TESTDIR)/pgsql.schema.inc: $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
 	
 $(TESTDIR)/gen.test.schema: . | $(GENDIR)
-	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema
+	php dump_provider.php DBTest $(MYSQLURL) > $(TESTDIR)/gen.test.schema
 $(TESTDIR)/gen.pgsql.test.schema: . | $(GENDIR)
-	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema
+	php dump_provider.php DBTest $(PGSQLURL) > $(TESTDIR)/gen.pgsql.test.schema
 	
 $(GENDIR)/mdb2_schema.inc: $(TESTDIR)/test_mdb2.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/test_mdb2.schema $(GENDIR)/mdb2_

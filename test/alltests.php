@@ -19,8 +19,23 @@ class TestCase extends PHPUnit_Framework_TestCase
 	protected $createGlobalsReference = false;
 }
 
-require_once dirname( __FILE__ ) . '/gen/schema.inc';
+$mdburl_i = array_search( '--mdburl', $argv );
+if( $mdburl_i === false )
+{
+	echo( "Skipping MDB2 Test!!!\n" );
+	$mdburl = null;
+}
+else	
+	$mdburl = $argv[$mdburl_i+1];
+
+if( strpos( $mdburl, 'pgsql:' ) === 0 )
+	require_once dirname( __FILE__ ) . '/gen/pgsql.schema.inc';
+else
+	require_once dirname( __FILE__ ) . '/gen/schema.inc';
 require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
+
+//used to prevent conflicting defintions in common_test.inc
+$skipCommonSchema = true;
 
 include 'common_test.inc';
 include 'dbstest_basic.inc';
@@ -30,7 +45,7 @@ class DBSchema_AllTests
 {
 	public static function main()
 	{
-		global $db_test, $argv;
+		global $db_test, $argv, $mdburl;
 		$okay = true;
 		
 		if( array_search( '--nomysql', $argv ) === false )
@@ -42,14 +57,6 @@ class DBSchema_AllTests
 			$okay &= $ret->wasSuccessful();
 		}
 		
-		$mdburl_i = array_search( '--mdburl', $argv );
-		if( $mdburl_i === false )
-		{
-			echo( "Skipping MDB2 Test!!!\n" );
-			return $okay;
-		}
-		
-		$mdburl = $argv[$mdburl_i+1];
 		echo( "Running as MDB2DBSource...\n" );
 		@$mdb =& MDB2::factory( $mdburl,
 			//'mysqli://DBSTestUser:password@localhost/dbs_test',

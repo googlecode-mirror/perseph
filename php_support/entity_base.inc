@@ -1030,9 +1030,9 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 		
 	//if we are using the lastInsert mechanism, then handle it here
 	if( $newRecord && $lastInsert !== null ) {
-		$id = $db->getNewID();
-		
 		list( $member, $dbname, $dbtype ) = current( $lastInsert );
+		
+		$id = $db->getNewID( $table[0], $dbname );
 		
 		if( $into->__has( $member ) )
 			throw new Exception( "LastInsert field $member already set in data!" );

@@ -7,7 +7,7 @@
 -- CREATE USER "DBSTestUser" PASSWORD 'password';
 --	GRANT ALL PRIVILEGES ON DATABASE dbs_test TO "DBSTestUser";
 --
--- The rest should run as the DBSTestUser
+-- The rest should run as the DBSTestUser, since postgres doesn't have a grant which accepts all tables
 
 
 DROP SEQUENCE IF EXISTS basic_seq CASCADE;

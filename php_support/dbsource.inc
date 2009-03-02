@@ -47,7 +47,7 @@ interface DBSource {
 	
 	public function escapeTable( $table );
 	
-	public function getNewID();
+	public function getNewID( $table = null, $field = null );
 	
 	/**
 	 * Allows the disabling (or reenabling) of error logging. By default DB errors
@@ -242,8 +242,8 @@ class MDB2DBSource implements DBSource {
 		return $this->mdb->quoteIdentifier( $table );
 	}
 	
-	public function getNewID() {
-		return $this->mdb->lastInsertID();
+	public function getNewID( $table = null, $field = null ) {
+		return $this->mdb->lastInsertID( $table, $field );
 	}
 	
 	static public function dateToMDB2_Date( $date ) {
@@ -422,7 +422,7 @@ abstract class DBSourceBase implements DBSource {
 		die("Unsupported!");
 	}
 
- 	public function getNewID() {
+	public function getNewID( $table = null, $field = null ) {
  		die("Unsupported!");
  	}
 
@@ -719,7 +719,7 @@ class MySQLSource extends DBSourceBase {
 		return mysql_real_escape_string( $data, $this->connect );
 	}
 
-	function getNewID( ) {
+	public function getNewID( $table = null, $field = null ) {
 		return mysql_insert_id( $this->connect );
 	}
 	

@@ -31,10 +31,10 @@ CREATE TABLE "basic" (
 
 DROP TABLE IF EXISTS "twokeys";
 
- CREATE TABLE "twokeys" (
-"KeyNum" INT NOT NULL ,
-"KeyString" VARCHAR( 20 ) NOT NULL ,
-"Value" VARCHAR( 50 ) NOT NULL 
+CREATE TABLE "twokeys" (
+	"KeyNum" INT NOT NULL ,
+	"KeyString" VARCHAR( 20 ) NOT NULL DEFAULT '',	/*The default only exists for use in BasicTwoKeys entity*/
+	"Value" VARCHAR( 50 ) NOT NULL 
 ) ;
 CREATE UNIQUE INDEX twokeys_index on twokeys ("KeyNum","KeyString");
 
@@ -92,14 +92,14 @@ CREATE INDEX idname_index ON idname ("Name");
 
 DROP TABLE IF EXISTS "mergebasic";
 
- CREATE TABLE "mergebasic" (
-"ID" INT NOT NULL,
-"Name" VARCHAR( 50 ) UNIQUE,
-"Date" DATE NOT NULL ,
-"Time" TIME NOT NULL ,
-"DateTime" TIMESTAMP,
-"Bool" BOOL NOT NULL ,
-"Decimal" DECIMAL( 10, 5 ) NOT NULL ,
-"Float" FLOAT NOT NULL ,
+CREATE TABLE "mergebasic" (
+	"ID" INT NOT NULL,
+	"Name" VARCHAR( 50 ) UNIQUE,
+	"Date" DATE NOT NULL DEFAULT current_timestamp,
+	"Time" TIME NOT NULL DEFAULT '00:00:00.00',
+	"DateTime" TIMESTAMP DEFAULT current_timestamp,
+	"Bool" BOOL NOT NULL DEFAULT false,
+	"Decimal" DECIMAL( 10, 5 ) NOT NULL DEFAULT 0,
+	"Float" FLOAT NOT NULL DEFAULT 0,
 PRIMARY KEY ( "ID" )
 );

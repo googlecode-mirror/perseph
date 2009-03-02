@@ -27,6 +27,7 @@ function check_error( $res ) {
 
 $typeMap = array( 
 	'int' => 'Integer',
+	'int2' => 'Integer',
 	'tinyint' => 'Integer',
 	'smallint' => 'Integer',
 	'bigint' => 'Integer',
@@ -80,8 +81,9 @@ foreach( $tablesViews as $table ) {
 		
 		//determine native type
 		if( !array_key_exists( $decl['nativetype'], $typeMap ) ) {
-			print( "Unknown nativetype: {$decl['nativetype']}\n" );
-			exit(1);
+			file_put_contents( 'php://stderr', "WARNING: Unknown nativetype: {$decl['nativetype']}\n" );
+			print( "\t\t/*Omitting $field: Unknown nativetype: {$decl['nativetype']}*/\n" );
+			continue;
 		}
 		$type = $typeMap[$decl['nativetype']];
 		$ext = '';

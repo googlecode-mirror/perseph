@@ -43,7 +43,8 @@ $typeMap = array(
 	'decimal' => 'Decimal',
 	'float' => 'Float',
 	'double' => 'Float',
-	'boolean' => 'Bool',	//NOTE: MySQL bool is TINYINT, so this won't come up
+	'bool' => 'Bool',
+	'boolean' => 'Bool',	//NOTE: MySQL bool is TINYINT -- we can't tell
 	'blob' => 'Binary',
 	'longblob' => 'Binary',
 	);
@@ -90,7 +91,10 @@ foreach( $tablesViews as $table ) {
 		
 		//TODO: skip for now since not supported
 		if( $type == 'Binary' )
+		{
+			print( "\t\t/*Omitting $field: Binary fields not yet supported*/\n" );
 			continue;	
+		}	
 			
 		//consider Decimals with no fractional part to be Integers
 		if( $type == 'Decimal' && isset( $decl['length'] ) ) {

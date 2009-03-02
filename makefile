@@ -32,10 +32,10 @@ test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
 $(GENDIR)/schema.inc: $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
-	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/mysqlsource.schema $(TESTDIR)/test.schema $(GENDIR)/
+	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/
 	
 $(TESTDIR)/pgsql.schema.inc: $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
-	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/pgsql.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
+	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
 	
 $(TESTDIR)/gen.test.schema: . | $(GENDIR)
 	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema

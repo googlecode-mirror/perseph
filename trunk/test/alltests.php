@@ -31,12 +31,16 @@ class DBSchema_AllTests
 	public static function main()
 	{
 		global $db_test, $argv;
+		$okay = true;
 		
-		echo( "Running as MySQLSource...\n" );
-		$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
-		$db_test->setErrorLogging( false );
-		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(false));
-		$okay = $ret->wasSuccessful();
+		if( array_search( '--nomysql', $argv ) === false )
+		{
+			echo( "Running as MySQLSource...\n" );
+			$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
+			$db_test->setErrorLogging( false );
+			$ret = PHPUnit_TextUI_TestRunner::run(self::suite(false));
+			$okay &= $ret->wasSuccessful();
+		}
 		
 		$mdburl_i = array_search( '--mdburl', $argv );
 		if( $mdburl_i === false )
@@ -48,7 +52,6 @@ class DBSchema_AllTests
 		$mdburl = $argv[$mdburl_i+1];
 		echo( "Running as MDB2DBSource...\n" );
 		@$mdb =& MDB2::factory( $mdburl,
-			
 			//'mysqli://DBSTestUser:password@localhost/dbs_test',
 			/*array(
 				'phptype' => 'mysqli',
@@ -70,7 +73,7 @@ class DBSchema_AllTests
 		}
 		$GLOBALS['mdb'] =& $mdb;
 		$db_test = new MDB2DBSource( $mdb, 'cstring' );
-		//$db_test->setErrorLogging( false );
+		$db_test->setErrorLogging( false );
 		//$mdb->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
 		//check_db_error( $mdb->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
 		//$mdb->loadModule( 'Extended' );	//also not needed by dbsource

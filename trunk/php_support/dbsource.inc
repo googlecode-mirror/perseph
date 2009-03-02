@@ -235,12 +235,11 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	public function escapeColumn( $column ) {
-		//TODO: what is the function for this?
-		return "`$column`";
+		return $this->mdb->quoteIdentifier( $column );
 	}
 	
 	public function escapeTable( $table ) {
-		return $this->escapeColumn( $table );
+		return $this->mdb->quoteIdentifier( $table );
 	}
 	
 	public function getNewID() {

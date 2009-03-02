@@ -4,8 +4,8 @@
 --	DROP DATABASE if exists dbs_test;
 --	CREATE DATABASE "dbs_test" DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci; 
 --
--- CREATE USER DBSTestUser PASSWORD 'password';
---	GRANT ALL PRIVILEGES ON DATABASE dbs_test TO DBSTestUser;
+-- CREATE USER "DBSTestUser" PASSWORD 'password';
+--	GRANT ALL PRIVILEGES ON DATABASE dbs_test TO "DBSTestUser";
 --
 
 DROP TABLE IF EXISTS "basic";

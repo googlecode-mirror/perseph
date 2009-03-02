@@ -30,7 +30,7 @@ class DBSchema_AllTests
 {
 	public static function main()
 	{
-		global $db_test;
+		global $db_test, $argv;
 		
 		echo( "Running as MySQLSource...\n" );
 		$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
@@ -38,9 +38,18 @@ class DBSchema_AllTests
 		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(false));
 		$okay = $ret->wasSuccessful();
 		
+		$mdburl_i = array_search( '--mdburl', $argv );
+		if( $mdburl_i === false )
+		{
+			echo( "Skipping MDB2 Test!!!\n" );
+			return $okay;
+		}
+		
+		$mdburl = $argv[$mdburl_i+1];
 		echo( "Running as MDB2DBSource...\n" );
-		@$mdb =& MDB2::factory( 
-			'mysqli://DBSTestUser:password@localhost/dbs_test',
+		@$mdb =& MDB2::factory( $mdburl,
+			
+			//'mysqli://DBSTestUser:password@localhost/dbs_test',
 			/*array(
 				'phptype' => 'mysqli',
 				'username' => 'DBSTestUser',

@@ -17,7 +17,10 @@ $(GENDIR):
 test: phptest webtest
 	
 phptest: test-build
-	php $(TESTDIR)/alltests.php
+	php $(TESTDIR)/alltests.php --mdburl mysqli://DBSTestUser:password@localhost/dbs_test
+
+phptest-pgsql: test-build
+	php $(TESTDIR)/alltests.php --mdburl pgsql://DBSTestUser:password@localhost/dbs_test
 
 webtest: test-build
 	cd $(TESTDIR) && testplan web_sanity.test

@@ -16,11 +16,14 @@ $(GENDIR):
 .PHONY: test phptest webtest
 test: phptest webtest
 	
-phptest: test-build
-	php $(TESTDIR)/alltests.php --mdburl mysqli://DBSTestUser:password@localhost/dbs_test
+MYSQLURL=mysqli://DBSTestUser:password@localhost/dbs_test
+PGSQLURL=pgsql://DBSTestUser:password@localhost/dbs_test
 
-phptest-pgsql: test-build
-	php $(TESTDIR)/alltests.php --mdburl pgsql://DBSTestUser:password@localhost/dbs_test
+phptest: test-build
+	php $(TESTDIR)/alltests.php --mdburl $(MYSQLURL)
+
+phptest-pgsql: test-build $(TESTDIR)/pgsql.schema.inc
+	php $(TESTDIR)/alltests.php --mdburl $(PGSQLURL) --nomysql
 
 webtest: test-build
 	cd $(TESTDIR) && testplan web_sanity.test
@@ -29,9 +32,14 @@ test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
 $(GENDIR)/schema.inc: $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
-	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema $(GENDIR)/
+	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/mysqlsource.schema $(TESTDIR)/test.schema $(GENDIR)/
+	
+$(TESTDIR)/pgsql.schema.inc: $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
+	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/pgsql.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
 	
 $(TESTDIR)/gen.test.schema: . | $(GENDIR)
+	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema
+$(TESTDIR)/gen.pgsql.test.schema: . | $(GENDIR)
 	php dump_provider.php DBTest mysqli://DBSTestUser:password@localhost/dbs_test > $(TESTDIR)/gen.test.schema
 	
 $(GENDIR)/mdb2_schema.inc: $(TESTDIR)/test_mdb2.schema . | $(GENDIR)

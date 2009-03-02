@@ -70,7 +70,7 @@ class DBSchema_AllTests
 		}
 		$GLOBALS['mdb'] =& $mdb;
 		$db_test = new MDB2DBSource( $mdb, 'cstring' );
-		$db_test->setErrorLogging( false );
+		//$db_test->setErrorLogging( false );
 		//$mdb->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
 		//check_db_error( $mdb->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
 		//$mdb->loadModule( 'Extended' );	//also not needed by dbsource

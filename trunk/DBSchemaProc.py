@@ -94,7 +94,11 @@ class Processor:
 			else:
 				errorOn( prov, "Unknown definition type: %s" % defn )
 							
-			if defn != 'incomplete':
+			if defn == 'incomplete':
+				checkVarSet( prov, varset, ["definition"], ["dbType"] )
+				if "dbType" in varset:
+					provider.dbType = varset["dbType"]
+			else:
 				type = varset["type"]
 				impl = None
 				if type == "DBSource" or type == 'MDB2':

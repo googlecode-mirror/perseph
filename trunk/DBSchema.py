@@ -75,6 +75,7 @@ class Provider:
 	def __init__(self):
 		self.tables = {}#Name:Provider_Table
 		self.impl = None	#Provider_Impl
+		self.dbType = 'generic'	# The type of the DB in the backend
 
 class Provider_Impl:
 	def __init__(self):

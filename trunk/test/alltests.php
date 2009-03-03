@@ -28,8 +28,19 @@ if( $mdburl_i === false )
 else	
 	$mdburl = $argv[$mdburl_i+1];
 
+/**
+ * Specifies limits per DB type that could alter the test cases
+ */
+class TestLimit
+{
+	static public $time24H = false;
+}
+
 if( strpos( $mdburl, 'pgsql:' ) === 0 )
+{
+	TestLimit::$time24H = true;
 	require_once dirname( __FILE__ ) . '/gen/pgsql.schema.inc';
+}
 else
 	require_once dirname( __FILE__ ) . '/gen/schema.inc';
 require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
@@ -57,32 +68,44 @@ class DBSchema_AllTests
 			$okay &= $ret->wasSuccessful();
 		}
 		
+		//determine whether to use the DB driver conversion functions or our own
+		//must be False For MySQL4. Strangely, if this is "false" when the backing DB has
+		//a utf-8 character set the tests will still work -- the DB value will however be
+		//corrupt (I'm not sure how to detect this)
+		$useDBCharset = array_search( '--usedbcharset', $argv ) !== false;
+		
+		$opts = array();
+		if( !$useDBCharset )
+		{
+			//setup as utf8 for text columns
+			$opts['datatype_map'] = array( 'cstring' => 'cstring' );
+			$opts['datatype_map_callback'] = array( 'cstring' => 'mdb2_cstring_utf8_callback' );
+		}
+		
 		echo( "Running as MDB2DBSource...\n" );
-		@$mdb =& MDB2::factory( $mdburl,
-			//'mysqli://DBSTestUser:password@localhost/dbs_test',
-			/*array(
-				'phptype' => 'mysqli',
-				'username' => 'DBSTestUser',
-				'password' => 'password',
-				'hostspec' => 'localhost',
-				'database' => 'dbs_test' 
-				),*/
-			array(
-				//setup as utf8 for text columns
-				'datatype_map' => array( 'cstring' => 'cstring' ),
-				'datatype_map_callback' => array( 'cstring' => 'mdb2_cstring_utf8_callback' ),
-				) 
-			);
+		@$mdb =& MDB2::factory( $mdburl, $opts );
 		if( @PEAR::isError( $mdb ) ) 
 		{
 			error_log( $mdb->getMessage() );
 			die( "Unable to create MDB2 DB instance\n" );
 		}
 		$GLOBALS['mdb'] =& $mdb;
-		$db_test = new MDB2DBSource( $mdb, 'cstring' );
+		if( $useDBCharset )
+			$db_test = new MDB2DBSource( $mdb );
+		else	
+			$db_test = new MDB2DBSource( $mdb, 'cstring' );
 		$db_test->setErrorLogging( false );
-		//$mdb->setFetchMode(MDB2_FETCHMODE_ASSOC);	//Just as reference, dbsource doesn't need, nor should it need it
-		//check_db_error( $mdb->setCharset( 'UTF8' ) );	//hmmm??? produces an error, MySQL 5 only perhaps?!
+		
+		if( $useDBCharset )
+		{
+			$res = $mdb->setCharset( 'utf8' );	//Won't work on MySQL 4, actually the syntax of the name is DB specific it seems
+			if( @PEAR::isError( $res ) )
+			{
+				error_log( $res->getMessage() );
+				die( "Unable to set the character set\n" );
+			}
+		}
+		
 		//$mdb->loadModule( 'Extended' );	//also not needed by dbsource
 		$ret = PHPUnit_TextUI_TestRunner::run(self::suite(true));
 		$okay &= $ret->wasSuccessful();

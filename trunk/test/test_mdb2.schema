@@ -7,7 +7,7 @@ provider MDBTest {
 	/*Indicates which MDB2 type to use for textual columns (Strings,Text). By default
 	 the 'text' type will be used, but this allows you to use a custom type, required in
 	 cases where encoding translation must occur */
-	textType cstring;	
+	/*textType cstring;	*/
 		
 	
 	table basic {

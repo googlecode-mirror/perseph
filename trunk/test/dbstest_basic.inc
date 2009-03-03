@@ -25,7 +25,7 @@ class DBSTest_Clean extends TestCase {
 }
 
 class DBSTest_Basic extends TestCase {
-	function testAddFind() 	{
+	function testAddFind() 	{	
 		$n = DBSTest::createWithNothing();
 		$n->name = 'T❀stNäm€' . time();	//include some unicode, latin-1, and latin-15 overlap characters
 		
@@ -36,7 +36,10 @@ class DBSTest_Basic extends TestCase {
 		$date->setMinute( 0 );
 		$date->setSecond( 0 );
 		$n->date = $date;
-		$n->time = rand( -100000, 100000 );	//be sure to have negatives tested as well
+		if( TestLimit::$time24H )
+			$n->time = rand( 0, 3600*24 );	//some DB's are limited to 24H
+		else
+			$n->time = rand( -100000, 100000 );	//be sure to have negatives tested as well
 		$n->dateTime = new Date( rand( -1000000000, -10000000 ), DATE_FORMAT_UNIXTIME ); //this time use negative
 		$n->decimal = rand( 0, 100000 ) / 1000.0;
 		$n->float = rand() / getrandmax();

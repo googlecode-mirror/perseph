@@ -1,6 +1,3 @@
-/* Nothing actually usess the charset yet, the db variable in PHP must be set to do the conversion correctly */
-default charset "UTF-8";
-
 /* Custom types allow finer control over formatting and conversions. Custom types can
 	not be used in the "provider" sections. */
 type CustomID<Integer> { 	/* The base type says how this type behaves (for forms,listings,+elsewhere) */

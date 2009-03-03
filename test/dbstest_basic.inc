@@ -299,13 +299,13 @@ class DBSTest_Basic extends TestCase {
 		
 		//we only need one ALT_RECORD_KEY to delete
 		$d = DBSTest::withName( $q->name );
-		$d->delete();
+		$d->delete();	//TODO: syntax error in postgres, yet it deletes anyways?
 		
 		try {
 			$l = DBSTest::findWithName( $q->name );
 			$this->assertTrue( false );
-		} catch( Exception $ex ) {
-			$this->assertTrue( true );
+		} catch( DBS_DBException $ex ) {
+			$this->assertEquals( DBS_DBException::NOT_IN_DB, $ex->getCode() );
 		}
 	}
 	

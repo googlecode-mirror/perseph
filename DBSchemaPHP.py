@@ -503,7 +503,7 @@ static private function _searchAndDelete( $$args ) {
 //TODO: as with everything, support multiple locators
 public function delete() {
 	$$query = array();
-	$$query[] = DBS_Query::limit( 1 );	//a safety measure
+	$limitPart;
 	$$keys = array();
 	$deletekeys
 	
@@ -522,7 +522,9 @@ public function delete() {
 		'table': loc.provider.phpTableRef( loc.table ),
 		'class': en.phpInstClassName,
 		'deletekeys': self.getKeyBlock( loc.fields, False, lambda field:
-			"\t\t$keys[] = DBS_Query::match( '%s', $this->%s );\n" % ( field.phpName, field.phpName ) )
+			"\t\t$keys[] = DBS_Query::match( '%s', $this->%s );\n" % ( field.phpName, field.phpName ) ),
+		# TODO: abstract this into the delete command -- there is a way to do this postgres as well (see entity_base.inc delete)
+		'limitPart': '$query[] = DBS_Query::limit( 1 );	//a safety measure' if loc.provider.dbType == 'mysql' else ''
 		} )
 		
 	

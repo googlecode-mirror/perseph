@@ -467,18 +467,20 @@ class DBS_DBException extends DBS_Exception {
 	const DELETE_FAILED = 7;
 	
 	static private $codeToMsg = array(
-		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
-		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB.",
-		self::LOAD_FAILED => "A load operation has failed.",
-		self::SAVE_FAILED => "A save operation has failed.",
-		self::SAVE_ZERO_FIELDS => "A save was attempted with no modified fields, or defaults on add. There is no way to do this with most DBs, thus it isn't supported.",
-		self::NOT_IN_DB => "Failed to find a record.",
-		self::DELETE_FAILED => "A delete operation has failed.",
+		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB",
+		self::SAVE_NOT_IN_DB => "Attempting to save an entity that is not already in the DB",
+		self::LOAD_FAILED => "A load operation has failed",
+		self::SAVE_FAILED => "A save operation has failed",
+		self::SAVE_ZERO_FIELDS => "A save was attempted with no modified fields, or defaults on add. There is no way to do this with most DBs, thus it isn't supported",
+		self::NOT_IN_DB => "Failed to find a record",
+		self::DELETE_FAILED => "A delete operation has failed",
 		);
 		
 	public $sql;	//a possible associated SQL statement, or null if none
 	public function __construct( $code, $sql = null, $msg = '' ) {
-		$fullmsg =  self::$codeToMsg[$code] . $msg;
+		$fullmsg =  self::$codeToMsg[$code];
+		if( strlen($msg))
+			$fullmsg .= ': ' . $msg;
 		if( $sql !== null )
 			$fullmsg .= ": $sql";
 		parent::__construct( $fullmsg, $code );
@@ -919,7 +921,7 @@ function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
 	$sql = "DELETE FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->exec( $sql );
 	if( $res === false )	
-		throw new DBS_DBException( DBS_DBException::DELETE_FAILED, $sql );
+		throw new DBS_DBException( DBS_DBException::DELETE_FAILED, $sql, $db->getLastError() );
 	$db->endResult( $res );
 }
 

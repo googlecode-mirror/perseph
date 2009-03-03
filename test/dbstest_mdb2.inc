@@ -7,7 +7,7 @@
  */
 class DBSTest_DirectMDB2 extends TestCase {
 	function testSomething()	{
-		$q = MDBSTest::createWithName( "Hello" . time() );
+		$q = MDBSTest::createWithName( "MDB2 T❀stNäm€" . time() );
 		$q->add();
 		
 		$l = MDBSTest::findWithID( $q->id );

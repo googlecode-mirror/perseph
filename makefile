@@ -20,10 +20,10 @@ MYSQLURL=mysqli://DBSTestUser:password@localhost/dbs_test
 PGSQLURL=pgsql://DBSTestUser:password@localhost/dbs_test
 
 phptest: test-build
-	php $(TESTDIR)/alltests.php --mdburl $(MYSQLURL)
+	php $(TESTDIR)/alltests.php --mdburl $(MYSQLURL) --usedbcharset
 
 phptest-pgsql: test-build $(TESTDIR)/pgsql.schema.inc
-	php $(TESTDIR)/alltests.php --mdburl $(PGSQLURL) --nomysql
+	php $(TESTDIR)/alltests.php --mdburl $(PGSQLURL) --nomysql --usedbcharset
 
 webtest: test-build
 	cd $(TESTDIR) && testplan web_sanity.test

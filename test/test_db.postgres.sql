@@ -91,7 +91,6 @@ CREATE TABLE "idname" (
 CREATE INDEX idname_index ON idname ("Name");
 
 DROP TABLE IF EXISTS "mergebasic";
-
 CREATE TABLE "mergebasic" (
 	"ID" INT NOT NULL,
 	"Name" VARCHAR( 50 ) UNIQUE,

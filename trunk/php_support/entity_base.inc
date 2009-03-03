@@ -464,6 +464,7 @@ class DBS_DBException extends DBS_Exception {
 	const SAVE_FAILED = 4;
 	const SAVE_ZERO_FIELDS = 5;
 	const NOT_IN_DB = 6;
+	const DELETE_FAILED = 7;
 	
 	static private $codeToMsg = array(
 		self::ADD_ALREADY_IN_DB => "Attempting to add an entity that already exists in the DB.",
@@ -472,6 +473,7 @@ class DBS_DBException extends DBS_Exception {
 		self::SAVE_FAILED => "A save operation has failed.",
 		self::SAVE_ZERO_FIELDS => "A save was attempted with no modified fields, or defaults on add. There is no way to do this with most DBs, thus it isn't supported.",
 		self::NOT_IN_DB => "Failed to find a record.",
+		self::DELETE_FAILED => "A delete operation has failed.",
 		);
 		
 	public $sql;	//a possible associated SQL statement, or null if none
@@ -910,11 +912,14 @@ class _DBS_DBSource_Result_Iterator implements Iterator {
 }
 
 function dbs_dbsource_delete( &$db, $table, $item_construct, $fields, $opts ) {
+	//TODO: postgres doesn't support the limit directly, though refer to
+	//http://archives.postgresql.org/pgsql-patches/2002-09/msg00260.php
 	$proto = $item_construct();
 	list( $dbWhere, $dbSort, $dbLimit ) = _dbs_dbsource_extract_options( $db, $table, $fields, $opts, $proto );
 	$sql = "DELETE FROM {$db->escapeTable($table[0])} $dbWhere $dbSort $dbLimit";
 	$res = $db->exec( $sql );
-	//TODO: Check errors
+	if( $res === false )	
+		throw new DBS_DBException( DBS_DBException::DELETE_FAILED, $sql );
 	$db->endResult( $res );
 }
 

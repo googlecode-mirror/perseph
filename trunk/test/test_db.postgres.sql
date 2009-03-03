@@ -36,7 +36,8 @@ CREATE TABLE "twokeys" (
 	"KeyString" VARCHAR( 20 ) NOT NULL DEFAULT '',	/*The default only exists for use in BasicTwoKeys entity*/
 	"Value" VARCHAR( 50 ) NOT NULL 
 ) ;
-CREATE UNIQUE INDEX twokeys_index on twokeys ("KeyNum","KeyString");
+/* Don't use a unique index since our tests use this for multiple purposes */
+CREATE INDEX twokeys_index on twokeys ("KeyNum","KeyString");
 
 DROP SEQUENCE IF EXISTS convert_seq CASCADE;
 CREATE SEQUENCE convert_seq;

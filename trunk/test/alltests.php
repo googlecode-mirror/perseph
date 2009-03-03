@@ -72,6 +72,7 @@ class DBSchema_AllTests
 		//must be False For MySQL4. Strangely, if this is "false" when the backing DB has
 		//a utf-8 character set the tests will still work -- the DB value will however be
 		//corrupt (I'm not sure how to detect this)
+		//NOTE: if "false" then the DMB2 textType will need to be set to cstring...
 		$useDBCharset = array_search( '--usedbcharset', $argv ) !== false;
 		
 		$opts = array();

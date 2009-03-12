@@ -262,8 +262,9 @@ static public function with${keyName}($keyParamStr) {
 				
 			if  field.ent_field_field != None:
 				# Nulls are always converted to null, no attempt is made to instantiate target object
+				# Use instance name to hook into any custom creation logic (like caching)
 				self.wrt( "$$value = $$value === null ? null : $class::with${key}( $$value );\n" ,
-					{ 'class': field.ent_field.fieldType.phpClassName, 'key': field.ent_field_field.name })
+					{ 'class': field.ent_field.fieldType.phpInstClassName, 'key': field.ent_field_field.name })
 			
 			self.wr( "return $value;\n" )
 			self.wr( "}\n" );

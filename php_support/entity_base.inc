@@ -278,7 +278,11 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	protected $_isLoading = false;
 	
 	protected $_data = array();	//array<name=>Value> to hold the actual field data
-	protected $_data_dirty = array();	//array<name=>Bool> has the field be modified or changed in some way
+	
+	//array<name=>Bool> has the field be modified or changed in some way
+	// Only "TRUE" will ever be stored, the presence in the array indicates the item is dirty, absence clean
+	// this is to save memory by reducing overall values in PHP
+	protected $_data_dirty = array();	
 	
 	protected $_load_keys = null;	//which keys were used to load this instance
 	
@@ -359,7 +363,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	
 	public function __markClean( $field ) {
 		$field = $this->_fieldName( $field );
-		$this->_data_dirty[$field] = false;
+		unset( $this->_data_dirty[$field] );
 	}
 	
 	public function __has( $field ) {
@@ -380,7 +384,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		if( $this->_status == self::STATUS_UNKNOWN )
 			throw new Exception( "isDirty is ambiguous when status is unknown" );
 		$field = $this->_fieldName( $field );
-		return _pers_array_get_default( $field, $this->_data_dirty, false )
+		return array_key_exists( $field, $this->_data_dirty )
 			|| ($this->_status == DBS_EntityBase::STATUS_NEW && array_key_exists( $field, $this->_data_type->defaults ) );
 	}
 	

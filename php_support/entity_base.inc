@@ -278,7 +278,6 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	protected $_isLoading = false;
 	
 	protected $_data = array();	//array<name=>Value> to hold the actual field data
-	protected $_data_has = array();	//array<name=>Bool> fields which are actually set (to distinguish null as a real value)
 	protected $_data_dirty = array();	//array<name=>Bool> has the field be modified or changed in some way
 	
 	protected $_load_keys = null;	//which keys were used to load this instance
@@ -317,12 +316,12 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			
 		$field = $this->_fieldName( $field );
 			
-		if( _pers_array_get_default( $field, $this->_data_has, false ) )
+		if( array_key_exists( $field, $this->_data ) )
 			return $this->_data[$field];
 			
 		//attempt to load if we may already exist
 		if( $this->_status === self::STATUS_UNKNOWN && !$this->_isLoading && $this->maybeLoad( false ) ) {
-			if( _pers_array_get_default( $field, $this->_data_has, false ) )	//then try to see if we have the data now
+			if( array_key_exists( $field, $this->_data) )	//then try to see if we have the data now
 				return $this->_data[$field];
 		}
 			
@@ -350,7 +349,6 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			$this->_data_type->checkType( $field, $value );
 			$this->_data[$field] = $value;
 		}
-		$this->_data_has[$field] = true;
 		$this->_data_dirty[$field] = true;
 	}
 	
@@ -367,7 +365,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	public function __has( $field ) {
 		$field = $this->_fieldName( $field );
 			
-		return _pers_array_get_default( $field, $this->_data_has, false )
+		return array_key_exists( $field, $this->_data )
 			|| array_key_exists( $field, $this->_data_type->defaults );
 	}
 	

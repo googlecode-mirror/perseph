@@ -31,6 +31,14 @@ function convert_String_to_Text( $val ) { return $val; }
 function convert_Float_to_Decimal( $val ) { return $val; }
 function convert_Decimal_to_Float( $val ) { return $val; }
 
+/* Convert any Null String into an empty string, only on input, output is untouched */
+function convert_InStringNull_to_StringEmpty( $val ) { return $val === null ? '' : $val; }
+function convert_InStringNull_to_StringEmpty_inv( $val ) { return $val; }
+
+/* Convert empty strings and null on both in and out */
+function convert_StringNull_to_StringEmpty( $val ) { return $val === null ? '' : $val; }
+function convert_StringNull_to_StringEmpty_inv( $val ) { return strlen( $val ) ? $val : null; }
+
 /**
  * Wraps a reference for assignment.
  */

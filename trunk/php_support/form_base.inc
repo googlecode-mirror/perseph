@@ -42,8 +42,10 @@ abstract class DBS_FormBase {
 	 * @param entity [in] from where to take the values, null may be
 	 *		used to say from nowhere (in which case only defaults and special
 	 *		settings will be injected)
+	 * @param overrideRequest [in] whether these values should take
+	 *		precendence to what may already be determined by the request.
 	 */
-	abstract public function inject( $entity );
+	abstract public function inject( $entity, $overrideRequest );
 	
 	/**
 	 * Obtains what action was called on this form. Note that
@@ -120,6 +122,19 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	protected $privateValues = array();
 	
 	/**
+	 * Alters a name=value pair prior to outputting the form. If the form has
+	 * already been displayed/created this has no impact. This allows custom
+	 * validation routines to modify private parameters.  Not implemented
+	 * by default.
+	 *
+	 * @param name [in] must have been added previous with addPrivate
+	 * @param value [in] new value
+	 */
+	/*virtual*/ public function alterPrivate( $name, $value ) {
+		throw new Exception( "Unsupported" );
+	}
+	
+	/**
 	 * Sets field values for entities when new entities are being created.
 	 * Note that fields set in the form will override these.  For example, if
 	 * you specifc a text field for "Name" with a default, the first display
@@ -184,7 +199,7 @@ abstract class DBS_FormBase_HTMLForm extends DBS_FormBase {
 	
 	public function execute() {
 		if( !$this->hasAction() ) {
-			$this->inject( $this->createFrom );
+			$this->inject( $this->createFrom, false );
 		}
 			
 		$showForm = true;

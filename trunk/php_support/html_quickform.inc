@@ -143,7 +143,7 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 	}
 	
 	
-	public function inject( $entity, $overrideRequest = false ) {
+	public function inject( $entity, $overrideRequest ) {
 		$values = array();
 		
 		$typeDesc = call_user_func( "{$this->ENTITY}::getTypeDescriptor" );
@@ -195,6 +195,15 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 		
 	}
 	
+	/*virtual*/ public function alterPrivate( $name, $value ) {
+		if( !array_key_exists( $name, $this->privateValues ) )
+			throw new Exception( "$name not added with addPrivate" );
+		
+		$this->privateValues[$name] = $value;
+		$this->form->setConstants( array( $name => $value ) );
+	}
+	
+	
 	protected function getIdentifier( ) {
 		return $this->form->exportValue( '_key_ident' );
 	}
@@ -218,6 +227,16 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				} else {
 					$func = "_dbs_formout_{$baseType}";
 					$raw = $func( $raw );
+				}
+				
+				//check for a custom validator.  Expected to return "TRUE" on succes, or false/string message on failure
+				$customValidate = "validate_{$element->entityField}";
+				if( method_exists( $this, $customValidate ) ) {
+					$res = $this->$customValidate( $raw );
+					if( !is_bool( $res ) )
+						throw new Exception( $res );	//let below handler catch
+					else if( !$res )
+						throw new Exception( "Validation error" );
 				}
 			
 				if( $entity !== null )

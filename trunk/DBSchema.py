@@ -149,6 +149,8 @@ class Entity(Type):
 	
 	##
 	# Obtains a set of all keys/composites which can identify the identity.
+	# We decide ordering of key names here, and we use alphabetic for now (this
+	# applies to the component keys of RECORD_KEY type)
 	def getKeySet( self ):
 		ret = []
 		comp = []
@@ -159,6 +161,7 @@ class Entity(Type):
 				ret.append( [ field ] )
 			
 		if len(comp) > 0:
+			comp.sort(key=lambda x:x.name)
 			ret.append( comp )
 			
 		return ret

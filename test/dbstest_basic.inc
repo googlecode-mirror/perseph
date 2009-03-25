@@ -498,13 +498,13 @@ class DBSTest_Basic extends TestCase {
 			array( 2, "B", "DCB" ),
 			);
 		foreach( $data as $d ) {
-			$n = DBSTwoKeys::createWithNum_Name( $d[0], $d[1] );
+			$n = DBSTwoKeys::createWithName_Num( $d[1], $d[0] );
 			$n->value = $d[2];
 			$n->add();
 		}
 		
-		$this->assertEquals( "ABC", DBSTwoKeys::findWithNum_Name( 1, "A" )->value );
-		$this->assertEquals( "DCB", DBSTwoKeys::findWithNum_Name( 2, "B" )->value );
+		$this->assertEquals( "ABC", DBSTwoKeys::findWithName_Num( "A",1 )->value );
+		$this->assertEquals( "DCB", DBSTwoKeys::findWithName_Num( "B", 2  )->value );
 		
 		//finding by just one part of a key is forbidden
 		$j = DBSTwoKeys::withNothing();

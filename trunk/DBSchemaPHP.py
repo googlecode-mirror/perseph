@@ -743,6 +743,10 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 					self._throwSetFieldException( field, 'TYPE_NUMERIC' )
 					) )
 			elif tname == 'String' or tname == 'Text':
+				self.wr( self._if(
+					"!is_convertible_to_string($value)",
+					self._throwSetFieldException( field, 'TYPE_STRING' )
+					) )
 				if field.maxLen != None:
 					self.wr( self._if(
 						"strlen( $value ) > %d" % field.maxLen,

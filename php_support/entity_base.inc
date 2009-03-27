@@ -109,7 +109,7 @@ abstract class DBS_EntityBase {
 	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
 	
 	public function getType() {
-		return $this->data_type;
+		return $this->_data_type;
 	}
 	
 	const STATUS_UNKNOWN = 0;
@@ -536,12 +536,14 @@ class DBS_SetFieldException extends DBS_FieldException {
 	const TYPE_LEN = 0x2000;
 	const TYPE_NULL = 0x3000;
 	const TYPE_DATE = 0x4000;
+	const TYPE_STRING = 0x8000;
 	
 	static private $codeToMsg = array(
 		self::TYPE_NUMERIC => 'Attempt to set non-numeric value on numeric field',
 		self::TYPE_LEN => 'Length exceeds maximum for field',
 		self::TYPE_NULL => 'Attempt to set null on non-nullable field',
 		self::TYPE_DATE => 'Attempt to set non-Date on Date or DateTime field',
+		self::TYPE_STRING => 'Attempt to set non-string convertible value on string field',
 		);
 		
 	public function getType() {
@@ -689,6 +691,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				$value = $proto->$cnv( $q->value );
 			
 				$op = $q->op;	//TODO: Check for correctness
+				$proto->getType()->checkType( $member, $value ); //{LPBug:316730}
 				$value = $db->quote( $value, $dbtype );
 			}
 		} else if( $q instanceof DBS_Where_MatchString ) {
@@ -701,6 +704,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				$op = ' NOT LIKE ';
 				
 			//TODO: What if the quote escapes the * char?
+			$proto->getType()->checkType( $member, $q->pattern );
 			$value = str_replace( '*', '%', $db->quote( $q->pattern, 'String' ) );
 			
 		} else if( $q instanceof DBS_Where_MatchIn ) {
@@ -708,8 +712,10 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 			$op = 'IN';
 			
 			$valuesOut = array();
-			foreach( $q->values as $v )
+			foreach( $q->values as $v ) {
+				$proto->getType()->checkType( $member, $v );
 				$valuesOut[] = $db->quote( $proto->$cnv( $v ), $dbtype );
+			}
 			$value = '(' . implode( ',', $valuesOut ) . ')';
 			
 		} else {
@@ -1062,4 +1068,14 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 	}
 }
 
+/**
+ * checks if a variable is convertible, or usable as a text/string type
+ */
+function is_convertible_to_string( $string ) {
+	if( array_search( gettype( $string ), array( 'boolean', 'integer', 'double', 'string', 'NULL' ) ) !== false )
+		return true;
+	//NOTE: Don't check for __toString since those aren't true strings yet in PHP, they don't behave the same
+	//Refer: http://be.php.net/manual/en/migration52.incompatible.php
+	return false;
+}
 ?>

@@ -709,6 +709,22 @@ class DBSTest_Basic extends TestCase {
 		# TODO: multi-level loading A requires B which requires C
 		# TODO: multi-named values
 	}
+	
+	function testBadTypes() {
+		try {
+			DBSTest::findWithName( new Date( 123 ) );
+			$this->assertTrue( false );
+		} catch( DBS_SetFieldException $e ) {
+			$this->assertEquals( DBS_SetFieldException::TYPE_STRING, $e->getType() );
+		}
+		
+		try {
+			DBSTest::search( DBS_Query::match( 'decimal', 'badtype' ) );
+			$this->assertTrue( false );
+		} catch( DBS_SetFieldException $e ) {
+			$this->assertEquals( DBS_SetFieldException::TYPE_NUMERIC, $e->getType() );
+		}
+	}
+	
 }
-
 ?>

@@ -722,7 +722,7 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 			throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 		}
 		
-		return $db->escapeColumn( $dbname ) . $op . $value;
+		return $db->escapeColumn( $dbname ) . " $op " . $value;
 	} 
 	
 	if( $q instanceof DBS_Where_MatchSQL )

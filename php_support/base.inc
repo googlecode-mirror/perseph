@@ -34,4 +34,8 @@ function _pers_array_get_default( $name, $opts, $def = false ) {
     return $def;
 }
 
+function _pers_is_iterable( $item ) {
+	return is_array( $item )
+		|| is_object( $item );	//note that *all* objects are iterable in PHP
+}
 ?>

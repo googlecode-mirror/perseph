@@ -379,6 +379,9 @@ class DBSTest_Basic extends TestCase {
 		//test delete
 		DBSTest::searchAndDelete( DBS_Query::matchStringPattern( 'name', 'Search:*' ) );
 		$this->assertEquals( 0, count( DBSTest::search( DBS_Query::matchStringPattern( 'name', 'Search:*' ) )->loadAll() ) );
+		
+		//empty in
+		$this->assertEquals( 0, count( DBSTest::search( DBS_Query::matchIn( 'name', array() ) )->loadAll() ) );
 	}
 	
 	function testDefault() {

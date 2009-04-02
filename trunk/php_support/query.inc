@@ -29,8 +29,14 @@ class DBS_Query {
 	
 	/**
 	 * Matches a field against any item in a list of values.
+	 * 
+	 * @param member [in] which member to match
+	 * @param values [in] it must reside in this list of values.  This is an iterable object
 	 */
 	static public function matchIn( $member, $values ) {
+		if( !_pers_is_iterable( $values ) )
+			throw new Exception( "'values' to matchIn must be an iterable object" );
+			
 		$ret = new DBS_Where_MatchIn();
 		$ret->member = $member;
 		$ret->values = $values;

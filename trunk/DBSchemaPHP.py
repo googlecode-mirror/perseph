@@ -757,6 +757,13 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 					"!($value instanceof Date)",
 					self._throwSetFieldException( field, 'TYPE_DATE' )
 					) )
+			
+			elif isinstance( field.fieldType, DBSchema.Entity ):
+				self.wr( self._if(
+					"!($value instanceof %s)" % field.fieldType.phpInstClassName,
+					self._throwSetFieldException( field, 'TYPE_ENTITY' )
+					) )
+				
 						
 			self.wr( "\tbreak;\n" );
 		self.wrt("""

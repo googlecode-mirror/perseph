@@ -537,6 +537,7 @@ class DBS_SetFieldException extends DBS_FieldException {
 	const TYPE_NULL = 0x3000;
 	const TYPE_DATE = 0x4000;
 	const TYPE_STRING = 0x8000;
+	const TYPE_ENTITY = 0x10000;
 	
 	static private $codeToMsg = array(
 		self::TYPE_NUMERIC => 'Attempt to set non-numeric value on numeric field',
@@ -544,6 +545,7 @@ class DBS_SetFieldException extends DBS_FieldException {
 		self::TYPE_NULL => 'Attempt to set null on non-nullable field',
 		self::TYPE_DATE => 'Attempt to set non-Date on Date or DateTime field',
 		self::TYPE_STRING => 'Attempt to set non-string convertible value on string field',
+		self::TYPE_ENTITY => 'Attempt to set invalid, or non-entity, on entity field',
 		);
 		
 	public function getType() {
@@ -688,10 +690,10 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				} else
 					throw new Exception( "NULL can only be matched with = or !=" );
 			} else {
+				$proto->getType()->checkType( $member, $q->value ); //{LPBug:316730}
 				$value = $proto->$cnv( $q->value );
 			
 				$op = $q->op;	//TODO: Check for correctness
-				$proto->getType()->checkType( $member, $value ); //{LPBug:316730}
 				$value = $db->quote( $value, $dbtype );
 			}
 		} else if( $q instanceof DBS_Where_MatchString ) {
@@ -712,12 +714,18 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 			$op = 'IN';
 			
 			$valuesOut = array();
+			$hasValues = false;
 			foreach( $q->values as $v ) {
+				$hasValues = true;
 				$proto->getType()->checkType( $member, $v );
 				$valuesOut[] = $db->quote( $proto->$cnv( $v ), $dbtype );
 			}
 			$value = '(' . implode( ',', $valuesOut ) . ')';
 			
+			//special case if list is empty then we select nothing (no results is the more preferred option to
+			//an exception here -- matches more discussed use cases)
+			if( !$hasValues )
+				return '1=0';
 		} else {
 			throw new Exception( "Unknown query item: " . gettype_full( $q ) );
 		}

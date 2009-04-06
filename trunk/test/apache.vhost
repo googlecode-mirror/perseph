@@ -1,0 +1,22 @@
+# This is a sample file to use to get the persephone.local enabled
+# as a web server under apache.  This is needed to get the TestPlan
+# web tests to execute.
+#
+# cd /etc/apache2/sites-enabled
+# ln -s /opt/persephone/test/apache.vhost 005-persephone
+# /etc/init.d/apache2 restart
+#
+# Also add "persephone.local" to /etc/hosts beside "localhost"
+#
+<VirtualHost *>
+	DocumentRoot /opt/persephone/test/
+	ServerName persephone.local
+
+	<Directory /opt/persephone/test/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride All
+		Order allow,deny
+		allow from all
+	</Directory>
+</VirtualHost>
+

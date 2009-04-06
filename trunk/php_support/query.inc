@@ -133,10 +133,23 @@ class DBS_Query {
 	 *
 	 * @param member [in] either a single member, or an array of 
 	 *		members in precedence order to sort on
+	 * @param mode [in] if a single value applies as order to all members,
+	 * 	otherwise an array of same length as member indicating the
+	 *		sort order on each field
 	 */
 	static public function sort( $member, $mode ) {
 		if( !is_array( $member ) )
 			$member = array( $member );
+			
+		if( !is_array( $mode ) ) {
+			$m = $mode;
+			$mode = array();
+			for( $i =0; $i < count( $member ); $i++ )
+				$mode[] = $m;
+		}
+		
+		if( count($mode) != count($member) )
+			throw new Exception( "Member and mode arrays are of different length." );
 			
 		$ret = new DBS_Sort_Single();
 		$ret->members = $member;

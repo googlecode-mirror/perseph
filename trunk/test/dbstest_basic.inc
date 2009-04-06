@@ -343,6 +343,17 @@ class DBSTest_Basic extends TestCase {
 		for( $i = 1; $i <= 10; $i++ )
 			$this->assertEquals( $i, $ordered[$i-1]->decimal );
 			
+		//multi-field sort
+		$ordered = DBSTest::search( 
+			DBS_Query::matchStringPattern( 'name', 'Search:*' ),
+			DBS_Query::sort( 
+				array( 'float' , 'decimal' ), 	//float will be effectively ignored as they are all equal
+				array( DBS_Query::SORT_DESC, DBS_Query::SORT_ASC )
+				)
+			)->loadAll();
+		for( $i = 1; $i <= 10; $i++ )
+			$this->assertEquals( $i, $ordered[$i-1]->decimal );
+			
 		//non-keyed sort, though direct value load
 		$ordered = SortSearch::search()->loadAll( null, 'decimal' );
 		for( $i = 1; $i <= 10; $i++ )

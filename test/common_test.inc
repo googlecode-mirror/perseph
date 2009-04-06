@@ -5,6 +5,11 @@ if( !isset( $skipCommonSchema ) )
 	
 //date_default_timezone_set('Europe/Berlin'); 
 date_default_timezone_set('UTC'); //TODO: consider impact of this in Date conversions... (already breaks!)
+//force our defaults
+ini_set( 'mbstring.internal_encoding', 'UTF-8' );
+ini_set( 'mbstring.http_output',  'UTF-8' );
+ini_set( 'mbstring.http_input', 'UTF-8' );
+ini_set( 'mbstring.func_overload', 7 );
 
 $db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
 	

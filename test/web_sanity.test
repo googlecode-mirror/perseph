@@ -1,4 +1,4 @@
-GotoURLAbs http://localhost/persephone/listing.php
+GotoURL /listing.php
 
 set %Item% with
 	%Name% ⚘-%Var:Random%-ü

@@ -1,8 +1,8 @@
 # Start at listing again
-GotoURLAbs http://localhost/persephone/listing.php
+GotoURL /listing.php
 Click xpath://a[contains(@href,'%Item:ID%')][contains(text(),'Edit')]
 Click xpath://input[@value='Delete']
 
 # make sure it is gone
-GotoURLAbs http://localhost/persephone/listing.php
+GotoURL /listing.php
 CheckNot //td[1][contains(string(),'%Item:ID%')]

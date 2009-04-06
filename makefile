@@ -26,7 +26,7 @@ phptest-pgsql: test-build $(TESTDIR)/pgsql.schema.inc
 	php $(TESTDIR)/alltests.php --mdburl $(PGSQLURL) --nomysql --usedbcharset
 
 webtest: test-build
-	cd $(TESTDIR) && testplan web_sanity.test
+	cd $(TESTDIR) && testplan web_sanity.test +test.properties
 
 test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	

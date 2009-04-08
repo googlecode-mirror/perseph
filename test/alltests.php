@@ -1,5 +1,7 @@
 <?php
 
+require_once 'php_settings.inc';
+
 require_once dirname(__FILE__).'/../php_support/error_handling.inc';
 
 require_once 'PHPUnit/Framework.php';
@@ -45,12 +47,11 @@ else
 	require_once dirname( __FILE__ ) . '/gen/schema.inc';
 require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
 
-//used to prevent conflicting defintions in common_test.inc
-$skipCommonSchema = true;
-
-include 'common_test.inc';
 include 'dbstest_basic.inc';
 include 'dbstest_mdb2.inc';
+//used to prevent conflicting defintions in common_test.inc
+$skipCommonSchema = true;
+require_once 'common_test.inc';
 
 class DBSchema_AllTests
 {
@@ -68,6 +69,9 @@ class DBSchema_AllTests
 			$okay &= $ret->wasSuccessful();
 		}
 		
+		if( array_search( '--nomdb', $argv ) !== false )
+			return $okay;
+			
 		//determine whether to use the DB driver conversion functions or our own
 		//must be False For MySQL4. Strangely, if this is "false" when the backing DB has
 		//a utf-8 character set the tests will still work -- the DB value will however be

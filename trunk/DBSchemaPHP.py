@@ -98,9 +98,13 @@ class PHPEmitter:
 		for entity in self.sc.entities.itervalues():
 			self.genRequire( entity )
 		
-	def genRequire( self, en ):
-		self.wr( "require_once dirname(__FILE__).'/%s';\n" 
-			% os.path.basename( self.nameFor( en.phpClassName )  ) )
+	def genRequire( self, en, withSelf=True ):
+		if withSelf:
+			self.wr( "require_once dirname(__FILE__).'/%s';\n" 
+				% os.path.basename( self.nameFor( en.phpClassName )  ) )
+		if "PHPResolveCustomClass" in self.sc.defaults and \
+			en.phpClassName != en.phpInstClassName:
+			self.wr( self.sc.defaults["PHPResolveCustomClass"].replace( "%CLASS%", "%s" ) % en.phpInstClassName )
 		
 	def genBaseRequires( self ):
 		self.wr( "require_once 'persephone/entity_base.inc';\n" );
@@ -119,8 +123,8 @@ class PHPEmitter:
 		for search in en.searches.itervalues():
 			self.genSearchInEntity( en, search )
 			
-		self.genCloseEntityClass( en )
-		self.genSearchesForEntity( en )
+		self.genCompleteEntity( en )
+		
 		
 	def genEntityMerge( self, en ):
 		self.genNormalRequires( en )
@@ -138,8 +142,7 @@ class PHPEmitter:
 		for merge in en.keyMerges.itervalues():
 			self.genKeyMerge( en, merge )
 			
-		self.genCloseEntityClass( en )
-		self.genSearchesForEntity( en )
+		self.genCompleteEntity( en )
 	
 	def genNormalRequires( self, en ):
 		for field in en.fields.itervalues():
@@ -906,6 +909,13 @@ function _${inst}_privConstruct() {
 
 """, { 'class': en.phpClassName,
 		'inst': en.phpInstClassName	} )
+		
+	def genCompleteEntity( self, en ):
+		self.genCloseEntityClass( en )
+		# require ourself in case we're a custom class
+		self.genRequire( en, False )
+		# Add searches related to this entity
+		self.genSearchesForEntity( en )
 		
 		
 	##

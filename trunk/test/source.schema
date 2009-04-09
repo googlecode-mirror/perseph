@@ -20,3 +20,6 @@ provider DBTest2 {
 		ID<Integer>;
 	}
 }
+
+/* Value is a template for Python to locate class with name given as %CLASS% */
+default PHPResolveCustomClass "require_once dirname(__FILE__).'/../%CLASS%.inc';";

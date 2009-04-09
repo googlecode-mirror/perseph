@@ -1,6 +1,7 @@
 <?php
 	require_once 'persephone/listing_base.inc';
-	require_once 'common_test.inc';
+	require_once 'web_common.inc';
+	require_once dirname(__FILE__).'/gen/DBSTest.inc';
 	
 class Listing extends DBS_HTMLTable_Listing {
 	public $ENTITY = 'DBSTest';

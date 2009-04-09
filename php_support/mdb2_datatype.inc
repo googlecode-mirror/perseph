@@ -52,6 +52,10 @@ function mdb2_cstring_iso88591_callback(&$db, $method, $aParameters) {
 	return mdb2_cstring_callback( 'iso-8859-1', $db, $method, $aParameters );
 }
 
+function mdb2_cstring_latin1_callback(&$db, $method, $aParameters) {
+	return mdb2_cstring_callback( 'iso-8859-1', $db, $method, $aParameters );
+}
+
 function mdb2_cstring_iso885915_callback(&$db, $method, $aParameters) {
 	return mdb2_cstring_callback( 'iso-8859-15', $db, $method, $aParameters );
 }

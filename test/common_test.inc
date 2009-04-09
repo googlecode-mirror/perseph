@@ -1,20 +1,6 @@
 <?php
 require_once 'php_settings.inc';
 
-require_once dirname(__FILE__).'/../php_support/error_handling.inc';
-if( !isset( $skipCommonSchema ) ) {
-	require_once dirname(__FILE__).'/gen/schema.inc';
-	# These sources should be deprecated since I don't want to support them...
-	#$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
-	# Use the MDB for with character set support as the default (last to run in makefile)
-	$mdb_test = @MDB2::factory( "mysqli://DBSTestUser:password@localhost/dbs_test" );
-	$mdb_test->setCharset( "utf8" );
-	$db_test = new MDB2DBSource( $mdb_test );	//since our scheme uses the wrapper
-}
-	
-//date_default_timezone_set('Europe/Berlin'); 
-date_default_timezone_set('UTC'); //TODO: consider impact of this in Date conversions... (already breaks!)
-
 function std_header( ) {
 	header( "Content-Type: text/html; charset=utf-8" );	//TODO: hmm, depends/requires itnernal encoding to be utf-8...
 }
@@ -28,19 +14,6 @@ function &dbtest2_get() {
 	return $GLOBALS['db_test'];
 }
 
-/* The customer classes for the entites */
-
-class DerivedStrings extends DBSStrings {
-
-	//TODO: Show how to provide custom static constructors
-	
-	/**
-	 * A very simple example of how to provide custom functionality.
-	 */
-	public function contains( $str ) {
-		return (bool)array_search( $str, $this->labels );
-	}
-}
 
 /* The converters for custom types */
 

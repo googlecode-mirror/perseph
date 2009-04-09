@@ -49,8 +49,6 @@ require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
 
 include 'dbstest_basic.inc';
 include 'dbstest_mdb2.inc';
-//used to prevent conflicting defintions in common_test.inc
-$skipCommonSchema = true;
 require_once 'common_test.inc';
 
 class DBSchema_AllTests

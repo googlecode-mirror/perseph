@@ -69,7 +69,7 @@ aclocal.m4: configure.ac
 PACKAGEDIR=package
 PACKAGEFILES=$(wildcard *.py) php_support docs LICENSE.txt README.txt
 .PHONY: package
-package: all
+package: clean all
 	rm -fr $(PACKAGEDIR)
 	mkdir $(PACKAGEDIR)
 	cp -R $(PACKAGEFILES) $(PACKAGEDIR)

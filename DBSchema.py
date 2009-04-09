@@ -196,7 +196,7 @@ class Entity_Merge(Entity):
 		Entity.__init__(self,name)
 		self.merges = {}	# Name: Entity_Normal
 		self.links = []	# Array<Entity_Merge_Link> list of grouped items
-		self.keyMerges = {} # <Name: Entity_Normal> werges which serve as entry points
+		self.keyMerges = {} # <Name: Entity_Normal> merges which serve as entry points
 		
 	def linksWithEntity( self, entity ):
 		ret = []

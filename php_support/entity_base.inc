@@ -776,7 +776,7 @@ function _dbs_dbsource_extract_options( &$db, $table, $fields, $opts, $proto ) {
 		} else if( $opt instanceof DBS_FieldLimiter ) {
 			$fieldLimit = $opt->fields;
 		} else {
-			throw new Exception( "Unknown specification: " . gettype_full( $opt ) );
+			throw new Exception( "Unknown search query specification: " . gettype_full( $opt ) );
 		} 
 	}
 	

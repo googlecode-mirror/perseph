@@ -629,6 +629,8 @@ class MySQLSource extends DBSourceBase {
 	 */
 	var $ucaseTables = false;   
 
+	public $enableCharsetNames = 'utf8';	//use to set the Names communication value (false is to use default is used)
+	
 	function __construct( $aserver, $aname, $auser, $apass, $astr_enc = "windows-1252" ) {
 		$this->server = $aserver;
 		$this->name = $aname;
@@ -664,7 +666,8 @@ class MySQLSource extends DBSourceBase {
 	function int_connect() {
 		$result = mysql_connect( $this->server, $this->user, $this->pass, true  ) or die( "<p class='error'>MySql Connect: $this->server/$this->name: " . mysql_error() );
 		mysql_select_db( $this->name, $result ) or die( "<p class='error'>MySql Select: $this->name: " . mysql_error() );		
-		//mysql_query("SET CHARACTER SET {$this->str_enc}", $result);
+		if( $this->enableCharsetNames !== false )
+			mysql_query( "SET NAMES {$this->enableCharsetNames}", $result);
 		return $result;
 	}
 

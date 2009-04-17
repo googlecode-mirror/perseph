@@ -399,7 +399,6 @@ class Processor:
 							op = expr.getChild(0)
 							left = self.getMapperFieldExpr( expr.getChild(1) )
 							right = self.getMapperFieldExpr( expr.getChild(2) )
-							
 							if left['db'] == right['db']:
 								errorOn( expr, "requires one database and one entity field" )
 								
@@ -410,15 +409,8 @@ class Processor:
 								mapField.db_convert = db['func']
 								
 							#TODO: check that fields exist
-							if db['const'] != None:
-								errorOn( expr, "DB Constants not yet supported" )
-							else:
-								mapField.db_field = mapper.table.fields[db['name']]
-								
-							if ent['const'] != None:
-								mapField.ent_const = ent['const']
-							else:
-								mapField.ent_field = mapper.entity.fields[ent['name']]
+							mapField.db_field = mapper.table.fields[db['name']]
+							mapField.ent_field = mapper.entity.fields[ent['name']]
 							
 							if ent['subfield'] != None:
 								mapField.ent_field_field = mapField.ent_field.fieldType.fields[ent['subfield']]
@@ -448,7 +440,6 @@ class Processor:
 		res = {}
 		res['subfield'] = None
 		res['func'] = None
-		res['const'] = None
 		
 		if node.type == SL.FUNCTION:
 			func = DBSchema.Function()
@@ -468,11 +459,6 @@ class Processor:
 			res['subfield'] = node.getChild(1).text
 			return res
 			
-		if node.type == SL.CONST:
-			res['db'] = None
-			res['const'] = node.getChild(0).text
-			return res
-		
 		if node.type != SL.ENTFIELDNAME:
 			errorOn( node, "expecting an entity field, perhaps only db fields specified" )
 			

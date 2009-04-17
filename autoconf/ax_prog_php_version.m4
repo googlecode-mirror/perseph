@@ -3,7 +3,7 @@ AC_DEFUN([AX_PROG_PHP_VERSION],[
 	AC_REQUIRE([AC_PROG_SED])
 	AC_REQUIRE([AC_PROG_GREP])
 	
-	AS_IF([test -n "$PYTHON"],[
+	AS_IF([test -n "$PHP"],[
 		ax_php_version="$1"
 		AC_MSG_CHECKING([for php version])
 		changequote(<<,>>)

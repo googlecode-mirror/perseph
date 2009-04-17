@@ -108,6 +108,7 @@ mapper DBSIdentEx {
 			@ID => ID;
 			@Name = Name;
 			@Decimal = Value;
+			@Float <= CONST(101.5);
 		}
 	}
 }

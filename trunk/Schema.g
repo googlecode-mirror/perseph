@@ -145,6 +145,7 @@ mapperUsing
 mapperFieldExpr
 	:	mapperFieldSimpleExpr
 	//|	id typeDef  '(' mapperFieldSimpleExpr ( ',' mapperFieldSimpleExpr )* ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr+)
+	|	CONST '(' param ')' -> ^(CONST param )
 	|	id typeDef  '(' mapperFieldSimpleExpr ')' -> ^(FUNCTION id typeDef mapperFieldSimpleExpr)
 	;
 
@@ -234,6 +235,7 @@ id
 	| AND
 	| LINK
 	| MERGE
+	| CONST
 	;
 
 typeDef	
@@ -263,6 +265,7 @@ OR	:	'OR';
 AND	:	'AND';
 LINK	:	'link';
 MERGE	:	'merge';
+CONST	:	'CONST';
 
 // $>
 

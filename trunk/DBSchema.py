@@ -241,6 +241,8 @@ class Mapper_Field:
 		self.ent_field = None #<DBSchema_Entity_Field>
 		self.ent_field_field = None #<DBSchema_Entity_Field> name of field in the entity field, may be null (no sub-field in use)
 
+		self.ent_const = None	 #<Value> constant value to populate into DB field
+		
 		self.persist = PERSIST_TYPE_LOADSAVE #<Boolean> how this field is persisted in backing stores
 	
 	def isPersistSave( self ):

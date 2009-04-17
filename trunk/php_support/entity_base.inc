@@ -961,13 +961,18 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 	
 	foreach( $fields as $tuple ) {
 		list( $member, $dbname, $dbtype ) = $tuple;
-		if( !$into->__isDirty( $member ) )
-			continue;
+		if( $member !== null ) {
+			if( !$into->__isDirty( $member ) )
+				continue;
 			
-		$clean[] = $member;
+			$clean[] = $member;
+		}	//assume non true members are always dirty
+		
 		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		$cols[] = $dbname;
-		$vals[] = $db->quote( $into->$cnv( $into->__get( $member ) ), $dbtype );
+		
+		$raw = $member === null ? $into : $into->__get( $member );
+		$vals[] = $db->quote( $into->$cnv( $raw ), $dbtype );
 	}
 	
 	if( count( $cols ) == 0 )
@@ -975,7 +980,8 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 		
 	foreach( $keys as $tuple ) {
 		list( $member, $dbname, $dbtype, $value ) = $tuple;
-		
+		//unlike above, key fields must be true member fields (no nulls)
+				
 		$cnv = dbs_cnvfunc_entity_to_db( $into, $member, $table[1], $dbname );
 		//don't pass null's to quote, since it actually changes the syntax, quoting won't help :(
 		$unquoted = $into->$cnv( $value );

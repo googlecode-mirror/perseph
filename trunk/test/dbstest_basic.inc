@@ -110,10 +110,6 @@ class DBSTest_Basic extends TestCase {
 		
 		$b = DBSIdentEx::withIdentifier( "{$q->id}" );	//explicit form here
 		$this->assertEquals( 435, $b->value );
-		
-		//test related constant written into DB: @Float <= CONST(101.5)
-		$q = DBSTest::withID( $q->id );
-		$this->assertEquals( 101.5, $q->float );
 	}
 	
 	function testReload() {

@@ -29,24 +29,25 @@ phptest-pgsql: test-build $(TESTDIR)/pgsql.schema.inc
 webtest: test-build
 	cd $(TESTDIR) && testplan web_sanity.test +test.properties
 
-TESTDEPENDS=parser $(wildcard *.py) .
-test-build: $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
+test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 	
 # include . so that any changes will cause it to regenerate the file
-$(GENDIR)/schema.inc: $(TESTDEPENDS) $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
+$(GENDIR)/schema.inc: $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/
 	
-$(TESTDIR)/pgsql.schema.inc: $(TESTDEPENDS) $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
+$(TESTDIR)/pgsql.schema.inc: $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
 	
-$(TESTDIR)/gen.test.schema: $(TESTDEPENDS) | $(GENDIR)
+$(TESTDIR)/gen.test.schema: . | $(GENDIR)
 	php dump_provider.php DBTest $(MYSQLURL) > $(TESTDIR)/gen.test.schema
-$(TESTDIR)/gen.pgsql.test.schema: $(TESTDEPENDS) | $(GENDIR)
+$(TESTDIR)/gen.pgsql.test.schema: . | $(GENDIR)
 	php dump_provider.php DBTest $(PGSQLURL) > $(TESTDIR)/gen.pgsql.test.schema
 	
 $(GENDIR)/mdb2_schema.inc: $(TESTDIR)/test_mdb2.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/test_mdb2.schema $(GENDIR)/mdb2_
 	
+Persephone.py: | parser
+
 parser: SchemaParser.py
 
 ANTLRJARS=$(wildcard antlr/lib/*.jar)

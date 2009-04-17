@@ -270,42 +270,50 @@ static public function with${keyName}($keyParamStr) {
 	def genConverters( self, en, loc ):
 		self.wr( "//*** genConverters\n" )
 		for field in loc.fields:
-			fieldType = field.ent_field_field.fieldType if field.ent_field_field != None else field.ent_field.fieldType
+			if field.ent_field == None:
+				fieldType = field.db_field.fieldType
+			else:
+				fieldType = field.ent_field_field.fieldType if field.ent_field_field != None else field.ent_field.fieldType
 			dbFuncType = field.db_convert.returnType if field.db_convert != None else field.db_field.fieldType
 			entFuncType = field.ent_convert.returnType if field.ent_convert != None else fieldType
 			
 			#//// DB => Member
-			self.wrt( "public static function _cnv_F${table}_${db_col}_T${ent_field}( $$value ) {\n",
-				{ 'table': loc.table.name, 'db_col': field.db_field.name, 'ent_field': field.ent_field.name } )
-			src_type = field.db_field.fieldType
-			
-			if field.db_convert != None:
-				self.wr( "$value = %s( $value );\n" % field.db_convert.name )
-				src_type = field.db_convert.returnType
-			
-			if dbFuncType.name != entFuncType.name:
-				self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n", 
-					{ 'src_type': dbFuncType.name, 'to_type': entFuncType.name } )
-			
-			if field.ent_convert != None:
-				self.wr( "$value = %s_inv( $value );\n" % field.ent_convert.name )
+			if field.ent_field != None:
+				self.wrt( "public static function _cnv_F${table}_${db_col}_T${ent_field}( $$value ) {\n",
+					{ 'table': loc.table.name, 'db_col': field.db_field.name, 'ent_field': field.ent_field.name } )
+				src_type = field.db_field.fieldType
 				
-			if  field.ent_field_field != None:
-				# Nulls are always converted to null, no attempt is made to instantiate target object
-				# Use instance name to hook into any custom creation logic (like caching)
-				self.wrt( "$$value = $$value === null ? null : $class::with${key}( $$value );\n" ,
-					{ 'class': field.ent_field.fieldType.phpInstClassName, 'key': field.ent_field_field.name })
-			
-			self.wr( "return $value;\n" )
-			self.wr( "}\n" );
-			
+				if field.db_convert != None:
+					self.wr( "$value = %s( $value );\n" % field.db_convert.name )
+					src_type = field.db_convert.returnType
+				
+				if dbFuncType.name != entFuncType.name:
+					self.wrt( "$$value = convert_${src_type}_to_${to_type}( $$value );\n", 
+						{ 'src_type': dbFuncType.name, 'to_type': entFuncType.name } )
+				
+				if field.ent_convert != None:
+					self.wr( "$value = %s_inv( $value );\n" % field.ent_convert.name )
+					
+				if  field.ent_field_field != None:
+					# Nulls are always converted to null, no attempt is made to instantiate target object
+					# Use instance name to hook into any custom creation logic (like caching)
+					self.wrt( "$$value = $$value === null ? null : $class::with${key}( $$value );\n" ,
+						{ 'class': field.ent_field.fieldType.phpInstClassName, 'key': field.ent_field_field.name })
+				
+				self.wr( "return $value;\n" )
+				self.wr( "}\n" );
 			
 			#//// Member => DB
 			self.wrt( "public static function _cnv_F${ent_field}_T${table}_${db_col}( $$value ) {\n" ,
-				{ 'table': loc.table.name, 'db_col': field.db_field.name, 'ent_field': field.ent_field.name } )
+				{ 'table': loc.table.name, 'db_col': field.db_field.name, 
+					'ent_field': field.ent_field.name if field.ent_field != None else '' } )
 				
 			src_type = fieldType
-			if  field.ent_field_field != None:
+			# Start at constant if we have one
+			if field.ent_const != None:
+				self.wr( "$value = %s;\n" % self.constantExpr( fieldType, field.ent_const ) )
+				
+			if field.ent_field_field != None:
 				# As above, if we have a null we simply produce null
 				self.wr( "$value = $value === null ? null : $value->%s;\n" % field.ent_field_field.phpName )
 				
@@ -1058,6 +1066,8 @@ function _${inst}_privConstruct() {
 		buf = "";
 		#only need one ALT_RECORD_KEY, but need all RECORD_KEY
 		for field in fields:
+			if field.ent_field == None:
+				continue
 			key = field.ent_field
 			if key.keyType == DBSchema.KEY_TYPE_NONE:
 				continue;
@@ -1153,8 +1163,11 @@ function _${inst}_privConstruct() {
 			raise Exception, "Unconvertable member: %s " % str
 		return m.group(1).lower() + m.group(2)
 
-	def dbField( self, field ):
-		return "array( '%s', '%s', '%s' )" % (field.ent_field.phpName, field.db_field.name, field.db_field.fieldType.name)
+	def dbField( self, field ):	
+		if field.ent_field == None:
+			return "array( null, '%s', '%s' )" % ( field.db_field.name, field.db_field.fieldType.name)
+		else:
+			return "array( '%s', '%s', '%s' )" % (field.ent_field.phpName, field.db_field.name, field.db_field.fieldType.name)
 	
 	def args_or_array( self ):
 		#//allow an array to be used instead of variable arguments

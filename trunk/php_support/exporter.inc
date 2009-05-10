@@ -27,7 +27,8 @@
  *
  * NOTE: Internally used, or common types, which are used as basic
  * types (like Date) will also be flattened to a string representation.  This
- * means that export should never contain objects in the returned data.
+ * means that export should never contain objects in the returned data. It
+ * may however contain arrays if they are part of the entity.
  */
 function export_entity( DBS_EntityBase $object, $recurse = 0 ) {
 	$root = array();
@@ -52,4 +53,34 @@ function export_entity( DBS_EntityBase $object, $recurse = 0 ) {
 	}
 	return $root;
 }
+
+function import_entity( $entityType, $data ) {
+	$entity = call_user_func( "$entityType::withNothing" );
+	
+	$type = $entity->getType();
+	foreach( $data as $name => $value ) {
+		$field = $type->getFieldName( $name );
+		
+		//TODO: just allow the type descriptor to fail if field is not found for now, the todo is
+		//that it doesn't have an explicit check (PHP standard failure)
+		$base = $type->getBaseType( $field );
+
+		if( $base === 'Entity' ) {
+			$etype = $type->getCustomType( $field );
+			if( is_array( $value ) )
+				$value = import_entity( $etype, $value );
+			else if( is_null( $value ) )
+				$value = null;
+			else
+				$value = call_user_func( "$etype::withIdentifier", $value );
+		} else if( $base === 'DateTime' || $base === 'Date' ) {
+			$value = new Date( $value, DATE_FORMAT_ISO_EXTENDED_MICROTIME );
+		}
+		
+		$entity->$field = $value;
+	}
+	
+	return $entity;
+}
+
 ?>

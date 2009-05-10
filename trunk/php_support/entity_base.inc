@@ -414,11 +414,19 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		return $this->_data_type->names[$field];
 	}
 	
+	/**
+	 * You may override this function in your custom classes to define pre/post load
+	 * operations. Be sure to return the value of the parent class execution.
+	 */
 	protected function _maybeLoad( $reload ) {
 		//allow this not to exist in case the enity has no associated mapper -- strict in memory or temporary entities
 		throw new DBS_LogicException( DBS_LogicException::NO_LOAD_DEFINED );
 	}
 	
+	/**
+	 * You may override this function in your custom classes to define pre/post save
+	 * operations. Be sure to return the value of the parent class execution.
+	 */
 	protected function _save( $adding ) {
 		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
 	}

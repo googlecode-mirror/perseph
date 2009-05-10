@@ -11,6 +11,7 @@ require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__).'/../php_support/dbsource.inc';
 require_once dirname(__FILE__).'/../php_support/mdb2_datatype.inc';
 require_once dirname(__FILE__).'/../php_support/form_base.inc';
+require_once dirname(__FILE__).'/../php_support/exporter.inc';
 
 //Derive only from this testcase, other GLOBALS references will fail!
 //Refer to <http://www.phpunit.de/ticket/497> which has now been fixed -- we await a new release
@@ -49,6 +50,7 @@ require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
 
 include 'dbstest_basic.inc';
 include 'dbstest_mdb2.inc';
+include 'dbstest_functions.inc';
 require_once 'common_test.inc';
 
 class DBSchema_AllTests
@@ -118,11 +120,18 @@ class DBSchema_AllTests
 	
 	public static function suite( $directMDB2 )
 	{
+		global $argv;
+		
+		$skipdb = array_search( '--nodb', $argv ) !== false;
+		
 		$suite = new PHPUnit_Framework_TestSuite( 'DBSchema tests' );
-		$suite->addTestSuite( 'DBSTest_Clean' );
-		$suite->addTestSuite( 'DBSTest_Basic' );
-		if( $directMDB2 )
-			$suite->addTestSuite( 'DBSTest_DirectMDB2' );
+		$suite->addTestSuite( 'DBSTest_Functions' );
+		if( !$skipdb ) {
+			$suite->addTestSuite( 'DBSTest_Clean' );
+			$suite->addTestSuite( 'DBSTest_Basic' );
+			if( $directMDB2 )
+				$suite->addTestSuite( 'DBSTest_DirectMDB2' );
+		}
 		return $suite;
 	}
 }

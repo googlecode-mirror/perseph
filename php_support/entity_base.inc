@@ -50,6 +50,10 @@ abstract class DBS_TypeDescriptor {
 	public $aliases = array();	//alias=>name of available aliases
 	public $options = array();
 	
+	public function getFields() {
+		return array_keys( $this->names );
+	}
+	
 	public function getBaseType( $field ) {
 		return $this->names[$field][1];
 	}
@@ -73,6 +77,7 @@ abstract class DBS_TypeDescriptor {
 	 *		title	=> <Bool> is this a title field (Warning: only ever true, null if false)
 	 *		maxLength => <Integer> maximum length of a field
 	 *		label => <String> label of the field
+	 *		trueName => <String> the true name (not php mangled/converted) of this object
 	 */
 	public function getFieldOption( $field, $name, $def = null ) {
 		if( isset( $this->names[$field][2][$name] ) )

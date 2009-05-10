@@ -135,8 +135,17 @@ abstract class DBS_EntityBase {
 	/**
 	 * Forces a reload from the backing store using the keys of the object.  This
 	 * cannot be called if there are modified fields -- they must be resolved first.
+	 *
+	 * @param strict [in] if an object has not been loaded at all then specifying "true"
+	 *		here will cause this function to fail.  Otherwise it will proceed with a normal
+	 *		load operation.
 	 */
-	public function reload() {
+	public function reload( $strict = false ) {
+		if( $this->_status == self::STATUS_UNKNOWN && !$strict ) {
+			$this->find();
+			return;
+		}
+		
 		if( $this->_status != self::STATUS_EXTANT )
 			throw new DBS_LogicException( DBS_LogicException::RELOAD_NOT_EXTANT );
 			
@@ -263,7 +272,8 @@ abstract class DBS_EntityBase {
 	
 	/**
 	 * Should not be overridden as it is not the only manner in which an item may
-	 * be loaded (search is an alternate method)
+	 * be loaded (search is an alternate method).  Consider using the __backModified
+	 * item to watch for changes.
 	 *
 	 * @param $reload [in] true if item is being reloaded (that is, not for the first time
 	 *		as this instance)
@@ -461,7 +471,7 @@ class DBS_LogicException extends DBS_Exception {
 		self::NO_LOAD_DEFINED => "No loading mechanism has been defined for this entity.",
 		self::NO_SAVE_DEFINED => "No saving mechanism has been defined for this entity.",
 		self::FIND_NOT_UNKNOWN => "Find called on non-unknown status",
-		self::RELOAD_NOT_EXTANT => "Attempting to reload an entity that is in the backing store",
+		self::RELOAD_NOT_EXTANT => "Attempting to reload an entity that is not in/loading from the backing store",
 		self::CREATE_NON_UNKNOWN => "Attempting to mark for creation an object with a known status",
 		);
 	public function __construct( $code ) {

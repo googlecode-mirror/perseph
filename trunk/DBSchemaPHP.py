@@ -808,6 +808,7 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 		if field.maxLen != None:
 			options['maxLength'] = '%d' % field.maxLen
 		options['label'] = "'%s'" % field.label
+		options['trueName'] = "'%s'" % field.name
 		
 		return self.getPHPMapArrayStr( options )
 		

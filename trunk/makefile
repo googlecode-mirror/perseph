@@ -26,6 +26,9 @@ phptest: test-build
 phptest-pgsql: test-build $(TESTDIR)/pgsql.schema.inc
 	php $(TESTDIR)/alltests.php --mdburl $(PGSQLURL) --nomysql --usedbcharset
 
+nodbphptest: test-build
+	php $(TESTDIR)/alltests.php --nodb
+	
 webtest: test-build
 	cd $(TESTDIR) && testplan web_sanity.test +test.properties Debug.Web=/tmp/persephone-web.txt
 

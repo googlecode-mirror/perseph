@@ -51,7 +51,7 @@ class DBSTest_Basic extends TestCase {
 		
 		$this->assertTrue( $n->id > 0 );	//lastInsert
 		
-		$l = DBSTest::findWithName( $n->name );
+		$l = DBSTest::findWithName( strtoupper($n->name) );	//we expect a case-insensitive match, but the name must match what was in the DB!
 		//TODO: precision/comparison of 'float'?
 		foreach( array( 'id', 'name', 'time', 'bool', 'decimal' ) as $comp)
 			$this->assertEquals( $n->$comp, $l->$comp, "Compare: $comp" );

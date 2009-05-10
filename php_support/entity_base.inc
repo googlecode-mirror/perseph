@@ -40,17 +40,6 @@ function convert_StringNull_to_StringEmpty( $val ) { return $val === null ? '' :
 function convert_StringNull_to_StringEmpty_inv( $val ) { return strlen( $val ) ? $val : null; }
 
 /**
- * Wraps a reference for assignment.
- */
-class DBS_Ref {
-	public $ref;
-	
-	public function __construct( &$ref ) {
-		$this->ref =& $ref;
-	}
-}
-
-/**
  * WARNING: DO NOT USE the data members in this descriptor directly. They are public only
  * since other framework classes need them.  If you need this data use *ONLY* the accessor
  * functions to be shielded from changes
@@ -272,8 +261,22 @@ abstract class DBS_EntityBase {
 	}
 	public $backModifiedCallback = null;
 	
+	/**
+	 * Should not be overridden as it is not the only manner in which an item may
+	 * be loaded (search is an alternate method)
+	 *
+	 * @param $reload [in] true if item is being reloaded (that is, not for the first time
+	 *		as this instance)
+	 * @return [out] true if the object was found and loaded, false otherwise
+	 */
 	abstract protected function _maybeLoad( $reload );
 	
+	/**
+	 * May be overridden.
+	 *
+	 * @param $adding [in] true if this entity is new and being added, false otherwise
+	 * @return [out]
+	 */
 	abstract protected function _save( $adding );
 	
 	abstract public function getIdentifier();
@@ -316,7 +319,7 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			|| isset( $this->_data_type->aliases[$field] );
 	}
 	
-	public function &__getref( $field ) {
+	public function __get( $field ) {
 		if( $field == 'identifier' ) {
 			$id = $this->getIdentifier();
 			return $id;
@@ -344,23 +347,14 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		throw new DBS_FieldException( $field, DBS_FieldException::UNAVAILABLE );
 	}
 	
-	public function __get( $field ) {
-		return $this->__getref( $field );
-	}
-	
 	/**
 	 * NOTE: *ALL* sets must come through here to actually set the value!
 	 */
 	public function __set( $field, $value ) {
 		$field = $this->_fieldName( $field );
 			
-		if( $value instanceof DBS_Ref ) {
-			$this->_data_type->checkType( $field, $value->ref );
-			$this->_data[$field] =& $value->ref;
-		} else {
-			$this->_data_type->checkType( $field, $value );
-			$this->_data[$field] = $value;
-		}
+		$this->_data_type->checkType( $field, $value );
+		$this->_data[$field] = $value;
 		$this->_data_dirty[$field] = true;
 	}
 	

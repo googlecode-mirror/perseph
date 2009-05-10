@@ -108,7 +108,7 @@ foreach( $tablesViews as $table ) {
 		//TODO: skip for now since not supported
 		if( $type == 'Binary' )
 		{
-			print( "WARNING: Omitting $field: Binary fields not yet supported\n" );
+			perror( "WARNING: Omitting $field: Binary fields not yet supported\n" );
 			print( "\t\t/*Omitting $field: Binary fields not yet supported*/\n" );
 			continue;	
 		}	

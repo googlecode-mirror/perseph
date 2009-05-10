@@ -8,8 +8,12 @@ require_once dirname(__FILE__).'/php_support/error_handling.inc';
 
 require_once 'MDB2.php';
 
+function perror( $msg ) {
+	file_put_contents( 'php://stderr', $msg );
+}
+
 if( $argc < 3 ) {
-	print( "Syntax: {$argv[0]} provider_name dsn
+	perror( "Syntax: {$argv[0]} provider_name dsn
 	
 DSN Example: mysqli://DBSTestUser:password@localhost/dbs_test
 " );
@@ -20,8 +24,8 @@ function check_error( $res ) {
 	if( !@PEAR::isError( $res ) ) 
 		return true;
 		
-	error_log( $res->getMessage() );
-	error_log( $res->userinfo );	//why is this not part of getMessage?! (TODO: move into the DBScheme adapter for MDB2)
+	perror( $res->getMessage() );
+	perror( $res->userinfo );	//why is this not part of getMessage?! (TODO: move into the DBScheme adapter for MDB2)
 	exit(1);
 }
 
@@ -36,6 +40,7 @@ $typeMap = array(
 	'char' => 'String',
 	'varchar' => 'String',
 	'bpchar' => 'String',
+	'tinytext' => 'String',
 	'text' => 'Text',
 	'mediumtext' => 'Text',
 	'longtext' => 'Text',
@@ -52,6 +57,11 @@ $typeMap = array(
 	'boolean' => 'Bool',	//NOTE: MySQL bool is TINYINT -- we can't tell
 	'blob' => 'Binary',
 	'longblob' => 'Binary',
+	'tinyblob' => 'Binary',
+	'varbinary' => 'Binary',
+	'binary' => 'Binary',
+	'mediumblob' => 'Binary',
+	'enum' => 'String',	//For now we don't fully support enums...
 	);
 $provider = $argv[1];
 $dsn = $argv[2];
@@ -88,7 +98,7 @@ foreach( $tablesViews as $table ) {
 		
 		//determine native type
 		if( !array_key_exists( $decl['nativetype'], $typeMap ) ) {
-			file_put_contents( 'php://stderr', "WARNING: Unknown nativetype: {$decl['nativetype']}\n" );
+			perror( "WARNING: Unknown nativetype: {$decl['nativetype']}\n" );
 			print( "\t\t/*Omitting $field: Unknown nativetype: {$decl['nativetype']}*/\n" );
 			continue;
 		}
@@ -98,6 +108,7 @@ foreach( $tablesViews as $table ) {
 		//TODO: skip for now since not supported
 		if( $type == 'Binary' )
 		{
+			print( "WARNING: Omitting $field: Binary fields not yet supported\n" );
 			print( "\t\t/*Omitting $field: Binary fields not yet supported*/\n" );
 			continue;	
 		}	

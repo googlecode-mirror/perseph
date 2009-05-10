@@ -85,6 +85,13 @@ abstract class DBS_TypeDescriptor {
 		return $def;
 	}
 	
+	public function getFieldName( $trueName ) {
+		foreach( $this->names as $name => $data )
+			if( $trueName === $data[2]['trueName'] )
+				return $name;
+		throw new Exception( "Unknown truename for field: $trueName" );
+	}
+	
 	/**
 	 * As with getFieldOption any of these can be null.
 	 * Known options:

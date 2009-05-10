@@ -27,7 +27,13 @@ class DBSTest_Functions extends TestCase {
 		$this->assertEquals( $n->name, $export['Name'] );
 		$this->assertEquals( $n->float, $export['Float'] );
 		
-		//var_dump( json_encode( $export ) );
+		$import = import_entity( 'DBSTest', $export );
+		$this->assertEquals( $n->name, $import->name );
+		$this->assertEquals( $n->float, $import->float );
+		$this->assertNull( $n->nameRef );
+		$this->assertTrue( $n->dateTime->equals( $import->dateTime ) );
+		$this->assertEquals( $n->memoryOnly, $import->memoryOnly );
+		$this->assertEquals( $n->id, $import->id );
 		
 		//try one with linking
 		$to = DBSLink::withNothing();
@@ -36,9 +42,18 @@ class DBSTest_Functions extends TestCase {
 		$export = export_entity( $to );
 		$this->assertEquals( $n->identifier, $export['Basic'] );
 		
+		$import = import_entity( 'DBSLink', $export );
+		$this->assertEquals( $to->basic->id, $import->basic->id );
+		$this->assertEquals( $to->basic->name, $import->basic->name );	//we know our ID includes the name
+		$this->assertFalse( $import->basic->__has( 'memoryOnly' ) );	//not part of ID (no default)
+		
 		$export = export_entity( $to, 1 );
 		$this->assertEquals( $n->name, $export['Basic']['Name'] );
-		//var_dump( json_encode( $export ) );
+		
+		$import = import_entity( 'DBSLink', $export );
+		$this->assertEquals( $to->basic->id, $import->basic->id );
+		$this->assertEquals( $to->basic->name, $import->basic->name );
+		$this->assertEquals( $to->basic->float, $import->basic->float );
 	}
 }
 

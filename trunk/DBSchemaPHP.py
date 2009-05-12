@@ -117,7 +117,7 @@ class PHPEmitter:
 		self.genIdentifier( en )
 		
 		self.genEmpty( en )
-		self.genKeyCtors( en )
+		self.genKeyCtors( en, en )
 		if en.name in self.sc.mappers:
 			self.genMapper( en, self.sc.mappers[en.name] )
 		for search in en.searches.itervalues():
@@ -164,7 +164,7 @@ class PHPEmitter:
 		self.wr( "//*** genMapper\n" )
 		self.genGetDB( loc )
 
-	def genKeyCtors( self, en ):
+	def genKeyCtors( self, en, outerEn ):
 		# Produce a convenient form of the key names for functions names and parameter lists
 		keyset = en.getKeySet()
 		for keys in keyset:
@@ -178,7 +178,7 @@ class PHPEmitter:
 				keyName += keys[i].name;
 				keyParamStr += "$key%d" % i
 			
-			self.genKeyPart( en, keys, keyName, keyParamStr )
+			self.genKeyPart( en, outerEn, keys, keyName, keyParamStr )
 			
 	def genGetDB( self, loc ):
 		self.wr("static private function &getDB() {\n" );
@@ -223,37 +223,38 @@ class PHPEmitter:
 		
 	##########################################################
 	# All the parts working on the keys of the entity -- in a mapper
-	def genKeyPart( self, en, keys, keyName, keyParamStr ):
+	def genKeyPart( self, en, outerEn, keys, keyName, keyParamStr ):
 		self.wr( "//*** genKeyPart\n" )
 		#Emit the finder to load from the DB (TODO: ensure only one record exists!)
 		self.wrt("""
 static public function findWith${keyName}( $keyParamStr ) {
-	$$ret = self::with${keyName}( $keyParamStr );
+	$$ret = $instName::with${keyName}( $keyParamStr );
 	$$ret->find();
 	return $$ret;
 }
 
 static public function findOrCreateWith${keyName}( $keyParamStr ) {
-	$$ret = self::with${keyName}($keyParamStr);
+	$$ret = $instName::with${keyName}($keyParamStr);
 	$$ret->findOrCreate();
 	return $$ret;
 }
 
 static public function createWith${keyName}($keyParamStr) {
-	$$ret = self::with${keyName}($keyParamStr);
+	$$ret = $instName::with${keyName}($keyParamStr);
 	$$ret->create();
 	return $$ret;
 }
 
 //create an object with the specified key (no other fields will be loaded until needed)
 static public function with${keyName}($keyParamStr) {
-	$$ret = self::withNothing();
+	$$ret = $instName::withNothing();
 	$keyAssignBlock
 	return $$ret;
 }
 
 """, { 'keyName': keyName, 'keyParamStr': keyParamStr,
-	'keyAssignBlock': self.getKeyAssignBlock( keys ) } )
+	'keyAssignBlock': self.getKeyAssignBlock( keys ),
+	'instName': outerEn.phpInstClassName } )
 
 	def getKeyAssignBlock( self, keys ):
 		ret = ""
@@ -575,7 +576,7 @@ function _save( $adding ) {
 """)
 
 	def genKeyMerge( self, entity, merge ):
-		self.genKeyCtors( merge )
+		self.genKeyCtors( merge, entity )
 		
 	def genMergeMaybeLoad( self, en ):
 		self.wr( """//*** getMergeMaybeLoad

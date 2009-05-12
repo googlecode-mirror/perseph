@@ -134,8 +134,15 @@ abstract class DBS_EntityBase {
 	
 	/**
 	 * Finds the entity in the backing store.
+	 *
+	 * @param strict [in] if an object is already known to be extant than find will normally
+	 *		just accept that and not try to find it again.  Using the strict flag can force this
+	 *		logic to be skipped, such that find ensures it is looking for an unknown item.
 	 */
-	public function find() {
+	public function find( $strict = false ) {
+		if( $this->_status == self::STATUS_EXTANT && !$strict )
+			return;
+			
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new DBS_LogicException( DBS_LogicException::FIND_NOT_UNKNOWN );
 			

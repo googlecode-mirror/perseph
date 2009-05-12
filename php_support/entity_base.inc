@@ -140,7 +140,7 @@ abstract class DBS_EntityBase {
 			throw new DBS_LogicException( DBS_LogicException::FIND_NOT_UNKNOWN );
 			
 		if( !$this->maybeLoad( false ) )
-			throw new DBS_DBException( DBS_DBException::NOT_IN_DB );
+			throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, $this->getAnyIdentifier() );
 		$this->_status = self::STATUS_EXTANT;
 	}
 	

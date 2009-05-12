@@ -72,6 +72,15 @@ class DBSTest_Basic extends TestCase {
 		$l->id = $n->id;
 		$l->find();
 		$this->assertEquals( $n->name, $l->name );
+		
+		//lenient/strict find
+		$l->find();	//expect no exception
+		try {
+			$l->find( true /*strict*/ );
+			$this->assertTrue( false );
+		} catch( DBS_LogicException $le ) {
+			$this->assertEquals( DBS_LogicException::FIND_NOT_UNKNOWN, $le->getCode() );
+		}
 	}
 	
 	function testIdentifier() {
@@ -140,6 +149,16 @@ class DBSTest_Basic extends TestCase {
 		$n->decimal = 11;
 		$n->add();
 		$n->reload();
+		
+		//test lenient reload
+		$lenient = DBSTest::withName( 'ReloadMe' );
+		try {
+			$lenient->reload( true /*strict*/ );
+			$this->assertTrue( false );
+		} catch( DBS_LogicException $le ) {
+			$this->assertEquals( DBS_LogicException::RELOAD_NOT_EXTANT, $le->getCode() );
+		}
+		$lenient->reload();
 	}
 	
 	function testReloadDirty() {

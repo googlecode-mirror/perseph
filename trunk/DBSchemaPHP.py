@@ -229,17 +229,13 @@ class PHPEmitter:
 		self.wrt("""
 static public function findWith${keyName}( $keyParamStr ) {
 	$$ret = self::with${keyName}( $keyParamStr );
-	
-	if( !$$ret->maybeLoad( false ) )
-		throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, " ($keyName) / ($keyParamStr)" );
-	$$ret->_status = DBS_EntityBase::STATUS_EXTANT;
-		
+	$$ret->find();
 	return $$ret;
 }
 
 static public function findOrCreateWith${keyName}( $keyParamStr ) {
 	$$ret = self::with${keyName}($keyParamStr);
-	$$ret->maybeLoad( false );
+	$$ret->findOrCreate();
 	return $$ret;
 }
 

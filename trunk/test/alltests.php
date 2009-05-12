@@ -53,11 +53,13 @@ include 'dbstest_mdb2.inc';
 include 'dbstest_functions.inc';
 require_once 'common_test.inc';
 
+$skipCaseTest = false;
+
 class DBSchema_AllTests
 {
 	public static function main()
 	{
-		global $db_test, $argv, $mdburl;
+		global $db_test, $argv, $mdburl, $skipCaseTest;
 		$okay = true;
 		
 		if( array_search( '--nomysql', $argv ) === false )
@@ -85,6 +87,8 @@ class DBSchema_AllTests
 			//setup as utf8 for text columns
 			$opts['datatype_map'] = array( 'cstring' => 'cstring' );
 			$opts['datatype_map_callback'] = array( 'cstring' => 'mdb2_cstring_utf8_callback' );
+			//the broken combination likely means the backing store can't do case-insensitve searching properly
+			$skipCaseTest = true;
 		}
 		
 		echo( "Running as MDB2DBSource...\n" );

@@ -408,8 +408,12 @@ class Processor:
 							elif db['func'] != None:
 								mapField.db_convert = db['func']
 								
-							#TODO: check that fields exist
+							if not db['name'] in mapper.table.fields:
+								errorOn( expr, "DB column %s does not exist in the table" % db['name'] )
 							mapField.db_field = mapper.table.fields[db['name']]
+							
+							if not ent['name'] in mapper.entity.fields:
+								errorOn( expr, "Entity %s field does not exist in the entity" % ent['name'] )
 							mapField.ent_field = mapper.entity.fields[ent['name']]
 							
 							if ent['subfield'] != None:

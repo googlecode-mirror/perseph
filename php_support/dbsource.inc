@@ -13,7 +13,7 @@
 					  
 @require_once 'MDB2.php';
 @require_once 'MDB2/Date.php';
-@require_once 'Date.php';
+//@require_once 'Date.php';
 
 interface DBSource {
 	/**
@@ -247,13 +247,11 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	static public function dateToMDB2_Date( $date ) {
-		return $date->getDate( DATE_FORMAT_ISO );	//though the default, be explicit, this is what MDB2 timestamps are
+		return $date->format( DateTime::ISO8601 );	//though the default, be explicit, this is what MDB2 timestamps are
 	}
 	
 	static public function mdb2_DateToDate( $mdate ) {
-		$date = new Date();
-		$date->setDate( $mdate, DATE_FORMAT_ISO );
-		return $date;	
+		return new DateTime( $mdate );
 	}
 }
 
@@ -470,9 +468,9 @@ abstract class DBSourceBase implements DBSource {
 			case 'float':
 				return floatval( $value );
 			case 'datetime':
-				return '\'' . $value->getDate( DATE_FORMAT_ISO ) . '\'';
+				return '\'' . $value->format( DateTime::ISO8601 ) . '\'';
 			case 'date':
-				return '\'' . $value->format( "%Y-%m-%d" ) . '\'';
+				return '\'' . $value->format( "Y-m-d" ) . '\'';
 			case 'time':
 				return '\'' . _dbs_encode_time( $value ) . '\'';
 			case 'bool':
@@ -502,8 +500,7 @@ abstract class DBSourceBase implements DBSource {
 				if( $dot !== false )
 					$value = substr( $value, 0, $dot );
 			
-				$ret = new Date();
-				$ret->setDate( $value, DATE_FORMAT_ISO );
+				$ret = new DateTime( $value );
 				return $ret;
 				
 			case 'time':

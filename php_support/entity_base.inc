@@ -313,7 +313,7 @@ abstract class DBS_EntityBase {
 
 abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	
-	/* a special LOADING case is needed so that __getref doesn't incorrectly
+	/* a special LOADING case is needed so that __get doesn't incorrectly
 		attempt to load data while already loading. */
 	protected $_isLoading = false;
 	

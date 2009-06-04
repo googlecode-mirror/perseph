@@ -249,14 +249,17 @@ function format_html_DateTime( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return $value->getDate( DATE_FORMAT_ISO );
+	if( $value->getOffset() )
+		return $value->format( 'Y-m-d H:i:sO' ); //if timezome offset used, then we must display it
+	else
+		return $value->format( 'Y-m-d H:i:s' ); //otherwise use the normal display
 }
 
 function format_html_Date( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return $value->format('%Y-%m-%d' );
+	return $value->format('Y-m-d' );
 }
 
 function format_html_Time( $value ) {
@@ -325,14 +328,14 @@ function format_csv_DateTime( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return $value->getDate(DATE_FORMAT_ISO);
+	return $value->format( DateTime::ISO8601 );
 }
 
 function format_csv_Date( $value ) {
 	if( is_null( $value ) )
 		return 'n/a';
 		
-	return $value->getDate('%Y-%m-%d' );
+	return $value->format( 'Y-m-d' );
 }
 
 function format_csv_Boolean( $value ) {

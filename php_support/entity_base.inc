@@ -39,6 +39,9 @@ function convert_InStringNull_to_StringEmpty_inv( $val ) { return $val; }
 function convert_StringNull_to_StringEmpty( $val ) { return $val === null ? '' : $val; }
 function convert_StringNull_to_StringEmpty_inv( $val ) { return strlen( $val ) ? $val : null; }
 
+/* Functions for those still using PHP 5.2 lacking some fundamental date operations */
+require_once dirname(__FILE__).'/date_funcs.inc';
+
 /**
  * WARNING: DO NOT USE the data members in this descriptor directly. They are public only
  * since other framework classes need them.  If you need this data use *ONLY* the accessor

@@ -291,8 +291,16 @@ function _dbs_formin_Text( $value ) {	return $value === null ? '' : $value; }
 function _dbs_formin_Decimal( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_Float( $value ) { return $value === null ? '' : '' . $value; }
 function _dbs_formin_Bool( $value ) {	return $value === null ? '' : $value ? '1' : '0'; }
-function _dbs_formin_DateTime( $value ) {	return $value === null ? '' : $value->getDate( DATE_FORMAT_ISO ); }
-function _dbs_formin_Date( $value ) { return $value === null ? '' : $value->format( '%Y-%m-%d' ); }
+function _dbs_formin_DateTime( $value ) {	
+	if( $value === null )
+		return '';
+	
+	if( $value->getOffset() )
+		return $value->format( 'Y-m-d H:i:sO' ); //if timezome offset used, then we must display it
+	else
+		return $value->format( 'Y-m-d H:i:s' ); //otherwise use the normal display
+}
+function _dbs_formin_Date( $value ) { return $value === null ? '' : $value->format( 'Y-m-d' ); }
 function _dbs_formin_Time( $value ) {	return $value === null ? '' : _dbs_encode_time($value ); }
 
 function _dbs_formout_Integer( $value ) { 
@@ -352,19 +360,16 @@ function _dbs_formout_Bool( $value ) {
 function _dbs_formout_DateTime( $value ) { 
 	if( $value === '' )
 		return null;
-	//http://pear.php.net/bugs/bug.php?id=15631 (check format first, setDate doesn't indicate failure)
+	//the DateTime constructor has no option to check the format, so we'll check it here
 	if( !preg_match('/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(\.\d+)?(Z|[\+\-]\d{2}:?\d{2})?)?$/i', $value ) )
 		throw new DBS_FormConvertException( DBS_FormConvertException::INVALID_INPUT_STRING );
 	
-	$ret = new Date();
-	$ret->setDate( $value ); //default accepts a lot of formats
+	$ret = new DateTime( $value ); //default accepts a lot of formats
 	return $ret;
 }
 function _dbs_formout_Date( $value ) { 
 	$ret = _dbs_formout_DateTime( $value ); 
-	//TODO: requires Date >= 1.5 (still alpha release)
-	//if( $ret !== null )
-	//	$ret->trunc( DATE_PRECISION_DAY );
+	$ret->setTime( 0, 0, 0 ); //truncate to day (sort of)
 	return $ret;
 }
 function _dbs_formout_Time( $value ) { 

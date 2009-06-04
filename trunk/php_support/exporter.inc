@@ -44,8 +44,8 @@ function export_entity( DBS_EntityBase $object, $recurse = 0 ) {
 				$value = export_entity( $value, $recurse - 1 );
 			else
 				$value = $value->identifier;
-		} else if( $value instanceof Date ) {
-			$value = $value->getDate( DATE_FORMAT_ISO_EXTENDED_MICROTIME );
+		} else if( $value instanceof DateTime ) {
+			$value = $value->format( DateTime::ISO8601 );
 		}
 		
 			
@@ -74,7 +74,7 @@ function import_entity( $entityType, $data ) {
 			else
 				$value = call_user_func( "$etype::withIdentifier", $value );
 		} else if( $base === 'DateTime' || $base === 'Date' ) {
-			$value = new Date( $value, DATE_FORMAT_ISO_EXTENDED_MICROTIME );
+			$value = new DateTime( $value );
 		}
 		
 		$entity->$field = $value;

@@ -781,7 +781,7 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 						) )
 			elif tname == 'Date' or tname == 'DateTime':
 				self.wr( self._if(
-					"!($value instanceof Date)",
+					"!($value instanceof DateTime)",
 					self._throwSetFieldException( field, 'TYPE_DATE' )
 					) )
 			

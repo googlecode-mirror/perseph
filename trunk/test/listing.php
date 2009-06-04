@@ -14,6 +14,7 @@ class Listing extends DBS_HTMLTable_Listing {
 			'id' => array( 'label' => 'Some ID', 'format' => '_fmt_id' ),
 			'name' => array(),	/*User default label*/
 			'decimal' => array( 'label' => 'Decimal Value' ),
+			'dateTime',
 			/*NameRef "Links To"; TODO: support without need for converter */
 				
 			/* Here the entity itself is provided to the formatter */

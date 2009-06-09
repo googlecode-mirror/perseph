@@ -158,7 +158,10 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 				continue;
 				
 			$baseType = $typeDesc->getBaseType( $element->entityField );
-			if( isset( $element->options['convertIn'] ) ) {	
+			$memcnv = "formin_{$element->entityField}";
+			if( method_exists( $this, $memcnv ) ) {	//allow custom converters
+				$raw = $this->$memcnv( $raw );
+			} else if( isset( $element->options['convertIn'] ) ) {	
 				$func = $element->options['convertIn']; 
 				$raw = $func($raw);
 			} else if( $baseType === 'Entity' ) {
@@ -222,7 +225,14 @@ abstract class DBS_FormBase_QuickForm extends DBS_FormBase_HTMLForm {
 			try {
 				$baseType = $typeDesc->getBaseType( $element->entityField );
 				$raw = $this->form->exportValue( $element->formField );
-				if( $baseType === 'Entity' ) {
+				
+				$memcnv = "formout_{$element->entityField}";
+				if( method_exists( $this, $memcnv ) ) {	//allow custom converters
+					$raw = $this->$memcnv( $raw );
+				} else if( isset( $element->options['convertOut'] ) ) {	
+					$func = $element->options['convertOut']; 
+					$raw = $func($raw);
+				} else if( $baseType === 'Entity' ) {
 					$raw = call_user_func( "{$typeDesc->getCustomType($element->entityField)}::withIdentifier", $raw );
 				} else {
 					$func = "_dbs_formout_{$baseType}";

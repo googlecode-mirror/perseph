@@ -247,7 +247,8 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	static public function dateToMDB2_Date( $date ) {
-		return $date->format( DateTime::ISO8601 );	//though the default, be explicit, this is what MDB2 timestamps are
+		//TODO: This must be per-DB, include also Timezome (or convert to GMT?)
+		return $date->format( 'Y-m-d H:i:s' );	//though the default, be explicit, this is what MDB2 timestamps are
 	}
 	
 	static public function mdb2_DateToDate( $mdate ) {

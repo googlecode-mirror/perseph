@@ -469,7 +469,7 @@ abstract class DBSourceBase implements DBSource {
 			case 'float':
 				return floatval( $value );
 			case 'datetime':
-				return '\'' . $value->format( DateTime::ISO8601 ) . '\'';
+				return '\'' . $value->format( "Y-m-d H:i:s" ) . '\'';
 			case 'date':
 				return '\'' . $value->format( "Y-m-d" ) . '\'';
 			case 'time':

@@ -88,6 +88,8 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	public function setTimezone( $tz ) {
+		if( !($tz instanceof DateTimeZone) )
+			$tz = new DateTimeZone( $tz );
 		$this->timezone = $tz;
 	}
 	
@@ -299,6 +301,8 @@ abstract class DBSourceBase implements DBSource {
 	private $timezone;
 
 	public function setTimezone( $tz ) {
+		if( !($tz instanceof DateTimeZone) )
+			$tz = new DateTimeZone( $tz );
 		$this->timezone = $tz;
 	}
 	

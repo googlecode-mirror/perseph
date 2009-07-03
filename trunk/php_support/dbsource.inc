@@ -65,6 +65,7 @@ class MDB2DBSource implements DBSource {
 
 	private $mdb;
 	private $textType;
+	private $timezone;
 	
 	/**
 	 *
@@ -78,10 +79,20 @@ class MDB2DBSource implements DBSource {
 	public function __construct( MDB2_Driver_Common &$mdb, $textType = 'text' ) {
 		$this->mdb =& $mdb;
 		$this->textType = $textType;
+		
+		$this->timezone = new DateTimeZone( date_default_timezone_get() );
 	}
 	
 	public function &getMDB() {
 		return $this->mdb;
+	}
+	
+	public function setTimezone( $tz ) {
+		$this->timezone = $tz;
+	}
+	
+	public function getTimezone( $tz ) {
+		return $this->timezone;
 	}
 	
 	/** 
@@ -184,7 +195,7 @@ class MDB2DBSource implements DBSource {
 				
 			case 'date':
 			case 'datetime':
-				$out = self::mdb2_DateToDate( $value );
+				$out = $this->mdb2_DateToDate( $value );
 				break;
 				
 			case 'time':
@@ -209,7 +220,7 @@ class MDB2DBSource implements DBSource {
 			switch( strtolower( $type ) ) {
 				case 'date':
 				case 'datetime':
-					$halfraw = self::dateToMDB2_Date( $value );
+					$halfraw = $this->dateToMDB2_Date( $value );
 					break;
 					
 				case 'time':
@@ -246,13 +257,14 @@ class MDB2DBSource implements DBSource {
 		return $this->mdb->lastInsertID( $table, $field );
 	}
 	
-	static public function dateToMDB2_Date( $date ) {
-		//TODO: This must be per-DB, include also Timezome (or convert to GMT?)
-		return $date->format( 'Y-m-d H:i:s' );	//though the default, be explicit, this is what MDB2 timestamps are
+	public function dateToMDB2_Date( $date ) {
+		$ndate = clone $date;
+		$ndate->setTimezone( $this->timezone );
+		return $ndate->format( 'Y-m-d H:i:s' );	//though the default, be explicit, this is what MDB2 timestamps are
 	}
 	
-	static public function mdb2_DateToDate( $mdate ) {
-		return new DateTime( $mdate );
+	public function mdb2_DateToDate( $mdate ) {
+		return new DateTime( $mdate, $this->timezone );
 	}
 }
 
@@ -283,7 +295,17 @@ abstract class DBSourceBase implements DBSource {
 	var $connect;
 	var $isinit;
 	var $str_enc;   //the string encoding used in the DB (what is returned raw)
+	
+	private $timezone;
 
+	public function setTimezone( $tz ) {
+		$this->timezone = $tz;
+	}
+	
+	public function getTimezone( $tz ) {
+		return $this->timezone;
+	}
+	
 	/* The default encoding is Windows-1252 since most of the system have an
 	 * Access front-end which seems to be using this encoding, at least initially 
 	 *
@@ -293,6 +315,7 @@ abstract class DBSourceBase implements DBSource {
 		$this->connect = NULL;
 		$this->isinit = False;
 		$this->str_enc = $astr_enc;
+		$this->timezone = new DateTimeZone( date_default_timezone_get() );
 	}
 
 	public function fetchRow( $res ) {
@@ -468,9 +491,11 @@ abstract class DBSourceBase implements DBSource {
 			case 'decimal':
 			case 'float':
 				return floatval( $value );
-			case 'datetime':
+			case 'datetime': {
+				$nvalue = clone $value;
+				$nvalue->setTimezone( $this->timezone );
 				return '\'' . $value->format( "Y-m-d H:i:s" ) . '\'';
-			case 'date':
+			} case 'date':
 				return '\'' . $value->format( "Y-m-d" ) . '\'';
 			case 'time':
 				return '\'' . _dbs_encode_time( $value ) . '\'';
@@ -501,7 +526,7 @@ abstract class DBSourceBase implements DBSource {
 				if( $dot !== false )
 					$value = substr( $value, 0, $dot );
 			
-				$ret = new DateTime( $value );
+				$ret = new DateTime( $value, $this->timezone );
 				return $ret;
 				
 			case 'time':

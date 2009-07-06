@@ -196,8 +196,11 @@ class MDB2DBSource implements DBSource {
 				break;
 				
 			case 'date':
-			case 'datetime':
 				$out = $this->mdb2_DateToDate( $value );
+				break;
+				
+			case 'datetime':
+				$out = $this->mdb2_DateTimeToDateTime( $value );
 				break;
 				
 			case 'time':
@@ -221,8 +224,11 @@ class MDB2DBSource implements DBSource {
 				
 			switch( strtolower( $type ) ) {
 				case 'date':
-				case 'datetime':
 					$halfraw = $this->dateToMDB2_Date( $value );
+					break;
+					
+				case 'datetime':
+					$halfraw = $this->dateTimeToMDB2_DateTime( $value );
 					break;
 					
 				case 'time':
@@ -260,13 +266,22 @@ class MDB2DBSource implements DBSource {
 	}
 	
 	public function dateToMDB2_Date( $date ) {
+		//ignore timezone on the date
+		return $date->format( 'Y-m-d' );	//though the default, be explicit, this is what MDB2 timestamps are
+	}
+	
+	public function dateTimeToMDB2_DateTime( $date ) {
 		$ndate = clone $date;
 		$ndate->setTimezone( $this->timezone );
 		return $ndate->format( 'Y-m-d H:i:s' );	//though the default, be explicit, this is what MDB2 timestamps are
 	}
 	
-	public function mdb2_DateToDate( $mdate ) {
+	public function mdb2_DateTimeToDateTime( $mdate ) {
 		return new DateTime( $mdate, $this->timezone );
+	}
+	
+	public function mdb2_DateToDate( $mdate ) {
+		return new DateTime( $mdate );
 	}
 }
 
@@ -523,8 +538,11 @@ abstract class DBSourceBase implements DBSource {
 			case 'decimal':
 			case 'float':
 				return floatval( $value );
-			case 'datetime':
 			case 'date':
+				//use local timezone so that the date porition is left as-is, without a proper Date class we can't do anything else
+				return new DateTime( $value );
+				
+			case 'datetime':
 				//remove trailing milliseconds if there (quick and dirty... *sigh* new PHP should parse them)		
 				$dot = strrpos( $value, '.' );
 				if( $dot !== false )

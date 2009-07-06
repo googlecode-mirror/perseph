@@ -12,6 +12,8 @@ ini_set( 'iconv_internal_encoding', 'UTF-8' );
 require_once dirname(__FILE__).'/../php_support/error_handling.inc';
 	
 //date_default_timezone_set('Europe/Berlin'); 
-date_default_timezone_set('UTC'); //TODO: consider impact of this in Date conversions... (already breaks!)
+//date_default_timezone_set('UTC'); //TODO: consider impact of this in Date conversions... (already breaks!)
+//pretend to be one we're not
+date_default_timezone_set('Asia/Tokyo');
 
 ?>

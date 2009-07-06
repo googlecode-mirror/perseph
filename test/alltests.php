@@ -66,6 +66,7 @@ class DBSchema_AllTests
 		{
 			echo( "Running as MySQLSource...\n" );
 			$db_test = new MySQLSource( 'localhost', "dbs_test", 'DBSTestUser', 'password', 'utf-8' );
+			$db_test->setTimezone( 'America/Vancouver' );
 			$db_test->setErrorLogging( false );
 			$ret = PHPUnit_TextUI_TestRunner::run(self::suite(false));
 			$okay &= $ret->wasSuccessful();
@@ -104,6 +105,7 @@ class DBSchema_AllTests
 		else	
 			$db_test = new MDB2DBSource( $mdb, 'cstring' );
 		$db_test->setErrorLogging( false );
+		$db_test->setTimezone( 'Pacific/Honolulu' );
 		
 		if( $useDBCharset )
 		{

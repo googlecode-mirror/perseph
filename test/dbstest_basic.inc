@@ -60,9 +60,13 @@ class DBSTest_Basic extends TestCase {
 		//TODO: precision/comparison of 'float'?
 		foreach( array( 'id', 'name', 'time', 'bool', 'decimal' ) as $comp)
 			$this->assertEquals( $n->$comp, $l->$comp, "Compare: $comp" );
-		foreach( array( 'date', 'dateTime' ) as $comp)
+		foreach( array( 'dateTime', 'date' ) as $comp) {
+			//compare in a single timezone
+			$n->$comp->setTimeZone( new DateTimeZone( 'UTC' ) );
+			$l->$comp->setTimeZone( new DateTimeZone( 'UTC' ) );
 			$this->assertEquals( $n->$comp->format( DateTime::W3C ), $l->$comp->format( DateTime::W3C ),
 				"Compare: $comp" );
+		}
 		
 		//by id
 		$l = DBSTest::findWithID( $n->id );

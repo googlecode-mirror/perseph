@@ -498,7 +498,7 @@ abstract class DBSourceBase implements DBSource {
 			case 'datetime': {
 				$nvalue = clone $value;
 				$nvalue->setTimezone( $this->timezone );
-				return '\'' . $value->format( "Y-m-d H:i:s" ) . '\'';
+				return '\'' . $nvalue->format( "Y-m-d H:i:s" ) . '\'';
 			} case 'date':
 				return '\'' . $value->format( "Y-m-d" ) . '\'';
 			case 'time':

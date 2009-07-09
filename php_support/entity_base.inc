@@ -208,6 +208,13 @@ abstract class DBS_EntityBase {
 	 * creating it does not automatically save it in the backing store.
 	 */
 	public function findOrCreate() {
+		//the first two conditions allow for caching of objects and proper chaining from a ::withXXX call
+		//in ::findOrCreateWithXXX
+		if( $this->_status == self::STATUS_NEW )
+			return false;
+		if( $this->_status == self::STATUS_EXTANT )
+			return true;
+			
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new Exception( "FindOrCreate called on non-unknown status" );
 			

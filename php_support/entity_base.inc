@@ -198,6 +198,9 @@ abstract class DBS_EntityBase {
 	 * more than mark the entity as being new.
 	 */
 	public function create() {
+		if( $this->_status == self::STATUS_NEW )
+			return;
+			
 		if( $this->_status != self::STATUS_UNKNOWN )
 			throw new DBS_LogicException( DBS_LogicException::CREATE_NON_UNKNOWN );
 		$this->_status = DBS_EntityBase::STATUS_NEW;

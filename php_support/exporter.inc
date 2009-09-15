@@ -55,7 +55,8 @@ function export_entity( DBS_EntityBase $object, $recurse = 0 ) {
 }
 
 function import_entity( $entityType, $data ) {
-	$entity = call_user_func( "$entityType::withNothing" );
+	//as was before in form_base, can't use the $entityType::withNothing notation on Debian etch stable...
+	$entity = call_user_func( array( $entityType, 'withNothing' ) );
 	
 	$type = $entity->getType();
 	foreach( $data as $name => $value ) {
@@ -71,8 +72,11 @@ function import_entity( $entityType, $data ) {
 				$value = import_entity( $etype, $value );
 			else if( is_null( $value ) )
 				$value = null;
-			else
-				$value = call_user_func( "$etype::withIdentifier", $value );
+			else {
+				if( !method_exists( $etype, 'withIdentifier' )  )
+					throw new Exception( "cannot load due to missing function: $etype::withIdentifier" );
+				$value = call_user_func( array( $etype, 'withIdentifier' ), $value );
+			}
 		} else if( $base === 'DateTime' || $base === 'Date' ) {
 			$value = new DateTime( $value );
 		}

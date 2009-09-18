@@ -445,6 +445,17 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		return false;
 	}
 	
+	/**
+	 * Obtains an array of all dirty items in this instance.
+	 */
+	public function __allDirty() {
+		$ret = array();
+		foreach( $this->_data_type->names as $name => $ignore )
+			if( $this->__isDirty( $name ) )
+				$ret[] = $name;
+		return $ret;
+	}
+	
 	public function __getTypeData( $field ) {
 		$field = $this->_fieldName( $field );
 		return $this->_data_type->names[$field];

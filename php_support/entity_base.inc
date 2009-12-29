@@ -1120,7 +1120,12 @@ function dbs_dbsource_save( &$db, $table, DBS_EntityBase $into, $keys, $fields, 
 		$id = $db->getNewID( $table[0], $dbname );
 		
 		if( $into->__has( $member ) )
-			throw new Exception( "LastInsert field $member already set in data!" );
+		{
+			//if we've intentionally saved this value and they match this is okay
+			//TODO: check if the value matches...
+			if( array_search( $member, $clean ) === false )
+				throw new Exception( "LastInsert field $member already set in data!" );
+		}
 		
 		$cnv = dbs_cnvfunc_db_to_entity( $into, $member, $table[1], $dbname );
 		$value = $into->$cnv( $id );

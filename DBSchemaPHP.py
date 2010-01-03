@@ -1132,21 +1132,22 @@ function _${inst}_privConstruct() {
 	
 	def memberName( self, str ):
 		#replace all first caps except last before non-cap
+		# treat numbers as caps to avoid things like MD5Hash => mD5Hash
 		
 		#all caps  Ex: UPPER => upper
 		#PYTHON: if re.match( '(?u)^\P{Lu}+$', str ):
-		if re.search('(?u)^[A-Z]+$', str ):
+		if re.search('(?u)^[A-Z0-9]+$', str ):
 			return str.lower()
 		
 		#one leading cap  Ex: BasicName => basicName
 		#PYTHON: ^(\p{Lu})([^\p{Lu}].*)$
-		m = re.search( '^([A-Z])([^A-Z].*)$', str )
+		m = re.search( '^([A-Z0-9])([^A-Z0-9].*)$', str )
 		if m:
 			return m.group(1).lower() + m.group(2)
 			
 		#many leading caps Ex: IDString => idString
 		#PYTHON: ^(\p{Lu}+)(\p{Lu}[^\p{Lu}])
-		m = re.search( '^([A-Z]+)([A-Z][^A-Z].*)$', str )
+		m = re.search( '^([A-Z0-9]+)([A-Z0-9][^A-Z0-9].*)$', str )
 		if not m:
 			raise Exception, "Unconvertable member: %s " % str
 		return m.group(1).lower() + m.group(2)

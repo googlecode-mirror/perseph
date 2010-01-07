@@ -12,6 +12,8 @@ interface EntityCache {
 	public function getCached( $key );
 	
 	/**
+	 * This adds an item to the cache or updates an existing item.
+	 *
 	 * @param key [in] how to reference the entity in the cache
 	 * @param object [in] the object/value to store in the cache
 	 */

@@ -769,5 +769,19 @@ class DBSTest_Basic extends TestCase {
 		}
 	}
 	
+	function testMultiAltKey() {
+		$a = ComboAltKey::createWithDecimal_Float( 10, 3 );
+		$a->add();
+		
+		$b = ComboAltKey::createWithDecimal_Float( 10, 4 );
+		$b->add();
+		
+		$q = ComboAltKey::findWithDecimal_Float( 10, 3 );
+		$this->assertEquals( $a->id, $q->id );
+		
+		$q = ComboAltKey::findWithID( $b->id );
+		$this->assertEquals( 10, $q->decimal );
+		$this->assertEquals( 4, $q->float );
+	}
 }
 ?>

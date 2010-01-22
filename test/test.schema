@@ -303,6 +303,28 @@ mapper BasicTwoKeys {
 	}
 }
 
+
+/* Here either ID or Decimal&Float can be used as a record key*/
+entity ComboAltKey {
+	fields {
+		ID<CustomID> 	ALT_RECORD_KEY(0);
+		Decimal<Decimal> ALT_RECORD_KEY(1);
+		Float<Float> ALT_RECORD_KEY(1);
+	}
+}
+
+mapper ComboAltKey {
+	provider DBTest;
+	
+	fields {
+		using basic {
+			@ID => ID;
+			@Decimal = Decimal;
+			@Float = Float;
+		}
+	}
+}
+
 /********************************************************************
  * For Merge Testing
  *******************************************************************/
@@ -352,3 +374,4 @@ entity SimpleMerge {
 		SimpleName.NameID = SimpleBasic.BasicID;
 	}
 }
+

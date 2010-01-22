@@ -17,6 +17,7 @@
 # Contributors:
 #		edA-qa mort-ora-y <edA-qa@disemia.com>
 # ***** END LICENSE BLOCK *****
+from collections import defaultdict
 
 class Type:
 	def __init__(self, name):
@@ -116,6 +117,7 @@ class Entity_Field:
 		self.name = name
 		self.fieldType = fieldType
 		self.keyType = KEY_TYPE_NONE
+		self.keyNum = 0 # For multiply combined ALT_RECORD_KEYs the number can be changed
 		self.hasDefault = False #<Boolean>
 		self.defaultValue = None
 		self.maxLen = None #Null<Integer>if non-null indicates the maximum logical length to the entity
@@ -131,6 +133,7 @@ class Entity(Type):
 		self.aliases = {}#AliasString:InternalString
 		self.fields = {}	#String: Entity_Field
 		self.identifierField = None	#<Entity_Field> the unique identifier of the item, if one exists
+		self.autoKeyNum = -1
 			
 	def getRootType(self):
 		return Type("Entity")
@@ -150,19 +153,24 @@ class Entity(Type):
 	##
 	# Obtains a set of all keys/composites which can identify the identity.
 	# We decide ordering of key names here, and we use alphabetic for now (this
-	# applies to the component keys of RECORD_KEY type)
+	# applies to the component keys of RECORD_KEY type and combined ALT_RECORD_KEY
+	# entries)
 	def getKeySet( self ):
 		ret = []
+		alt = defaultdict(list)
 		comp = []
 		for field in self.fields.itervalues():
 			if field.keyType == KEY_TYPE_RECORD:
 				comp.append( field )
 			elif field.keyType == KEY_TYPE_ALT:
-				ret.append( [ field ] )
+				alt[field.keyNum].append( field )
 			
 		if len(comp) > 0:
 			comp.sort(key=lambda x:x.name)
 			ret.append( comp )
+		for k,v in alt.items():
+			v.sort(key=lambda x:x.name)
+			ret.append( v )
 			
 		return ret
 	

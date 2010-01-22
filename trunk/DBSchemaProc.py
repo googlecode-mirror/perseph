@@ -196,6 +196,11 @@ class Processor:
 						field.keyType = DBSchema.KEY_TYPE_RECORD
 					elif opt[0] == 'ALT_RECORD_KEY':
 						field.keyType = DBSchema.KEY_TYPE_ALT
+						if len( opt ) > 1:
+							field.keyNum = opt[1]
+						else:
+							field.keyNum = entity.autoKeyNum
+							entity.autoKeyNum -= 1
 					elif opt[0] == 'DEFAULT':
 						field.hasDefault = True
 						field.defaultValue = opt[1]

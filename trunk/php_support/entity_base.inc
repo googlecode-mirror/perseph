@@ -275,6 +275,15 @@ abstract class DBS_EntityBase {
 	}
 	
 	/**
+	 * This is to ensure future compatibility with saveOrAdd. This is used
+	 * by sub-class factory methods to indicate they behave like a findOrCreate
+	 * method.
+	 */
+	protected function enableSaveOrAdd() {
+		//nothing for now
+	}
+	
+	/**
 	 * Objects in PHP 5 are like C pointers in that the actual object will never actually by
 	 * copied in normal semantics, only via a clone operator.  In the persephone sense
 	 * this doesn't have a clear meaning and is thus blocked.

@@ -124,6 +124,7 @@ class Entity_Field:
 		self.allowNull = False #<Boolean> does the field allow a null assignment
 		self.label = None #<String> logical label of the field, defaults to name
 		self.desc = None #<String> description, no default
+		self.phpCache = None #Array<String> first item is the name of the cache calss
 	
 class Entity(Type):
 	def __init__(self,name):
@@ -192,6 +193,14 @@ class Entity(Type):
 	def getTitle( self ):
 		return self.titleField
 
+	##
+	# Determine if any field is used as a cachec key in PHP
+	def isPHPCache( self ):
+		for field in self.fields.itervalues():
+			if field.phpCache != None:
+				return True;
+		return False;
+		
 
 class Entity_Normal(Entity):
 	def __init__(self,name):

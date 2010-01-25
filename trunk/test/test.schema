@@ -7,7 +7,8 @@ type CustomID<Integer> { 	/* The base type says how this type behaves (for forms
 entity DBSTest {
 	fields {
 		ID<CustomID> 
-			ALT_RECORD_KEY;
+			ALT_RECORD_KEY
+			PHP_CACHE(TestCache,"id");
 		Name<String> 
 			ALT_RECORD_KEY TITLE MAXLEN(50)
 			LABEL("Logical Name")

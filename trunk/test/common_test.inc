@@ -1,6 +1,9 @@
 <?php
 require_once 'php_settings.inc';
 
+require_once dirname(__FILE__).'/../php_support/cache.inc';
+require_once dirname(__FILE__) . '/testcache.inc';
+
 function std_header( ) {
 	header( "Content-Type: text/html; charset=utf-8" );	//TODO: hmm, depends/requires itnernal encoding to be utf-8...
 }

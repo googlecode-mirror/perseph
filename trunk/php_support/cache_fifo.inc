@@ -4,7 +4,7 @@ require_once dirname(__FILE__).'/cache.inc';
 
 /**
  * Implements a FIFO cache for entities.  This cache has a maximum size and
- * the most recently added items are preferred to older items.
+ * the most recently added items are preferred to older items. It is a request based cache.
  */
 final class FIFOCache implements EntityCache {
 	

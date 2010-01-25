@@ -820,6 +820,11 @@ class DBSTest_Basic extends TestCase {
 		$cache->inCache = array();
 		$l = DBSTest::findWithID( $n->id );
 		$this->assertEquals( $l, $cache->lastAddObject );
+		
+		//test that nothing is altered when saving by name
+		$q = DBSTest::withName( 'Cache2:' . time() );
+		$q->add();
+		$this->assertEquals( $l->id, $cache->lastAddKey );
 	}
 }
 ?>

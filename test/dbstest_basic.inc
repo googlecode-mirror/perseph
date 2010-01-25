@@ -783,5 +783,43 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( 10, $q->decimal );
 		$this->assertEquals( 4, $q->float );
 	}
+	
+	function testCache() {
+		$cache = DBSTest::getCacheID();
+		
+		$a = DBSTest::withID( 123 );
+		$this->assertEquals( 123, $cache->lastIs );
+		
+		//ensure added to cache on add
+		$n = DBSTest::createWithNothing();
+		$n->name = 'Cache:' . time();
+		$n->decimal = 42;
+		$n->add();
+		$this->assertEquals( $n->name, $cache->lastAddObject->name );
+		$this->assertEquals( $n->id, $cache->lastAddKey );
+		$this->assertEquals( 42, $cache->lastAddObject->decimal );
+		
+		//double check the object was correct
+		$n->decimal = 43;
+		$this->assertEquals( 43, $cache->lastAddObject->decimal );
+		
+		//ensure updated on save
+		$cache->lastAddKey = null;
+		$cache->lastAddObject = null;
+		$n->save();
+		$this->assertEquals( $n, $cache->lastAddObject );
+		
+		//ensure with grabs from cache
+		$cache->inCache[$n->id] = $n;
+		$q = DBSTest::withID( $n->id );
+		$this->assertEquals( $n, $cache->lastAddObject );
+		
+		//ensure loading updates cache as well
+		$cache->lastAddKey = null;
+		$cache->lastAddObject = null;
+		$cache->inCache = array();
+		$l = DBSTest::findWithID( $n->id );
+		$this->assertEquals( $l, $cache->lastAddObject );
+	}
 }
 ?>

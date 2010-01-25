@@ -939,7 +939,7 @@ class $class extends DBS_${type}EntityBase {
 			self.wrt("""
 	static private $$_cache$key;
 	
-	static protected function getCache$key() {
+	static public function getCache$key() {
 		if( self::$$_cache$key == null )
 			self::$$_cache$key =  new $create( $params );
 		return self::$$_cache$key;

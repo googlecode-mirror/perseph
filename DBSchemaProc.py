@@ -221,8 +221,10 @@ class Processor:
 						field.desc = opt[1]
 					elif opt[0] == 'IDENTIFIER':
 						if entity.identifierField != None:
-							errorOn( fieldSpce, "entity has duplicate IDENTIFIER, only one supported" )
+							errorOn( fieldSpec, "entity has duplicate IDENTIFIER, only one supported" )
 						entity.identifierField = field
+					elif opt[0] == 'PHP_CACHE':
+						field.phpCache = opt[1:]
 					else:
 						errorOn( fieldSpec, "unrecognized option: %s " % opt )
 					

@@ -170,6 +170,7 @@ class PHPEmitter:
 		for keys in keyset:
 			keyName = ''
 			keyParamStr = ''
+			hasCache = False
 			for i in range( len(keys) ):
 				if i > 0:
 					keyName += '_'
@@ -177,8 +178,10 @@ class PHPEmitter:
 				
 				keyName += keys[i].name;
 				keyParamStr += "$key%d" % i
+				if keys[i].phpCache != None:
+					hasCache = True
 			
-			self.genKeyPart( en, outerEn, keys, keyName, keyParamStr )
+			self.genKeyPart( en, outerEn, keys, keyName, keyParamStr, hasCache )
 			
 	def genGetDB( self, loc ):
 		self.wr("static private function &getDB() {\n" );
@@ -223,8 +226,17 @@ class PHPEmitter:
 		
 	##########################################################
 	# All the parts working on the keys of the entity -- in a mapper
-	def genKeyPart( self, en, outerEn, keys, keyName, keyParamStr ):
+	def genKeyPart( self, en, outerEn, keys, keyName, keyParamStr, hasCache ):
 		self.wr( "//*** genKeyPart\n" )
+		
+		# setup cache string
+		cache = ''
+		if hasCache:
+			cache = """
+	if( self::getCache%s()->isCached( %s ) )
+		return self::getCache%s()->getCached( %s );
+""" % ( keyName, keyParamStr, keyName, keyParamStr )
+	
 		#Emit the finder to load from the DB (TODO: ensure only one record exists!)
 		self.wrt("""
 static public function findWith${keyName}( $keyParamStr ) {
@@ -247,6 +259,7 @@ static public function createWith${keyName}($keyParamStr) {
 
 //create an object with the specified key (no other fields will be loaded until needed)
 static public function with${keyName}($keyParamStr) {
+	$cache
 	$$ret = $instName::withNothing();
 	$keyAssignBlock
 	return $$ret;
@@ -254,7 +267,8 @@ static public function with${keyName}($keyParamStr) {
 
 """, { 'keyName': keyName, 'keyParamStr': keyParamStr,
 	'keyAssignBlock': self.getKeyAssignBlock( keys ),
-	'instName': outerEn.phpInstClassName } )
+	'instName': outerEn.phpInstClassName,
+	'cache': cache } )
 
 	def getKeyAssignBlock( self, keys ):
 		ret = ""
@@ -378,13 +392,15 @@ protected function _maybeLoad( $$reload ) {
 		$$this->_load_keys = null;	//reset these keys as we didn't actually load
 		return false;
 	}
+	$cache
 	return true;
 }
 """, { 
 			'loadkeys': self.getKeyBlock( loc.fields, False, lambda key:
 				"$load_keys[] = %s;" % key.phpLoadDescriptor(loc) ),
 			'table': loc.provider.phpTableRef( loc.table ),
-			'members': self.getFields( self.FOR_LOAD, loc.fields )
+			'members': self.getFields( self.FOR_LOAD, loc.fields ),
+			'cache': self.getAddToCache( en )
 			} )
 				
 
@@ -431,14 +447,30 @@ protected function _save( $$adding ) {
 	//now reclaculate keys in case a load field was changed, or some default set
 	//NOTE: we are no longer in "adding" mode here!
 	$$this->_load_keys = $$this->getSaveKeys( false );
+	$cache
 }""", {
 		'savekeys': self.getKeyBlock( loc.fields, True, lambda key:
 				"$keys[] = %s;" % key.phpLoadDescriptor(loc) ),
 		'readonly': self.getCheckReadOnly( loc.fields ),
 		'table': loc.provider.phpTableRef( loc.table ),
 		'members': self.getSaveMembers( loc.fields ),
-		'insertField': self.getInsertFields( loc.fields )
+		'insertField': self.getInsertFields( loc.fields ),
+		'cache': self.getAddToCache( en )
 		} )
+		
+		
+	# Updates the cache when, used when an item is saved or loaded
+	# we have to check if the key field name is defined first since in some
+	# cases it may not be (incomplete data, or alternate keys)
+	def getAddToCache( self, en ):
+		buf = ""
+		# check for cached keys
+		for field in en.fields.itervalues():
+			if field.phpCache != None:
+				buf += "if( $this->__has( '%s' ) )" % field.phpName
+				buf += "self::getCache%s()->add( $this->%s, $this );\n" % ( field.name, field.phpName )
+				
+		return buf
 	
 	def getInsertFields( self, fields ):
 		for field in fields:
@@ -587,6 +619,7 @@ function _maybeLoad( $reload ) {
 		for merge in en.merges.itervalues():
 			self.wr( "$ret &= $this->%s->maybeLoad( $reload );\n" % merge.phpMergeName );
 			
+		self.wr( self.getAddToCache( en ) )
 		self.wr( "return $ret;\n}\n" );
 		
 	##################################################################
@@ -894,10 +927,32 @@ class $class extends DBS_${type}EntityBase {
 		'type': type
 		} )
 	
+		# Create merge declarations
 		if type == 'Merge':
 			for merge in en.merges.itervalues():
 				self.wr("\tprotected $%s; //<%s>\n" % ( merge.phpMergeName, merge.phpClassName ) )
+				
+		# Create cache declarations
+		for field in en.fields.itervalues():
+			if field.phpCache == None:
+				continue
+			self.wrt("""
+	static private $$_cache$key;
+	
+	static protected function getCache$key() {
+		if( self::$$_cache$key == null )
+			self::$$_cache$key =  new $create( $params );
+		return self::$$_cache$key;
+	}
+		
+""", { 'key': field.name,
+			'create' : field.phpCache[0],
+			'params' : ",".join( [ "'%s'" % p for p in field.phpCache[1:] ] )
 
+		} )
+
+	#################################################
+	# Close class
 	def genCloseEntityClass( self, en ):
 		self.wrt( """} //end of class
 

@@ -37,7 +37,9 @@ test-build: parser $(GENDIR)/schema.inc $(GENDIR)/mdb2_schema.inc
 # include . so that any changes will cause it to regenerate the file
 $(GENDIR)/schema.inc: $(TESTDIR)/gen.test.schema $(TESTDIR)/test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/gen.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/
-	
+
+genschema: $(GENDIR)/schema.inc
+
 $(TESTDIR)/pgsql.schema.inc: $(TESTDIR)/gen.pgsql.test.schema . | $(GENDIR)
 	python Persephone.py $(TESTDIR)/gen.pgsql.test.schema $(TESTDIR)/source.schema $(TESTDIR)/test.schema $(GENDIR)/pgsql.
 	

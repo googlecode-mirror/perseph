@@ -39,6 +39,8 @@ class TestLimit
 	static public $time24H = false;
 }
 
+require_once 'common_test.inc';
+
 if( strpos( $mdburl, 'pgsql:' ) === 0 )
 {
 	TestLimit::$time24H = true;
@@ -51,7 +53,6 @@ require_once dirname( __FILE__ ) . '/gen/mdb2_schema.inc';
 include 'dbstest_basic.inc';
 include 'dbstest_mdb2.inc';
 include 'dbstest_functions.inc';
-require_once 'common_test.inc';
 
 $skipCaseTest = false;
 

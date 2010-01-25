@@ -109,7 +109,7 @@ abstract class DBS_TypeDescriptor {
 	abstract protected function checkType( $field, $value );
 }
 
-abstract class DBS_EntityBase {
+abstract class DBS_EntityBase implements Serializable {
 	protected $_data_type = null; //<DBS_TypeDescriptor> to be set in derived class
 	
 	public function getType() {
@@ -151,7 +151,6 @@ abstract class DBS_EntityBase {
 			
 		if( !$this->maybeLoad( false ) )
 			throw new DBS_DBException( DBS_DBException::NOT_IN_DB, null, $this->getAnyIdentifier() );
-		$this->_status = self::STATUS_EXTANT;
 	}
 	
 	/**
@@ -186,9 +185,7 @@ abstract class DBS_EntityBase {
 		if( $this->maybeLoadCallback !== null )
 			call_user_func( $this->maybeLoadCallback );
 		$ret = $this->_maybeLoad( $reload );
-		if( $ret )
-			$this->_status = DBS_EntityBase::STATUS_EXTANT;
-		else
+		if( !$ret )
 			$this->_status = DBS_EntityBase::STATUS_NEW;
 		return $ret;
 	}
@@ -331,6 +328,13 @@ abstract class DBS_EntityBase {
 	abstract protected function _save( $adding );
 	
 	abstract public function getIdentifier();
+	
+	/**
+	 * By default, and for safety, these objects can't be serialized. The derived classes
+	 * must take care of it.
+	 */
+	public function serialize( ) { throw new Exception( "Unsupported" ); }
+	public function unserialize( $serialized ) { throw new Exception( "Unsupported" ); }
 }
 
 abstract class DBS_NormalEntityBase extends DBS_EntityBase {
@@ -485,6 +489,112 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 	 */
 	protected function _save( $adding ) {
 		throw new DBS_LogicException( DBS_LogicException::NO_SAVE_DEFINED );
+	}
+	
+	/**
+	 * Custom serailizer for entity types. This ensures the linked entities are not seralized
+	 * with this one, rather simply an identifier. This may be vital to some uses, in fact somebody
+	 * may want a flag saying it should be included.
+	 *
+	 * This also patches broken types like DateTime (PHP: fixed in 5.3.0 apparently)
+	 */
+	public function serialize( ) { 
+		$pack = array();
+		//data_type (RECREATE)
+		$pack['_status'] = $this->_status;
+		$pack['_logic_block_save'] = $this->_logic_block_save;
+		//maybeLoadCallback (DROP)
+		//backModifiedCallback (DROP)
+		//_isLoading (DROP) can't serialize in this state
+		assert( !$this->_isLoading );
+		$pack['_data_dirty'] = $this->_data_dirty;
+		//patchup special data
+		$pack['_load_keys'] = $this->_serialPatch( $this->_load_keys, true );
+		$pack['_data'] = $this->_serialPatch( $this->_data, false );
+		return serialize( $pack );
+	}
+	
+	private function _serialPatch( $arr, $loadKeys )
+	{
+		if( $arr === null )
+			return null;
+			
+		$data = array();
+		foreach( $arr as $name => $indata )
+		{
+			$value = $loadKeys ? $indata[3] : $indata;
+			
+			if( $value instanceof DateTime )
+				$value = $value->format( DateTime::RFC3339 );
+			else if( $value instanceof DBS_EntityBase )
+				$value = $value->getAnyIdentifier();
+				
+			if( $loadKeys )
+			{
+				$data[$name] = $indata;
+				$data[$name][3] = $value;
+			}
+			else
+				$data[$name] = $value;
+		}
+		return $data;
+	}
+	
+	/**
+	 *  Recreates the instance from the serial form. This undoes the things that serialize has done.
+	 *
+	 * Note that since type descriptors are always the same they are just attached to the static
+	 * version.
+	 */
+	public function unserialize( $serialized ) { 
+		$pack = @unserialize( $serialized );
+		if( $pack === false )
+			throw new Exception( "Could not unserialize" );
+		
+		$this->_status = $pack['_status'];
+		$this->_logic_block_save = $pack['_logic_block_save'];
+		$this->_data = $pack['_data'];
+		$this->_data_dirty = $pack['_data_dirty'];
+		$this->_load_keys = $pack['_load_keys'];
+		$this->_data_type = $this->serialGetTypeDescriptor();
+		
+		//special unpacking
+		$this->_serialUnpatch( $this->_load_keys, true );
+		$this->_serialUnpatch( $this->_data, false );
+		return $this;
+	}
+	
+	private function _serialUnpatch( &$arr, $loadKeys )
+	{
+		if( $arr === null )
+			return;
+			
+		foreach( $arr as $name => $data )
+		{
+			$value = $loadKeys ? $data[3] : $data;
+			
+			if( $value === null )
+				continue;
+				
+			$type = $this->_data_type->getBaseType( $name );
+			if( $type === 'DateTime' || $type === 'Date' )
+				$value = new DateTime( $value );
+			else if( $type === 'Entity' )
+			{
+				$class = $this->_data_type->getCustomType( $name );
+				$value = call_user_func( array( $class, 'withIdentifier' ), $value );
+			}
+		
+			if( $loadKeys )
+				$arr[$name][3] = $value;
+			else
+				$arr[$name] = $value;
+		}
+	}
+	
+	protected function serialGetTypeDescriptor()
+	{
+		throw new Exception( "No unserial type descriptor defined" );
 	}
 }
 

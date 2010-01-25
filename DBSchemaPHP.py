@@ -392,6 +392,7 @@ protected function _maybeLoad( $$reload ) {
 		$$this->_load_keys = null;	//reset these keys as we didn't actually load
 		return false;
 	}
+	$$this->_status = DBS_EntityBase::STATUS_EXTANT;
 	$cache
 	return true;
 }
@@ -619,6 +620,7 @@ function _maybeLoad( $reload ) {
 		for merge in en.merges.itervalues():
 			self.wr( "$ret &= $this->%s->maybeLoad( $reload );\n" % merge.phpMergeName );
 			
+		self.wr( "	$this->_status = DBS_EntityBase::STATUS_EXTANT;\n");
 		self.wr( self.getAddToCache( en ) )
 		self.wr( "return $ret;\n}\n" );
 		
@@ -911,6 +913,10 @@ class $class extends DBS_${type}EntityBase {
 		if( self::$$_typeDescriptor == null )
 			self::$$_typeDescriptor = new ${class}TypeDescriptor();
 		return self::$$_typeDescriptor;
+	}
+			
+	protected function serialGetTypeDescriptor() {
+		return self::getTypeDescriptor();
 	}
 	
 	protected function __construct() {

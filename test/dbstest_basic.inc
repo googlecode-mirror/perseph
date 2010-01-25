@@ -821,5 +821,52 @@ class DBSTest_Basic extends TestCase {
 		$l = DBSTest::findWithID( $n->id );
 		$this->assertEquals( $l, $cache->lastAddObject );
 	}
+	
+	function testSerialPlain() {
+		$n = DBSTest::createWithNothing();
+		$n->name = 'Serial' . time();
+		$n->dateTime = new DateTime();
+		$n->decimal = rand( 0, 100000 ) / 1000.0;
+		$n->float = rand() / getrandmax();
+		$n->memoryOnly = rand( 0, 1000 );
+		
+		$s = serialize( $n );
+		$q = unserialize( $s );
+		
+		$this->assertEquals( $n->name, $q->name );
+		$this->assertEquals( $n->decimal, $q->decimal );
+		$this->assertEquals( $n->float, $q->float );
+		$this->assertEquals( $n->memoryOnly, $q->memoryOnly );
+		$this->assertTrue( $q->isNew() );
+		$this->assertTrue( $q->__isDirty('name' ) );
+		$this->assertEquals( timestamp_from_datetime( $n->dateTime ), timestamp_from_datetime( $q->dateTime ) );
+	}
+	
+	//this tests links by identifier and the loadkeys serialize
+	function testSerialEntity() {
+		$a = DBSName::createWithID( 11001 );
+		$a->name = 'One';
+		$a->add();
+		
+		$b = DBSName::createWithID( 11002 );
+		$b->name = 'Two';
+		$b->add();
+		
+		$q = DBSLinkNames::createWithNothing();
+		$q->left = $a;
+		$q->right = $b;
+		$q->value = 123;
+		$q->add();
+		
+		$s = serialize( $q );
+		//var_dump( $s );
+		$l = unserialize( $s );
+		
+		$this->assertTrue( $l->left->isUnknown() ); //since only created with identifier
+		$this->assertEquals( $q->left->id, $l->left->id );
+		$this->assertTrue( $l->right->isUnknown() ); //since only created with identifier
+		$this->assertEquals( $q->right->id, $l->right->id );
+		$this->assertEquals( $q->value, $l->value );
+	}
 }
 ?>

@@ -514,6 +514,14 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		return serialize( $pack );
 	}
 	
+	/**
+	 * Some values can't, or shouldn't be stored using their normal serialization.
+	 *
+	 * DateTime < 5.3.0 just can't be serialized
+	 * Entity : We don't want to store a chain of data, rather just the immediate value and
+	 *		an identifier. Here the classname is stored as well, though usually we would know
+	 *		what class it is on reload. This allows easier subclass support and "special" cases.
+	 */
 	private function _serialPatch( $arr, $loadKeys )
 	{
 		if( $arr === null )
@@ -523,12 +531,13 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		foreach( $arr as $name => $indata )
 		{
 			$value = $loadKeys ? $indata[3] : $indata;
+			if( $loadKeys )
+				$name = $indata[0];
 			
 			if( $value instanceof DateTime )
 				$value = $value->format( DateTime::RFC3339 );
 			else if( $value instanceof DBS_EntityBase )
-				$value = $value->getAnyIdentifier();
-				
+				$value = array( get_class( $value ), $value->getAnyIdentifier() );
 			if( $loadKeys )
 			{
 				$data[$name] = $indata;
@@ -572,18 +581,17 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 		foreach( $arr as $name => $data )
 		{
 			$value = $loadKeys ? $data[3] : $data;
-			
 			if( $value === null )
 				continue;
+				
+			if( $loadKeys )
+				$name = $data[0];
 				
 			$type = $this->_data_type->getBaseType( $name );
 			if( $type === 'DateTime' || $type === 'Date' )
 				$value = new DateTime( $value );
 			else if( $type === 'Entity' )
-			{
-				$class = $this->_data_type->getCustomType( $name );
-				$value = call_user_func( array( $class, 'withIdentifier' ), $value );
-			}
+				$value = call_user_func( array( $value[0], 'withIdentifier' ), $value[1] );
 		
 			if( $loadKeys )
 				$arr[$name][3] = $value;

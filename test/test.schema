@@ -328,10 +328,23 @@ mapper ComboAltKey {
 
 entity ExtDefault {
 	fields {
+		ID<Integer> RECORD_KEY;
 		DateTime<DateTime> DEFAULT(Now);
 		Time<Time> DEFAULT(Now);
 		Date<Date> DEFAULT(Now);
-		Custom<String>;
+		Custom<String> DEFAULT_FUNC(str_repeat,A,3);
+		Empty<String> DEFAULT("");
+		Counter<Decimal> DEFAULT_FUNC(next_counter);
+	}
+}
+
+mapper ExtDefault {
+	provider DBTest;
+	fields {
+		using basic {
+			@ID => ID;
+			@Decimal = Counter;
+		}
 	}
 }
 

@@ -1,5 +1,12 @@
 <?php
 
+$counter = 0;
+function next_counter()
+{
+	global $counter;
+	return $counter++;
+}
+
 class DBSTest_Clean extends TestCase {
 	function testCleanup() {
 		DBSTest::searchAndDelete( DBS_Query::matchAll() );
@@ -874,6 +881,25 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( time(), timestamp_from_datetime( $n->dateTime ) );
 		$this->assertEquals( default_Time_now(), $n->time );
 		$this->assertEquals( timestamp_from_datetime( default_Date_now() ), timestamp_from_datetime( $n->date ) );
+		$this->assertEquals( "", $n->empty );
+		$this->assertEquals( "AAA", $n->custom );
+		
+		//now the counter, we have expectations of when /how often it is called/how data is stored
+		global $counter;
+		
+		$counter = 123;
+		$a = ExtDefault::createWithNothing();
+		$this->assertEquals( 123, $a->counter );
+		$this->assertEquals( 123, $a->counter ); //first time should freeze the value
+		$this->assertEquals( 124, $counter );
+		
+		//and the defaults should be saved for new objects
+		$b = ExtDefault::createWithNothing();
+		$b->add();
+		
+		$counter = 200;
+		$c = ExtDefault::findWithID( $b->id );
+		$this->assertEquals( 124, $c->counter );
 	}
 }
 ?>

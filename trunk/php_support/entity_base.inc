@@ -42,6 +42,11 @@ function convert_StringNull_to_StringEmpty_inv( $val ) { return strlen( $val ) ?
 /* Functions for those still using PHP 5.2 lacking some fundamental date operations */
 require_once dirname(__FILE__).'/date_funcs.inc';
 
+/* Standard defaults */
+function default_DateTime_now() { return new DateTime(); }
+function default_Date_now() { $d = new DateTime(); $d->setTime(0,0,0); return $d; }
+function default_Time_now() { return time() - timestamp_from_datetime( default_DateTime_now() ); }
+
 /**
  * WARNING: DO NOT USE the data members in this descriptor directly. They are public only
  * since other framework classes need them.  If you need this data use *ONLY* the accessor
@@ -103,6 +108,18 @@ abstract class DBS_TypeDescriptor {
 	public function getOption( $name, $def = null ) {
 		if( isset( $this->options[$name] ) )
 			return $this->options[$name];
+		return $def;
+	}
+	
+	/**
+	 * Obtains the default value for a field. This assumes a default exists.
+	 */
+	public function defaultFor( $field ) {
+		$def = $this->defaults[$field];
+		//is it a functional definition
+		if( is_array( $def ) )
+			return call_user_func( $def[0], array_slice( $def, 1 ) );
+		
 		return $def;
 	}
 	
@@ -397,7 +414,13 @@ abstract class DBS_NormalEntityBase extends DBS_EntityBase {
 			
 		//defaults must come after attempting to load, since real data overrides a default
 		if( array_key_exists( $field, $this->_data_type->defaults ) )
-			return $this->_data_type->defaults[$field];
+		{
+			//once a default is accessed it becomes a real value to maintain consistancy, this
+			//is mostly relevant for dynamic defaults and some tricky save/load situations
+			$val = $this->_data_type->defaultFor( $field );
+			$this->__set( $field, $val );
+			return $val;
+		}
 			
 		throw new DBS_FieldException( $field, DBS_FieldException::UNAVAILABLE );
 	}

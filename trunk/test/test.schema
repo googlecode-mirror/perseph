@@ -326,6 +326,15 @@ mapper ComboAltKey {
 	}
 }
 
+entity ExtDefault {
+	fields {
+		DateTime<DateTime> DEFAULT(Now);
+		Time<Time> DEFAULT(Now);
+		Date<Date> DEFAULT(Now);
+		Custom<String>;
+	}
+}
+
 /********************************************************************
  * For Merge Testing
  *******************************************************************/

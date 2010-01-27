@@ -118,7 +118,7 @@ abstract class DBS_TypeDescriptor {
 		$def = $this->defaults[$field];
 		//is it a functional definition
 		if( is_array( $def ) )
-			return call_user_func( $def[0], array_slice( $def, 1 ) );
+			return call_user_func_array( $def[0], array_slice( $def, 1 ) );
 		
 		return $def;
 	}

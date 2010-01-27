@@ -1169,8 +1169,11 @@ function _${inst}_privConstruct() {
 		style = None
 		raw = None
 		
+		if type(value).__name__ == 'list':
+			style = 'func'
+			raw = value
 		# Handle null values
-		if value == None:
+		elif value == None:
 			raw = 'null';
 		elif tname == 'String' or tname =='Text':
 			raw = "'%s'" % self.addslashes( value )
@@ -1188,19 +1191,19 @@ function _${inst}_privConstruct() {
 		elif tname == 'DateTime':
 			if value == 'Now':
 				style = 'func'
-				raw = 'default_DateTime_now'
+				raw = [ 'default_DateTime_now' ]
 			else:
 				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
 		elif tname == 'Date':
 			if value == 'Now':
 				style = 'func'
-				raw = 'default_Date_now'
+				raw = [ 'default_Date_now' ]
 			else:
 				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
 		elif tname == 'Time':
 			if value == 'Now':
 				style = 'func'
-				raw = 'default_Time_now'
+				raw = [ 'default_Time_now' ]
 			else:
 				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
 		else:
@@ -1209,7 +1212,7 @@ function _${inst}_privConstruct() {
 		if style == 'func':
 			if expr:
 				return "%s()" % raw
-			return "array( '%s' )" % raw;
+			return self.getPHPArrayStr( [ "'%s'" % r for r in raw ] )
 		else:
 			return raw
 		

@@ -207,6 +207,9 @@ class Processor:
 						#TODO: only handle NULL if a raw string, not quoted
 						if field.defaultValue == 'NULL':
 							field.defaultValue = None
+					elif opt[0] == 'DEFAULT_FUNC':
+						field.hasDefault = True
+						field.defaultValue = opt[1:] # Store rest as name/parameters
 					elif opt[0] == 'TITLE':
 						if entity.titleField != None:
 							errorOn( fieldSpec, "entity has duplicate TITLE" )

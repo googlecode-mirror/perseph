@@ -868,5 +868,12 @@ class DBSTest_Basic extends TestCase {
 		$this->assertEquals( $q->right->id, $l->right->id );
 		$this->assertEquals( $q->value, $l->value );
 	}
+	
+	function testDefaults() {
+		$n = ExtDefault::createWithNothing();
+		$this->assertEquals( time(), timestamp_from_datetime( $n->dateTime ) );
+		$this->assertEquals( default_Time_now(), $n->time );
+		$this->assertEquals( timestamp_from_datetime( default_Date_now() ), timestamp_from_datetime( $n->date ) );
+	}
 }
 ?>

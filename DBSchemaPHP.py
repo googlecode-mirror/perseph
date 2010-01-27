@@ -770,7 +770,7 @@ class ${class}TypeDescriptor extends DBS_TypeDescriptor {
 			self.wrt("""	'$name' => $const,
 				""", {
 					'name': field.phpName,
-					'const': self.constantExpr( field.fieldType, field.defaultValue )
+					'const': self.constantExpr( field.fieldType, field.defaultValue, False )
 				} )
 		self.wr( ');\n' )
 				
@@ -1062,7 +1062,7 @@ function _${inst}_privConstruct() {
 				else:	#Entity_Field
 					expr  = "$this->%s" % filter.containerRef.phpName
 			else:
-				expr = self.constantExpr( filter.field.fieldType, filter.const )
+				expr = self.constantExpr( filter.field.fieldType, filter.const, True )
 				
 			if isinstance( filter, DBSchema.Search_FilterFieldPattern):
 				return "DBS_Query::matchStringPattern( '%s', %s )" \
@@ -1159,27 +1159,59 @@ function _${inst}_privConstruct() {
 	
 	##
 	# Produces the literal constant expression for a value of a given type
-	# TODO: Should this not be part of the processor?
-	def constantExpr( self, fieldType, value ):
+	# TODO: Should this not be part of the processor? I'm guessing not, but maybe parts of it
+	#
+	# @param fieldType [in] what type of field
+	# @param value [in] the entered value as a string
+	# @param expr [in] True if final expression desired, False if array encoded (for entity_base)
+	def constantExpr( self, fieldType, value, expr ):
 		tname = fieldType.name
+		style = None
+		raw = None
+		
 		# Handle null values
 		if value == None:
-			return 'null';
-		
-		if tname == 'String' or tname =='Text':
-			return "'%s'" % self.addslashes( value )
+			raw = 'null';
+		elif tname == 'String' or tname =='Text':
+			raw = "'%s'" % self.addslashes( value )
 		elif tname == 'Integer':
-			return "%d" % atol( value )
+			raw = "%d" % atol( value )
 		elif tname == 'Float' or tname == 'Decimal':
-			return "%f" % atof( value )
+			raw = "%f" % atof( value )
 		elif tname == 'Bool':
 			if value == 'True':
-				return True
-			if value == 'False':
-				return False
-			raise Exception, "Invalid Bool value for constant %s => %s"  % ( tname, value )
+				raw = 'true'
+			elif value == 'False':
+				raw = 'false'
+			else:
+				raise Exception, "Invalid Bool value for constant %s => %s"  % ( tname, value )
+		elif tname == 'DateTime':
+			if value == 'Now':
+				style = 'func'
+				raw = 'default_DateTime_now'
+			else:
+				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
+		elif tname == 'Date':
+			if value == 'Now':
+				style = 'func'
+				raw = 'default_Date_now'
+			else:
+				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
+		elif tname == 'Time':
+			if value == 'Now':
+				style = 'func'
+				raw = 'default_Time_now'
+			else:
+				raise Exception, "Invalid DateTime value for constant %s => %s" % ( tname, value )
 		else:
 			raise Exception, "Unknown type for constant %s " % tname
+		
+		if style == 'func':
+			if expr:
+				return "%s()" % raw
+			return "array( '%s' )" % raw;
+		else:
+			return raw
 		
 	##
 	# like the PHP function of the same name

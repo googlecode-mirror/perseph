@@ -463,13 +463,14 @@ protected function _save( $$adding ) {
 	# Updates the cache when, used when an item is saved or loaded
 	# we have to check if the key field name is defined first since in some
 	# cases it may not be (incomplete data, or alternate keys)
+	# NOTE: the use of __get rather than -> some PHP versions seem to do this differently!?
 	def getAddToCache( self, en ):
 		buf = ""
 		# check for cached keys
 		for field in en.fields.itervalues():
 			if field.phpCache != None:
 				buf += "if( $this->__has( '%s' ) )" % field.phpName
-				buf += "self::getCache%s()->add( $this->%s, $this );\n" % ( field.name, field.phpName )
+				buf += "self::getCache%s()->add( $this->__get('%s'), $this );\n" % ( field.name, field.phpName )
 				
 		return buf
 	

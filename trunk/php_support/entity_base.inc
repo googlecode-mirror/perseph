@@ -901,6 +901,13 @@ function _dbs_dbsource_where( &$db, $table, $fields, DBS_Where_Item $q, $proto )
 				$op = $q->op;	//TODO: Check for correctness
 				$value = $db->quote( $value, $dbtype );
 			}
+		} else if( $q instanceof DBS_Where_MatchMember ) {
+			$tuple = _find_member( $q->value, $fields );
+			if( $tuple === null )
+				throw new Exception( "Unknown field: " . $q->value );
+			
+			$op = $q->op;
+			$value = $db->escapeColumn( $tuple[1] );
 		} else if( $q instanceof DBS_Where_MatchString ) {
 			if( $dbtype !== 'String' && $dbtype !== 'Text' )
 				throw new Exception( 'MatchString can only be used with string/text columns, attempted: ' . $dbtype );

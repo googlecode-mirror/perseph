@@ -19,10 +19,24 @@ class DBS_Query {
 	const SORT_ASC = 'ASC';
 	const SORT_DESC = 'DESC';
 	
+	/**
+	 * Compares a member value to a specific value.
+	 */
 	static public function match( $member, $value, $op = '=' ) {
 		$ret = new DBS_Where_Match();
 		$ret->member = $member;
 		$ret->value = $value;
+		$ret->op = $op;
+		return $ret;
+	}
+	
+	/**
+	 * Compares one member value to that of another member.
+	 */
+	static public function matchMember( $memberA, $memberB, $op = '=' ) {
+		$ret = new DBS_Where_MatchMember();
+		$ret->member = $memberA;
+		$ret->value = $memberB;
 		$ret->op = $op;
 		return $ret;
 	}
@@ -226,6 +240,11 @@ class DBS_Where_MatchSQL extends DBS_Where_Item {
 
 class DBS_Where_Match extends DBS_Where_Member {
 	public $value;	//<*>
+	public $op;	//<String>
+}
+
+class DBS_Where_MatchMember extends DBS_Where_Member {
+	public $value;	//<String> the other member field
 	public $op;	//<String>
 }
 

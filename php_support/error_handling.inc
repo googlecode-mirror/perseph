@@ -31,8 +31,16 @@ function strict_clean_error_handler( $no, $msg, $file, $line ) {
 }
 set_error_handler('strict_clean_error_handler');
 
-assert_options( ASSERT_ACTIVE, 1);
-assert_options( ASSERT_WARNING, 1);
-assert_options( ASSERT_BAIL, 1);
+assert_options( ASSERT_ACTIVE, 1 );
+assert_options( ASSERT_WARNING, 1 );
+assert_options( ASSERT_BAIL, 0 ); //throw exception below instead
+assert_options( ASSERT_QUIET_EVAL, 0 );
+
+//track the stack with assertions.
+function exception_assert_handler($file, $line, $code)
+{	
+	throw new Exception( "Assert Fail: $file: $line: $code" );
+}
+assert_options(ASSERT_CALLBACK, 'exception_assert_handler');
 
 ?>

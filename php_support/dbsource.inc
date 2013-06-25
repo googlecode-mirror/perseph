@@ -313,7 +313,7 @@ abstract class DBSourceBase implements DBSource {
 	var $isinit;
 	var $str_enc;   //the string encoding used in the DB (what is returned raw)
 	
-	private $timezone;
+	protected $timezone;
 
 	public function setTimezone( $tz ) {
 		if( !($tz instanceof DateTimeZone) )
@@ -555,7 +555,7 @@ abstract class DBSourceBase implements DBSource {
 				return _dbs_decode_time( $value );
 				
 			case 'bool':
-				return $value == '1' || strtolower( $value ) === 'true';
+				return $value == '1' || strtolower( $value ) === 'true' || strtolower( $value ) === 't';
 			default:
 				throw new Exception( "Unrecognized decode type: $type" );
 		}
@@ -912,7 +912,7 @@ class PGSQLSource extends DBSourceBase {
 	function escapeColumn( $column ) {
 		$parts = explode( '.', $column );
 		foreach( $parts as $key => $col )
-			$parts[$key] = '`' . $this->escape_sql_str( $col ) . '`';
+			$parts[$key] = '"' . $this->escape_sql_str( $col ) . '"';
 		return implode('.',$parts);
 	}	
 	
@@ -920,6 +920,38 @@ class PGSQLSource extends DBSourceBase {
 		pg_free_result( $this->mapRes[$ref] );
 		unset( $this->curNames[$ref] );
 		unset( $this->curRow[$ref] );
+	}
+	
+	public function getNewID( $table = null, $field = null ){
+		die("Unsupported. See RETURNING http://www.postgresql.org/docs/9.0/interactive/sql-insert.html");
+	}
+	
+	function quote( $value, $type ) {	
+		if( $value === null )
+			return 'NULL';
+			
+		switch( strtolower( $type ) ) {
+			case 'string':
+			case 'text':
+				return '\'' . $this->escape_encode_str( $value ) . '\'';
+			case 'integer':
+				return intval( $value );
+			case 'decimal':
+			case 'float':
+				return floatval( $value );
+			case 'datetime': {
+				$nvalue = clone $value;
+				$nvalue->setTimezone( $this->timezone );
+				return '\'' . $nvalue->format( "Y-m-d H:i:s" ) . '\'';
+			} case 'date':
+				return '\'' . $value->format( "Y-m-d" ) . '\'';
+			case 'time':
+				return '\'' . _dbs_encode_time( $value ) . '\'';
+			case 'bool':
+				return $value ? 'true' : 'false';
+			default:
+				throw new Exception( "Unrecognized quote type: $type" );
+		}
 	}
 }
 

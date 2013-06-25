@@ -4,9 +4,7 @@ require_once 'php_settings.inc';
 
 require_once dirname(__FILE__).'/../php_support/error_handling.inc';
 
-require_once 'PHPUnit/Framework.php';
-require_once 'PHPUnit/TextUI/TestRunner.php';
-require_once 'PHPUnit/Framework.php';
+require_once 'PHPUnit/Autoload.php';
 
 require_once dirname(__FILE__).'/../php_support/dbsource.inc';
 require_once dirname(__FILE__).'/../php_support/mdb2_datatype.inc';

@@ -8,7 +8,7 @@
 #
 # Also add "persephone.local" to /etc/hosts beside "localhost"
 #
-<VirtualHost *>
+<VirtualHost *:80>
 	DocumentRoot /opt/persephone/test/
 	ServerName persephone.local
 

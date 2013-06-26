@@ -833,7 +833,7 @@ class PGSQLSource extends DBSourceBase {
 	}
 
 	function int_exec( $q ) {
-		$res = pg_query( $this->connect, $q );
+		$res = pg_query( $this->connect, $this->translate_query($q ));
 		$ref = array_push( $this->mapRes, $res ) - 1;
 		$this->curRow[ $ref ] = null;
 		$this->curNames[ $ref ] = null;
@@ -912,10 +912,25 @@ class PGSQLSource extends DBSourceBase {
 	function escapeColumn( $column ) {
 		$parts = explode( '.', $column );
 		foreach( $parts as $key => $col )
-			$parts[$key] = '"' . $this->escape_sql_str( $col ) . '"';
+			$parts[$key] =  $this->escape_sql_str( $col );
 		return implode('.',$parts);
 	}	
-	
+
+	function translate_query( $sql ) {
+		if( $this->ucaseTables ) {
+			$reg = '@\%TABLE\[([^\]]*)\]@';
+			$ret = preg_replace_callback(
+				$reg,
+				create_function( '$matches',
+					'return strtoupper($matches[1]);'
+					),	
+				$sql
+				);
+			return $ret;
+		} else {
+			return $sql;
+		}
+	}
 	function endresult( $ref ) {
 		pg_free_result( $this->mapRes[$ref] );
 		unset( $this->curNames[$ref] );

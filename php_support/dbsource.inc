@@ -912,7 +912,7 @@ class PGSQLSource extends DBSourceBase {
 	function escapeColumn( $column ) {
 		$parts = explode( '.', $column );
 		foreach( $parts as $key => $col )
-			$parts[$key] =  $this->escape_sql_str( $col );
+			$parts[$key] = '"' . $this->escape_sql_str( $col ) . '"';
 		return implode('.',$parts);
 	}	
 

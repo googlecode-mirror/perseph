@@ -396,7 +396,7 @@ class Processor:
 					if mapper.table != "":
 						errorOn( node, "Duplicate table spec, multi-tables not supported" )
 					if not using in mapper.provider.tables:
-						errorOn( node, "Table does not exist in provider: %s" % using )
+						errorOn( node, "Table %s does not exist in provider: %s" % (using, varset['provider']) )
 						
 					mapper.table = mapper.provider.tables[using];
 					
@@ -617,7 +617,7 @@ class Processor:
 					expr.containerRef = search.container
 				else:
 					if not fname in search.container.fields:
-						errorOn( right, "No such field in container entity, %s" % fname )
+						errorOn( right, "No such field in container %s entity, %s" % (search.container.name,  fname) )
 					expr.containerRef = search.container.fields[fname]
 			else:
 				expr.const = right.text

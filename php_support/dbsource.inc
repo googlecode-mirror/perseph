@@ -817,6 +817,15 @@ class PGSQLSource extends DBSourceBase {
 
 	//The mapRes system is also used in MySQL, perhaps it should be abstracted..
 	var $mapRes;	//maps ids to results
+
+	/* Queries will be scanned syntax %TABLE[tablename] and be translated
+	 * into just tablename.  This allows the translation of table names in
+	 * queries while maintaining a readable syntax.  The sytnax is additionally
+	 * chosen to prevent the string from accidentally occuring anywhere
+	 * else in a query.  (It can't exist in SQL raw and the escape_str function
+	 * *should* escape such a sequence -- TODO: it doesn't now, %'s are ignored...)).
+	 */
+	var $ucaseTables = false;   
 	
 	function __construct( $aserver, $aname, $auser, $apass, $astr_enc = "windows-1252" ) {
 		$this->server = $aserver;
